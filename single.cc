@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <tuple>
 
 #include <count.hh>
 
@@ -37,7 +38,7 @@ main(
     tables.emplace_back(ReductionTableFq(prime,px, opencl));
 
 
-  CurveCounter(prime, genus, read_coefficient_bounds(prime, genus, input))
+  CurveCounter(prime, read_coefficient_bounds(prime, genus, input))
     .count( [&output](auto poly_coeffs, auto nmb_points)
             {
                for (auto c : poly_coeffs) output << c << " ";

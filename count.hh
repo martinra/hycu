@@ -94,23 +94,48 @@ class Curve
 class CurveCounter
 {
   public:
-    CurveCounter(int prime, int genus, vector<tuple<int,int>> coeff_bounds) :
-      prime( prime ), genus_( genus ),  coeff_bounds( coeff_bounds ) {};
+    CurveCounter(int prime, vector<tuple<int,int>> coeff_bounds);
 
     int inline genus() const { return genus_; };
-    int inline degree() const { return 2*genus_ + 2; };
+    int inline degree() const { return coeff_bounds.size()-1; };
 
     void count(function<void(vector<int>&, vector<tuple<int,int>>&)>,
                const vector<ReductionTableFq> &, const OpenCLInterface &);
 
   private:
     const int prime;
-    const int genus_;
+    int genus_;
 
     vector<tuple<int,int>> coeff_bounds;
 
     void count_recursive(function<void(vector<int> &, vector<tuple<int,int>> &)>,
                          const vector<ReductionTableFq> &, const OpenCLInterface &, vector<int> & poly_coeffs);
+};
+
+class CurveEnumerator
+{
+  public:
+    CurveEnumerator(int prime, int genus, int package_size);
+
+    int inline genus() const { return genus_; };
+    int inline degree() const { return 2*genus_ + 2; };
+
+    int inline is_end() const { return is_end_; };
+
+    CurveEnumerator & step();
+
+    vector<tuple<int,int>> as_bounds();
+
+  private:
+    const int prime;
+    const int genus_;
+    const int package_size;
+
+    bool is_end_;
+    size_t dx;
+    vector<int> poly_coeffs;
+
+    int fp_non_square();
 };
 
 #endif
