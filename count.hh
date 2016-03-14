@@ -78,7 +78,7 @@ class Curve
     int inline degree() const { return this->poly_coeffs.size() + 1; };
     int genus() const;
 
-    vector<int> poly_coefficients_as_powers(const ReductionTableFq & table);
+    vector<int> poly_coefficients_as_generator_exponents(const ReductionTableFq & table);
 
     tuple<int,int> count(const ReductionTableFq & table, const OpenCLInterface&);
 

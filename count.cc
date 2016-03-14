@@ -61,7 +61,7 @@ genus()
 
 vector<int>
 Curve::
-poly_coefficients_as_powers(
+poly_coefficients_as_generator_exponents(
     const ReductionTableFq & table
     )
 {
@@ -82,7 +82,7 @@ count(
 {
   // todo: Use error checking for all calls. Some implementations don't seem to support try/catch, but doublecheck this.
   int poly_coeffs_size = (int)this->poly_coeffs.size();
-  vector<int> poly_coeffs_exponents = this->poly_coefficients_as_powers(table);
+  vector<int> poly_coeffs_exponents = this->poly_coefficients_as_generator_exponents(table);
   int nmb_units = table.prime_power-1;
 
   cl::Buffer buffer_poly_coeffs_exponents(
