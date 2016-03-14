@@ -64,6 +64,9 @@ class ReductionTableFq
     shared_ptr<cl::Buffer> buffer_incrementation_table;
 
   private:
+    void check_exponent_reduction_table();
+    void check_incrementation_table();
+
     shared_ptr<vector<int>> compute_exponent_reduction_table(int prime_power);
     tuple<shared_ptr<vector<int>>, shared_ptr<vector<int>>>
         compute_incrementation_fp_exponents_tables(int prime, int prime_exponent, int prime_power);
@@ -81,6 +84,7 @@ class Curve
     vector<int> poly_coefficients_as_powers(const ReductionTableFq & table);
 
     tuple<int,int> count(const ReductionTableFq & table, const OpenCLInterface&);
+    void count_verbose(const ReductionTableFq & table);
 
     vector<tuple<int,int>> isogeny_nmb_points(const vector<ReductionTableFq>& tables, const OpenCLInterface&);
 

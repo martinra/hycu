@@ -10,15 +10,16 @@ LIBRARIES+= -L/usr/lib64/openmpi/lib -lboost_mpi -lmpi_cxx -lmpi -Wl,-rpath,/usr
 
 .PHONY : all, clean
 
-all : single mpi
+all : single block mpi
 
 single : single.cc $(OBJS)
 	$(CC) $(CPPFLAGS) -o single single.cc $(OBJS) $(LIBRARIES)
+
+block : block.cc $(OBJS)
+	$(CC) $(CPPFLAGS) -o block block.cc $(OBJS) $(LIBRARIES)
 
 mpi : mpi.cc $(OBJS)
 	$(CC) $(CPPFLAGS) -o mpi mpi.cc $(OBJS) $(LIBRARIES)
 
 clean :
-	rm -f mpi mpi.o single single.o $(OBJS)
-	
-	
+	rm -f single single.o block block.o mpi mpi.o $(OBJS)

@@ -80,33 +80,45 @@ count(
     const OpenCLInterface & opencl
   )
 {
-  vector<int> poly_coeffs = this->poly_coefficients_as_powers(table);
-  int poly_coeffs_size = (int)poly_coeffs.size();
-  int fp_prime_power = table.prime_power;
+  // todo: Use error checking for all calls. Some implementations don't seem to support try/catch, but doublecheck this.
+  int poly_coeffs_size = (int)this->poly_coeffs.size();
+  vector<int> poly_coeffs_exponents = this->poly_coefficients_as_powers(table);
+  int nmb_units = table.prime_power-1;
 
-  cl::Buffer buffer_poly_coeffs(
+  cl::Buffer buffer_poly_coeffs_exponents(
                *opencl.context, CL_MEM_READ_ONLY,
                sizeof(int) * poly_coeffs_size);
-  opencl.queue->enqueueWriteBuffer(buffer_poly_coeffs, CL_TRUE, 0,
-                           sizeof(int)*poly_coeffs_size, poly_coeffs.data());
+  opencl.queue->enqueueWriteBuffer(buffer_poly_coeffs_exponents, CL_TRUE, 0,
+                           sizeof(int) * poly_coeffs_size, poly_coeffs_exponents.data());
 
   cl::Buffer buffer_nmbs_unramified(
-               *opencl.context, CL_MEM_READ_WRITE,
-               sizeof(int) * table.prime_power);
+               *opencl.context, CL_MEM_READ_WRITE, sizeof(int) * nmb_units);
   cl::Buffer buffer_nmbs_ramified(
-               *opencl.context, CL_MEM_READ_WRITE,
-               sizeof(int) * table.prime_power);
+               *opencl.context, CL_MEM_READ_WRITE, sizeof(int) * nmb_units);
 
-  cl::Kernel kernel_evaluation = cl::Kernel(*opencl.program_evaluation, "evaluation");
+  cl::Kernel kernel_evaluation = cl::Kernel(*opencl.program_evaluation, "evaluate");
   kernel_evaluation.setArg(0, sizeof(int), &poly_coeffs_size);
-  kernel_evaluation.setArg(1, buffer_poly_coeffs);
-  kernel_evaluation.setArg(2, sizeof(int), &fp_prime_power);
+  kernel_evaluation.setArg(1, buffer_poly_coeffs_exponents);
+  kernel_evaluation.setArg(2, sizeof(int), &nmb_units);
   kernel_evaluation.setArg(3, *table.buffer_exponent_reduction_table);
   kernel_evaluation.setArg(4, *table.buffer_incrementation_table);
   kernel_evaluation.setArg(5, buffer_nmbs_unramified);
   kernel_evaluation.setArg(6, buffer_nmbs_ramified);
 
-  opencl.queue->enqueueNDRangeKernel(kernel_evaluation, cl::NullRange, cl::NDRange(fp_prime_power), cl::NullRange);
+  opencl.queue->enqueueNDRangeKernel(kernel_evaluation, cl::NullRange, cl::NDRange(nmb_units), cl::NullRange);
+
+  // debug:
+  opencl.queue->finish();
+  auto nmbs_unramified = new int[nmb_units];
+  auto nmbs_ramified = new int[nmb_units];
+  opencl.queue->enqueueReadBuffer(buffer_nmbs_unramified, CL_TRUE, 0,
+                          sizeof(int)*nmb_units, nmbs_unramified);
+  opencl.queue->enqueueReadBuffer(buffer_nmbs_ramified, CL_TRUE, 0,
+                          sizeof(int)*nmb_units, nmbs_ramified);
+  cout << "GPU computation: ";
+  for (size_t ix=0; ix<nmb_units; ++ix)
+    cout << nmbs_unramified[ix] << " " << nmbs_ramified[ix] << "; ";
+  cout << endl;
 
 
   const int global_size_reduction = 1024;
@@ -125,7 +137,7 @@ count(
   kernel_reduction.setArg(1, buffer_nmbs_ramified);
   kernel_reduction.setArg(2, sizeof(int)*local_size_reduction, nullptr);
   kernel_reduction.setArg(3, sizeof(int)*local_size_reduction, nullptr);
-  kernel_reduction.setArg(4, sizeof(int), &fp_prime_power);
+  kernel_reduction.setArg(4, sizeof(int), &nmb_units);
   kernel_reduction.setArg(5, buffer_sums_nmbs_unramified);
   kernel_reduction.setArg(6, buffer_sums_nmbs_ramified);
 
@@ -147,21 +159,116 @@ count(
     nmb_ramified += sums_nmbs_ramified[ix];
   }
 
+  cout << "count real without 0 oo " << nmb_unramified << " " << nmb_ramified << endl;
   // point x = 0
-  if (this->poly_coeffs[0] == table.prime_power - 1) // constant coefficient is zero
+  if (poly_coeffs_exponents[0] == table.prime_power - 1) // constant coefficient is zero
     nmb_ramified++;
-  else if (!(this->poly_coeffs[0] & 1)) // constant coefficient is even power of generator
+  else if (!(poly_coeffs_exponents[0] & 1)) // constant coefficient is even power of generator
     nmb_unramified += 2;
 
+  cout << "count real without oo " << nmb_unramified << " " << nmb_ramified << endl;
   // point x = infty
-  // fixme: is this correct if the curve is singuluar?
-  if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with non-zero entry
+  if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
     nmb_ramified += 1;
-  else if (!(this->poly_coeffs.back() & 1)) // leading coefficient is odd power of generator
+  else if (!(poly_coeffs_exponents.back() & 1)) // leading coefficient is odd power of generator
     nmb_unramified += 2;
 
 
   return make_pair(nmb_unramified, nmb_ramified);
+}
+
+
+void
+Curve::
+count_verbose(
+    const ReductionTableFq & table
+    )
+{
+  unsigned int nmb_unramified = 0, nmb_ramified = 0;
+
+  vector<int> poly_coeffs = this->poly_coefficients_as_powers(table);
+
+  cout << "poly_coeffs in F_" << this->prime << ": ";
+  for (auto c : this->poly_coeffs)
+    cout << c << " ";
+  cout << endl;
+
+  cout << "poly_coeffs F^x_" << this->prime << ": ";
+  for (auto c : poly_coeffs)
+    cout << c << " ";
+  cout << endl;
+  
+
+  int poly_length = poly_coeffs.size();
+  int q = table.prime_power;
+
+  cout << "Counting  over F_" << q;
+  for (int x=0; x<table.prime_power-1; ++x) {
+    cout << endl << "evalutating X^" << x << ": ";
+    cout.flush();
+    int f = poly_coeffs[0];
+    cout << f << " ";
+    for (int dx=1, xpw=x; dx < poly_length; ++dx, xpw+=x) {
+      xpw = (*table.exponent_reduction_table)[xpw];
+      if (poly_coeffs[dx] != q-1) { // i.e. coefficient is not zero
+        if (f == q-1) { // i.e. f = 0
+          f = poly_coeffs[dx] + xpw;
+          f = (*table.exponent_reduction_table)[f];
+        } else {
+          int tmp = (*table.exponent_reduction_table)[poly_coeffs[dx] + xpw];
+          // if (tmp >= q-1) tmp -= q-1;
+          
+          if (tmp <= f) {
+            tmp = tmp + f;
+            f = tmp - f;
+            tmp = tmp - f;
+          }
+          int tmp2 = (*table.incrementation_table)[tmp-f];
+          if (tmp2 != q-1) {
+            f = f + tmp2;
+            f = (*table.exponent_reduction_table)[f];
+          }
+          else
+            f = q-1;
+        }
+        cout << "(" << xpw << "," << f << ")";
+        // f = (*table.exponent_reduction_table)[f];
+        // if (f >= q-1) f -= q-1;
+      cout << f << " ";
+      }
+    }
+    
+    if (f == q-1) {
+      nmb_ramified += 1;
+      cout << " -> 1; " << nmb_unramified << " " << nmb_ramified;
+    }
+    else if (f & 1) {
+      cout << " -> 0" << nmb_unramified << " " << nmb_ramified;
+    } else {
+      nmb_unramified += 2;
+      cout << " -> 2" << nmb_unramified << " " << nmb_ramified;
+    }
+
+    cout << endl;
+  }
+
+  cout << "all but 0 and oo: " << nmb_unramified << " " << nmb_ramified << endl;
+
+  // point x = 0
+  if (this->poly_coeffs[0] == table.prime_power - 1) // constant coefficient is zero
+    nmb_ramified++;
+  else if (!(poly_coeffs[0] & 1)) // constant coefficient is even power of generator
+    nmb_unramified += 2;
+
+  cout << "all but oo: " << nmb_unramified << " " << nmb_ramified << endl;
+
+  // point x = infty
+  if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
+    nmb_ramified += 1;
+  else if (!(poly_coeffs.back() & 1)) // leading coefficient is odd power of generator
+    nmb_unramified += 2;
+
+  cout << "counted over F_" << table.prime_power << ": " << nmb_unramified << " " << nmb_ramified << endl;
 }
 
 vector<tuple<int,int>>
@@ -205,6 +312,68 @@ ReductionTableFq(
   opencl.queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_TRUE, 0,
       sizeof(int)*this->incrementation_table->size(),
       this->incrementation_table->data() );
+
+  cout << "Tables for " << prime << "^" << prime_exponent << ":" << endl;
+  check_exponent_reduction_table();
+  check_incrementation_table();
+}
+
+void
+ReductionTableFq::
+check_exponent_reduction_table()
+{
+  for (size_t ix=0; ix<this->exponent_reduction_table->size(); ++ix)
+    if ((*exponent_reduction_table)[ix] != ix % (this->prime_power - 1))
+      cout << "exponent reduction wrong at: " << ix << ", where " << (*exponent_reduction_table)[ix] << endl;
+}
+
+void
+ReductionTableFq::
+check_incrementation_table()
+{
+  fmpz_t prime_fmpz;
+  fmpz_init(prime_fmpz);
+  fmpz_set_si(prime_fmpz, prime);
+  fq_nmod_ctx_t ctx;
+  fq_nmod_ctx_init(ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
+  fmpz_clear(prime_fmpz);
+
+  fq_nmod_t gen;
+  fq_nmod_init(gen, ctx);
+  fq_nmod_gen(gen, ctx);
+  fq_nmod_reduce(gen, ctx);
+
+
+  fq_nmod_t one;
+  fq_nmod_init(one, ctx);
+  fq_nmod_one(one, ctx);
+
+
+  fq_nmod_t a;
+  fq_nmod_t b;
+  fq_nmod_init(a, ctx);
+  fq_nmod_init(b, ctx);
+
+  for (size_t ix=0; ix < this->prime_power-1; ++ix) {
+    fq_nmod_pow_ui(a, gen, ix, ctx);
+    fq_nmod_add(a, a, one, ctx);
+
+    size_t jx;
+    for (jx=0; jx < this->prime_power-1; ++jx) {
+      fq_nmod_pow_ui(b, gen, jx, ctx);
+
+      if (fq_nmod_equal(a, b, ctx)) break;
+    }
+
+    if ((*this->incrementation_table)[ix] != jx)
+      cout << "incrementation wrong at " << ix << "," << jx << "; table is " << (*this->incrementation_table)[ix] << endl; 
+  }
+
+  fq_nmod_clear(gen, ctx); 
+  fq_nmod_clear(one, ctx); 
+  fq_nmod_clear(a, ctx); 
+  fq_nmod_clear(b, ctx); 
+  fq_nmod_ctx_clear(ctx);
 }
 
 shared_ptr<vector<int>>
@@ -241,6 +410,15 @@ compute_incrementation_fp_exponents_tables(
   fq_nmod_t gen;
   fq_nmod_init(gen, ctx);
   fq_nmod_gen(gen, ctx);
+  fq_nmod_reduce(gen, ctx);
+
+  if (prime_exponent==2) {
+    cout << endl << "context:" << endl;
+    fq_nmod_ctx_print(ctx);
+    cout << "generator ";
+    fq_nmod_print_pretty(gen, ctx);
+    cout << endl;
+  }
 
 
   auto incrementations = make_shared<vector<int>>(prime_power);
@@ -257,12 +435,13 @@ compute_incrementation_fp_exponents_tables(
   fq_nmod_init(a, ctx);
   fq_nmod_one(a, ctx);
 
-  for ( size_t ix=0; ix<prime_power; ++ix) {
+  for ( size_t ix=0; ix<prime_power-1; ++ix) {
     unsigned int coeff_sum = 0;
-    for ( size_t dx=0; dx<prime_exponent; ++dx ) {
+    for ( int dx=prime_exponent-1; dx>=0; --dx ) {
       coeff_sum *= prime;
       coeff_sum += nmod_poly_get_coeff_ui(a,dx);
     }
+
     gen_powers[coeff_sum] = ix;
     if (coeff_sum < prime)
       fp_exponents->at(coeff_sum) = ix;
@@ -271,8 +450,22 @@ compute_incrementation_fp_exponents_tables(
     fq_nmod_reduce(a, ctx);
   }
 
-  for ( size_t ix=0; ix<prime_power-1; ++ix)
-    incrementations->at(gen_powers[ix]) = gen_powers[ix+1];
+  for ( size_t pix=0; pix<prime_power-1; pix+=prime) {
+    for ( size_t ix=pix; ix<pix+prime-1; ++ix)
+      incrementations->at(gen_powers[ix]) = gen_powers[ix+1];
+    incrementations->at(gen_powers[pix+prime-1]) = gen_powers[pix];
+  }
+
+  if (prime_exponent==2) {
+    for (size_t ix=0; ix<gen_powers.size(); ++ix)
+      cout << "gen_power " << ix << " " << gen_powers[ix] << endl;
+    for (size_t ix=0; ix<incrementations->size(); ++ix)
+      cout << "incrementation " << ix << " " << (*incrementations)[ix] << endl;
+    for (size_t ix=0; ix<fp_exponents->size(); ++ix)
+      cout << "fp_exponent " << ix << " " << (*fp_exponents)[ix] << endl;
+
+    cout << endl;
+  }
 
 
   fq_nmod_clear(gen, ctx); 
@@ -286,9 +479,9 @@ const std::string opencl_kernel_evaluation =
   "void\n"
   "kernel\n"
   "evaluate(\n"
-  "  const int poly_length,\n"
-  "  global const int * poly_coeffs,\n"
-  "  const int q,\n"
+  "  const int poly_size,\n"
+  "  global const int * poly_coeffs_expontents,\n"
+  "  const int nmb_units, // this is prime_power - 1\n"
   "  global const int * exponent_reduction_table,\n"
   "  global const int * incrementation_table,\n"
   "  \n"
@@ -296,36 +489,47 @@ const std::string opencl_kernel_evaluation =
   "  global int * nmbs_ramified\n"
   "  )\n"
   "{\n"
-  "  // The variable x = a^i is represented by i. If x = 0, then we represent it by q-1.\n"
+  "  // The variable x = a^i is represented by i < nmb_units.\n"
+  "  // The case x=0 will not occur, but any element 0 is represented by then number nmb_units.\n"
   "  int x = get_global_id(0);\n"
   "  \n"
-  "  int f = poly_coeffs[0];\n"
-  "  for (int dx=1, xpw=0; dx < poly_length; ++dx, xpw+=x) {\n"
-  "    if (poly_coeffs[dx] != q-1) { // i.e. coefficient is not zero\n"
-  "      if (f == q-1) // i.e. f = 0\n"
-  "        f = poly_coeffs[dx] + xpw;\n"
-  "      else {\n"
-  "        int tmp = exponent_reduction_table[poly_coeffs[dx] + xpw];\n"
+  "  int f = poly_coeffs_expontents[0];\n"
+  "  for (int dx=1, xpw=x; dx < poly_size; ++dx, xpw+=x) {\n"
+  "    xpw = exponent_reduction_table[xpw];\n"
+  "    if (poly_coeffs_expontents[dx] != nmb_units) { // i.e. coefficient is not zero\n"
+  "      if (f == nmb_units) { // i.e. f = 0\n"
+  "        f = poly_coeffs_expontents[dx] + xpw;\n"
+  "        f = exponent_reduction_table[f];\n"
+  "        // if (f >= q-1) f -= q-1;\n"
+  "      } else {\n"
+  "        int tmp = exponent_reduction_table[poly_coeffs_expontents[dx] + xpw];\n"
   "        // if (tmp >= q-1) tmp -= q-1;\n"
   "        \n"
-  "        if (tmp >= f)\n"
-  "          f = (tmp - f) + incrementation_table[f];\n"
-  "        else\n"
-  "          f = (f - tmp) + incrementation_table[tmp];\n"
+  "        int tmp2;\n"
+  "        if (tmp <= f) {\n"
+  "          tmp2 = f;\n"
+  "          f = tmp;\n"
+  "          tmp = tmp2;\n"
+  "        }\n"
+  "        tmp2 = incrementation_table[tmp-f];\n"
+  "        if (tmp2 != nmb_units) {\n"
+  "          f = f + tmp2;\n"
+  "          f = exponent_reduction_table[f];\n"
+  "          // if (f >= q-1) f -= q-1;\n"
+  "        } else\n"
+  "          f = nmb_units;\n"
   "      }\n"
-  "      f = exponent_reduction_table[f];\n"
-  "      // if (f >= q-1) f -= q-1;\n"
   "    }\n"
   "  }\n"
   "  \n"
-  "  if (f == q-1) {\n"
+  "  if (f == nmb_units) {\n"
   "    nmbs_unramified[x] = 0;\n"
   "    nmbs_ramified[x] = 1;\n"
   "  } else if (f & 1) {\n"
   "    nmbs_unramified[x] = 0;\n"
   "    nmbs_ramified[x] = 0;\n"
   "  } else {\n"
-  "    nmbs_unramified[x] = 1;\n"
+  "    nmbs_unramified[x] = 2;\n"
   "    nmbs_ramified[x] = 0;\n"
   "  }\n"
   "}\n"
@@ -386,7 +590,7 @@ OpenCLInterface()
   this->platform = make_shared<cl::Platform>(all_platforms[0]);
 
   vector<cl::Device> all_devices;
-  this->platform->getDevices(CL_DEVICE_TYPE_ALL, &all_devices);
+  this->platform->getDevices(CL_DEVICE_TYPE_GPU, &all_devices);
   if (all_devices.size() == 0)
     throw "No devices found.";
   this->device = make_shared<cl::Device>(all_devices[0]);
