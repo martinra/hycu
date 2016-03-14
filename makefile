@@ -1,6 +1,6 @@
 CC = g++ 
 CPPFLAGS = -std=c++14 -O2 -pthread -I. -I/usr/include/flint -I/usr/include/openmpi-x86_64 -I/usr/include/yaml-cpp
-OBJS = count.o mpi_worker_pool.o
+OBJS = opencl_interface.o reduction_table.o curve.o mpi_worker_pool.o
 LIBRARIES = -L/usr/lib64/beignet/ -lcl
 LIBRARIES+= -lflint
 LIBRARIES+= -lyaml-cpp

@@ -4,7 +4,11 @@
 #include <sstream>
 #include <tuple>
 
-#include <count.hh>
+#include <opencl_interface.hh>
+#include <reduction_table.hh>
+#include <curve.hh>
+
+using namespace std;
 
 
 vector<tuple<int,int>> read_coefficient_bounds( int prime, int genus, istream& stream);
@@ -33,9 +37,9 @@ main(
 
   auto opencl = OpenCLInterface();
 
-  vector<ReductionTableFq> tables;
+  vector<ReductionTable> tables;
   for (int px = 0; px < genus; ++px)
-    tables.emplace_back(ReductionTableFq(prime,px, opencl));
+    tables.emplace_back(ReductionTable(prime,px, opencl));
 
 
   CurveCounter(prime, read_coefficient_bounds(prime, genus, input))

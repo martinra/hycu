@@ -5,7 +5,9 @@
 #include <tuple>
 #include <yaml.h>
 
-#include <count.hh>
+#include <opencl_interface.hh>
+#include <reduction_table.hh>
+#include <curve.hh>
 #include <mpi_worker_pool.hh>
 
 namespace mpi = boost::mpi;
@@ -91,9 +93,9 @@ main_worker(
 
   auto opencl = OpenCLInterface();
 
-  vector<ReductionTableFq> tables;
+  vector<ReductionTable> tables;
   for (int px = 0; px < genus; ++px)
-    tables.emplace_back(ReductionTableFq(prime,px, opencl));
+    tables.emplace_back(ReductionTable(prime,px, opencl));
 
 
   while (true) {

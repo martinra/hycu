@@ -4,9 +4,11 @@
 #include <sstream>
 #include <tuple>
 
-#include <count.hh>
+#include <opencl_interface.hh>
+#include <reduction_table.hh>
+#include <curve.hh>
 
-
+using namespace std;
 
 
 int
@@ -38,9 +40,9 @@ main(
 
   auto opencl = OpenCLInterface();
 
-  vector<ReductionTableFq> tables;
+  vector<ReductionTable> tables;
   for (int px = 1; px <= genus; ++px)
-    tables.emplace_back(ReductionTableFq(prime,px, opencl));
+    tables.emplace_back(ReductionTable(prime,px, opencl));
 
 
   auto nmb_points = Curve(prime, poly_coeffs).isogeny_nmb_points(tables, opencl);
