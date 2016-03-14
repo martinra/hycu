@@ -107,19 +107,6 @@ count(
 
   opencl.queue->enqueueNDRangeKernel(kernel_evaluation, cl::NullRange, cl::NDRange(nmb_units), cl::NullRange);
 
-  // debug:
-  opencl.queue->finish();
-  auto nmbs_unramified = new int[nmb_units];
-  auto nmbs_ramified = new int[nmb_units];
-  opencl.queue->enqueueReadBuffer(buffer_nmbs_unramified, CL_TRUE, 0,
-                          sizeof(int)*nmb_units, nmbs_unramified);
-  opencl.queue->enqueueReadBuffer(buffer_nmbs_ramified, CL_TRUE, 0,
-                          sizeof(int)*nmb_units, nmbs_ramified);
-  cout << "GPU computation: ";
-  for (size_t ix=0; ix<nmb_units; ++ix)
-    cout << nmbs_unramified[ix] << " " << nmbs_ramified[ix] << "; ";
-  cout << endl;
-
 
   const int global_size_reduction = 1024;
   const int local_size_reduction = 32;
@@ -159,14 +146,12 @@ count(
     nmb_ramified += sums_nmbs_ramified[ix];
   }
 
-  cout << "count real without 0 oo " << nmb_unramified << " " << nmb_ramified << endl;
   // point x = 0
   if (poly_coeffs_exponents[0] == table.prime_power - 1) // constant coefficient is zero
     nmb_ramified++;
   else if (!(poly_coeffs_exponents[0] & 1)) // constant coefficient is even power of generator
     nmb_unramified += 2;
 
-  cout << "count real without oo " << nmb_unramified << " " << nmb_ramified << endl;
   // point x = infty
   if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
     nmb_ramified += 1;
@@ -175,100 +160,6 @@ count(
 
 
   return make_pair(nmb_unramified, nmb_ramified);
-}
-
-
-void
-Curve::
-count_verbose(
-    const ReductionTableFq & table
-    )
-{
-  unsigned int nmb_unramified = 0, nmb_ramified = 0;
-
-  vector<int> poly_coeffs = this->poly_coefficients_as_powers(table);
-
-  cout << "poly_coeffs in F_" << this->prime << ": ";
-  for (auto c : this->poly_coeffs)
-    cout << c << " ";
-  cout << endl;
-
-  cout << "poly_coeffs F^x_" << this->prime << ": ";
-  for (auto c : poly_coeffs)
-    cout << c << " ";
-  cout << endl;
-  
-
-  int poly_length = poly_coeffs.size();
-  int q = table.prime_power;
-
-  cout << "Counting  over F_" << q;
-  for (int x=0; x<table.prime_power-1; ++x) {
-    cout << endl << "evalutating X^" << x << ": ";
-    cout.flush();
-    int f = poly_coeffs[0];
-    cout << f << " ";
-    for (int dx=1, xpw=x; dx < poly_length; ++dx, xpw+=x) {
-      xpw = (*table.exponent_reduction_table)[xpw];
-      if (poly_coeffs[dx] != q-1) { // i.e. coefficient is not zero
-        if (f == q-1) { // i.e. f = 0
-          f = poly_coeffs[dx] + xpw;
-          f = (*table.exponent_reduction_table)[f];
-        } else {
-          int tmp = (*table.exponent_reduction_table)[poly_coeffs[dx] + xpw];
-          // if (tmp >= q-1) tmp -= q-1;
-          
-          if (tmp <= f) {
-            tmp = tmp + f;
-            f = tmp - f;
-            tmp = tmp - f;
-          }
-          int tmp2 = (*table.incrementation_table)[tmp-f];
-          if (tmp2 != q-1) {
-            f = f + tmp2;
-            f = (*table.exponent_reduction_table)[f];
-          }
-          else
-            f = q-1;
-        }
-        cout << "(" << xpw << "," << f << ")";
-        // f = (*table.exponent_reduction_table)[f];
-        // if (f >= q-1) f -= q-1;
-      cout << f << " ";
-      }
-    }
-    
-    if (f == q-1) {
-      nmb_ramified += 1;
-      cout << " -> 1; " << nmb_unramified << " " << nmb_ramified;
-    }
-    else if (f & 1) {
-      cout << " -> 0" << nmb_unramified << " " << nmb_ramified;
-    } else {
-      nmb_unramified += 2;
-      cout << " -> 2" << nmb_unramified << " " << nmb_ramified;
-    }
-
-    cout << endl;
-  }
-
-  cout << "all but 0 and oo: " << nmb_unramified << " " << nmb_ramified << endl;
-
-  // point x = 0
-  if (this->poly_coeffs[0] == table.prime_power - 1) // constant coefficient is zero
-    nmb_ramified++;
-  else if (!(poly_coeffs[0] & 1)) // constant coefficient is even power of generator
-    nmb_unramified += 2;
-
-  cout << "all but oo: " << nmb_unramified << " " << nmb_ramified << endl;
-
-  // point x = infty
-  if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
-    nmb_ramified += 1;
-  else if (!(poly_coeffs.back() & 1)) // leading coefficient is odd power of generator
-    nmb_unramified += 2;
-
-  cout << "counted over F_" << table.prime_power << ": " << nmb_unramified << " " << nmb_ramified << endl;
 }
 
 vector<tuple<int,int>>
@@ -312,68 +203,6 @@ ReductionTableFq(
   opencl.queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_TRUE, 0,
       sizeof(int)*this->incrementation_table->size(),
       this->incrementation_table->data() );
-
-  cout << "Tables for " << prime << "^" << prime_exponent << ":" << endl;
-  check_exponent_reduction_table();
-  check_incrementation_table();
-}
-
-void
-ReductionTableFq::
-check_exponent_reduction_table()
-{
-  for (size_t ix=0; ix<this->exponent_reduction_table->size(); ++ix)
-    if ((*exponent_reduction_table)[ix] != ix % (this->prime_power - 1))
-      cout << "exponent reduction wrong at: " << ix << ", where " << (*exponent_reduction_table)[ix] << endl;
-}
-
-void
-ReductionTableFq::
-check_incrementation_table()
-{
-  fmpz_t prime_fmpz;
-  fmpz_init(prime_fmpz);
-  fmpz_set_si(prime_fmpz, prime);
-  fq_nmod_ctx_t ctx;
-  fq_nmod_ctx_init(ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
-  fmpz_clear(prime_fmpz);
-
-  fq_nmod_t gen;
-  fq_nmod_init(gen, ctx);
-  fq_nmod_gen(gen, ctx);
-  fq_nmod_reduce(gen, ctx);
-
-
-  fq_nmod_t one;
-  fq_nmod_init(one, ctx);
-  fq_nmod_one(one, ctx);
-
-
-  fq_nmod_t a;
-  fq_nmod_t b;
-  fq_nmod_init(a, ctx);
-  fq_nmod_init(b, ctx);
-
-  for (size_t ix=0; ix < this->prime_power-1; ++ix) {
-    fq_nmod_pow_ui(a, gen, ix, ctx);
-    fq_nmod_add(a, a, one, ctx);
-
-    size_t jx;
-    for (jx=0; jx < this->prime_power-1; ++jx) {
-      fq_nmod_pow_ui(b, gen, jx, ctx);
-
-      if (fq_nmod_equal(a, b, ctx)) break;
-    }
-
-    if ((*this->incrementation_table)[ix] != jx)
-      cout << "incrementation wrong at " << ix << "," << jx << "; table is " << (*this->incrementation_table)[ix] << endl; 
-  }
-
-  fq_nmod_clear(gen, ctx); 
-  fq_nmod_clear(one, ctx); 
-  fq_nmod_clear(a, ctx); 
-  fq_nmod_clear(b, ctx); 
-  fq_nmod_ctx_clear(ctx);
 }
 
 shared_ptr<vector<int>>
@@ -412,14 +241,6 @@ compute_incrementation_fp_exponents_tables(
   fq_nmod_gen(gen, ctx);
   fq_nmod_reduce(gen, ctx);
 
-  if (prime_exponent==2) {
-    cout << endl << "context:" << endl;
-    fq_nmod_ctx_print(ctx);
-    cout << "generator ";
-    fq_nmod_print_pretty(gen, ctx);
-    cout << endl;
-  }
-
 
   auto incrementations = make_shared<vector<int>>(prime_power);
   incrementations->at(prime_power-1) = 0; // special index for 0
@@ -456,17 +277,6 @@ compute_incrementation_fp_exponents_tables(
     incrementations->at(gen_powers[pix+prime-1]) = gen_powers[pix];
   }
 
-  if (prime_exponent==2) {
-    for (size_t ix=0; ix<gen_powers.size(); ++ix)
-      cout << "gen_power " << ix << " " << gen_powers[ix] << endl;
-    for (size_t ix=0; ix<incrementations->size(); ++ix)
-      cout << "incrementation " << ix << " " << (*incrementations)[ix] << endl;
-    for (size_t ix=0; ix<fp_exponents->size(); ++ix)
-      cout << "fp_exponent " << ix << " " << (*fp_exponents)[ix] << endl;
-
-    cout << endl;
-  }
-
 
   fq_nmod_clear(gen, ctx); 
   fq_nmod_clear(a, ctx); 
@@ -500,13 +310,13 @@ const std::string opencl_kernel_evaluation =
   "      if (f == nmb_units) { // i.e. f = 0\n"
   "        f = poly_coeffs_expontents[dx] + xpw;\n"
   "        f = exponent_reduction_table[f];\n"
-  "        // if (f >= q-1) f -= q-1;\n"
   "      } else {\n"
   "        int tmp = exponent_reduction_table[poly_coeffs_expontents[dx] + xpw];\n"
-  "        // if (tmp >= q-1) tmp -= q-1;\n"
   "        \n"
   "        int tmp2;\n"
   "        if (tmp <= f) {\n"
+  "          // this can be removed by doubling the size of incrementation_table\n"
+  "          // and checking at nmb_units + tmp - f\n"
   "          tmp2 = f;\n"
   "          f = tmp;\n"
   "          tmp = tmp2;\n"
@@ -515,7 +325,6 @@ const std::string opencl_kernel_evaluation =
   "        if (tmp2 != nmb_units) {\n"
   "          f = f + tmp2;\n"
   "          f = exponent_reduction_table[f];\n"
-  "          // if (f >= q-1) f -= q-1;\n"
   "        } else\n"
   "          f = nmb_units;\n"
   "      }\n"
