@@ -8,30 +8,38 @@
 using namespace std;
 
 
-class CurveEnumerator
+class BlockEnumerator
 {
   public:
-    CurveEnumerator(int prime, int genus, int package_size);
+    // BlockEnumerator(int prime, int degree, int block_size);
+    BlockEnumerator( int length,
+                     const map<int, tuple<int,int>> & blocks,
+                     const map<int, vector<int>> & sets,
+                     const vector<vector<int>> couplings,
+                     unsigned int package_size );
 
-    int inline genus() const { return genus_; };
-    int inline degree() const { return 2*genus_ + 2; };
+    int inline length() const { return length_; };
 
-    int inline is_end() const { return is_end_; };
+    bool inline valid_position() const { return has_reached_end; };
+    vector<int> as_position();
+    vector<tuple<int,int>> as_block();
 
-    CurveEnumerator & step();
-
-    vector<tuple<int,int>> as_bounds();
+    BlockEnumerator & step();
 
   private:
-    const int prime;
-    const int genus_;
-    const int package_size;
+    BlockEnumerator & step_(bool step_block_or_set, size_t step_ix);
 
-    bool is_end_;
-    size_t dx;
-    vector<int> poly_coeffs;
+    const int length_;
 
-    int fp_non_square();
+    vector<int> update_order_blocks;
+    vector<int> update_order_sets;
+    map<int, vector<int>> couplings;
+
+    map<int, tuple<int,int,unsigned int>> blocks;
+    map<int, vector<int>> sets;
+
+    vector<int> position;
+    bool has_reached_end;
 };
 
 #endif
