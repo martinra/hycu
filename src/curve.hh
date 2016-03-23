@@ -19,6 +19,8 @@ class Curve
     int inline degree() const { return this->poly_coeffs.size() + 1; };
     int genus() const;
 
+    bool has_squarefree_rhs();
+
     vector<int> poly_coefficients_as_generator_exponents(const ReductionTable & table);
 
     tuple<int,int> count(const ReductionTable & table, const OpenCLInterface&);
@@ -32,6 +34,8 @@ class Curve
     vector<int> poly_coeffs;
 };
 
+// todo: rename to CurveBlockCounter
+// todo: unify with CurveEnumerator
 class CurveCounter
 {
   public:

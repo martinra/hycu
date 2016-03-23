@@ -37,7 +37,6 @@ operator<<(
   return stream;
 }
 
-
 Curve::
 Curve(
     int prime,
@@ -59,6 +58,22 @@ genus()
     return (this->degree() - 2) / 2;
   else
     return (this->degree() - 1) / 2;
+}
+
+bool
+Curve::
+has_squarefree_rhs()
+{
+  nmod_poly_t poly;
+  nmod_poly_init2(poly, this->prime, poly_coeffs.size());
+
+  for (size_t ix=0; ix<this->poly_coeffs.size(); ++ix)
+    nmod_poly_set_coeff_ui(poly, ix, this->poly_coeffs[ix]);
+  bool is_squarefree = nmod_poly_is_squarefree(poly);
+
+  nmod_poly_clear(poly);
+
+  return is_squarefree;
 }
 
 vector<int>
@@ -234,9 +249,13 @@ count_recursive(
   size_t ix = poly_coeffs.size();
 
   if (ix > this->degree()) {
-    auto nmb_points = Curve(this->prime, poly_coeffs).isogeny_nmb_points(tables, opencl);
-    output(poly_coeffs, nmb_points);
-  } else {
+    auto curve = Curve(this->prime, poly_coeffs);
+    if (curve.has_squarefree_rhs()) {
+      auto nmb_points = curve.isogeny_nmb_points(tables, opencl);
+      output(poly_coeffs, nmb_points);
+    }
+  }
+  else {
     poly_coeffs.push_back(0);
     for (int c = get<0>(this->coeff_bounds[ix]); c < get<1>(this->coeff_bounds[ix]); ++c) {
       poly_coeffs[ix] = c;

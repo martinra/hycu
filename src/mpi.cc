@@ -94,7 +94,7 @@ main_worker(
   auto opencl = OpenCLInterface();
 
   vector<ReductionTable> tables;
-  for (int px = 0; px < genus; ++px)
+  for (int px = 1; px <= genus; ++px)
     tables.emplace_back(ReductionTable(prime,px, opencl));
 
 
