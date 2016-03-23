@@ -8,6 +8,7 @@
 #include <opencl_interface.hh>
 #include <reduction_table.hh>
 #include <curve.hh>
+#include <block_enumerator.hh>
 #include <mpi_worker_pool.hh>
 
 namespace mpi = boost::mpi;

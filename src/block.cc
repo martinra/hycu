@@ -8,6 +8,7 @@
 #include <opencl_interface.hh>
 #include <reduction_table.hh>
 #include <curve.hh>
+#include <block_enumerator.hh>
 #include <isogeny_type_store.hh>
 
 using namespace std;
