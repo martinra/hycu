@@ -7,7 +7,7 @@ BlockIterator::
 BlockIterator(
     const vector<tuple<int,int>> & bounds
     ) :
-  length( bounds.size() );
+  length_( bounds.size() );
   
 {
   map<size_t, tuple<int,int>> blocks;

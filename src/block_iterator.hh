@@ -1,6 +1,7 @@
 #ifndef _H_BLOCK_ITERATOR
 #define _H_BLOCK_ITERATOR
 
+#include <map>
 #include <vector>
 #include <tuple>
 
@@ -12,12 +13,13 @@ class BlockIterator
 {
   public:
     BlockIterator( const vector<tuple<int,int>> & bounds);
-    BlockIterator( size_t length,
-                     const map<size_t, tuple<int,int>> & blocks,
-                     unsigned int package_size = 1,
-                     auto sets = map<size_t, vector<int>>(),
-                     auto dependent_sets = map<size_t, tuple<size_t, map<int, vector<int>>>>(),
-                     );
+    BlockIterator(
+        size_t length,
+        const map<size_t, tuple<int,int>> & blocks,
+        unsigned int package_size = 1,
+        auto sets = map<size_t, vector<int>>(),
+        auto dependent_sets = map<size_t, tuple<size_t, map<int, vector<int>>>>()
+        );
 
     size_t inline length() const { return length_; };
 
@@ -41,7 +43,7 @@ class BlockIterator
 
     map<size_t, tuple<int,int,unsigned int>> blocks;
     map<size_t, vector<int>> sets;
-    map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets,
+    map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets;
 
     vector<int> position;
     bool has_reached_end;
