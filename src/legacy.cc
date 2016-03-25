@@ -70,7 +70,7 @@ main(
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
   OpenCLInterface opencl();
   ReductionTable reduction_table(prime, genus, opencl);
-  IsogenyTypeStore isogeny_type_store(prime);
+  IsogenyCountStore isogeny_type_store(prime);
   // note: we cannot convert between exponent blocks and additive blocks;
   // here we use exponent blocks
   enumerator = BlockIterator( coefficient_bounds );

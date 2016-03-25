@@ -29,8 +29,12 @@ class Curve
 
     const vector<tuple<int,int>> & count(const ReductionTable & table);
 
+    map<unsigned int, int> nmb_points();
+    vector<int> nmb_points(unsigned int max_prime_exponent);
+
     map<unsigned int, int> hasse_weil_offsets();
     vector<int> hasse_weil_offsets(unsigned int max_prime_exponent);
+
     vector<int> ramification_type();
     // todo: how does one compute the number of automorphisms?
     unsigned int nmb_automorphisms();

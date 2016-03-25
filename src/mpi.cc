@@ -85,6 +85,7 @@ main_master(
   return 0;
 }
 
+// todo: use OpenMP to parallelize the GPU and the factoring
 int
 main_worker(
     mpi::communicator & mpi_world

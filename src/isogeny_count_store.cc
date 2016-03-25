@@ -5,8 +5,8 @@
 #include <isogeny_type_store.hh>
 
 
-IsogenyTypeStore::
-IsogenyTypeStore(
+IsogenyCountStore::
+IsogenyCountStore(
     int prime
     ) :
   prime( prime )
@@ -14,14 +14,14 @@ IsogenyTypeStore(
   nmod_poly_init(this->poly, prime);
 }
 
-IsogenyTypeStore::
-~IsogenyTypeStore()
+IsogenyCountStore::
+~IsogenyCountStore()
 {
   nmod_poly_clear(this->poly);
 }
 
 void
-IsogenyTypeStore::
+IsogenyCountStore::
 register_curve(
     const Curve & curve
     )
@@ -41,7 +41,7 @@ register_curve(
 }
 
 int
-IsogenyTypeStore::
+IsogenyCountStore::
 to_legacy_ramification(
     const vector<int> & ramifications
     )
@@ -78,7 +78,7 @@ to_legacy_ramification(
 }
 
 ostream &
-IsogenyTypeStore::
+IsogenyCountStore::
 output_legacy(
     ostream & stream
     )

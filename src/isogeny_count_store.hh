@@ -1,5 +1,5 @@
-#ifndef _H_ISOGENY_TYPE_STORE
-#define _H_ISOGENY_TYPE_STORE
+#ifndef _H_ISOGENY_COUNT_STORE
+#define _H_ISOGENY_COUNT_STORE
 
 #include <map>
 #include <memory>
@@ -12,11 +12,11 @@ using namespace std;
 
 
 // this stored hyperelliptic curves with squarefree right hand side.
-class IsogenyTypeStore
+class IsogenyCountStore
 {
   public:
-    IsogenyTypeStore(int prime);
-    ~IsogenyTypeStore();
+    IsogenyCountStore(int prime);
+    ~IsogenyCountStore();
 
     void register_poly(const vector<int> & poly_coeffs, const vector<tuple<int,int>> & nmb_points);
 
