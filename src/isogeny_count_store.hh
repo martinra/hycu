@@ -5,8 +5,6 @@
 #include <memory>
 #include <tuple>
 #include <vector>
-#include <flint/nmod_vec.h>
-#include <flint/nmod_poly.h>
 
 using namespace std;
 
@@ -15,22 +13,16 @@ using namespace std;
 class IsogenyCountStore
 {
   public:
-    IsogenyCountStore(int prime);
-    ~IsogenyCountStore();
-
     void register_curve(const Curve & curve);
 
     ostream & output_legacy(ostream & stream);
 
   private:
-    int to_legacy_ramification(const vector<int> & ramifications);
-    shared_ptr<map<vector<int>,int>> legacy_ramfication_vectors;
-
-    const int prime;
-
     map<tuple<vector<int>,vector<int>>, int> store;
 
-    nmod_poly_t poly;
+    shared_ptr<map<vector<int>,int>> legacy_ramfication_vectors;
+
+    int to_legacy_ramification(const vector<int> & ramifications);
 };
 
 #endif

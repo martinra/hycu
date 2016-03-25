@@ -1,24 +1,7 @@
-#include <algorithm>
-#include <numeric>
 #include <iostream>
 
 #include <isogeny_type_store.hh>
 
-
-IsogenyCountStore::
-IsogenyCountStore(
-    int prime
-    ) :
-  prime( prime )
-{
-  nmod_poly_init(this->poly, prime);
-}
-
-IsogenyCountStore::
-~IsogenyCountStore()
-{
-  nmod_poly_clear(this->poly);
-}
 
 void
 IsogenyCountStore::
@@ -26,13 +9,9 @@ register_curve(
     const Curve & curve
     )
 {
-  if ( !curve.table->is_prime_field() ) {
-    cerr << "register_curve implemented only for prime fields" << endl;
-    throw;
-    // todo: implement
-  }
-
-  auto store_key = make_tuple(curve.ramifications(),curve.hasse_weil_offsets(curve.genus()));
+  auto store_key =
+    make_tuple( curve.ramifications(),
+                curve.hasse_weil_offsets(curve.table->prime_exponent * curve.genus()) );
   auto store_it = this->store.find(store_key);
   if (store_it == this->store.end())
     this->store[store_key] = 1;
@@ -83,7 +62,7 @@ output_legacy(
     ostream & stream
     )
 {
-  for (auto const & store_it : this->store) {
+for (auto const & store_it : this->store) {
     auto & ramifications = get<0>(store_it.first);
     auto & hasse_weil_offsets = get<1>(store_it.first);
 

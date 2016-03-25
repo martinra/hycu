@@ -41,7 +41,9 @@ class Curve
 
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 
-  private:
+    friend class IsogenyRepresentativeStore;
+
+  protected:
     const shared_ptr<FqElementTable> table;
     vector<int> poly_coeff_exponents;
 
