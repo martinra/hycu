@@ -7,8 +7,6 @@
 using namespace std;
 
 
-class Curve;
-
 class ReductionTable
 {
   public:
@@ -25,7 +23,7 @@ class ReductionTable
     // int inline zero_index() const { return this->prime_power - 1; };
     // vector<int> power_cosets(int n);
 
-    friend Curve;
+    friend class Curve;
 
   protected:
     const int prime;

@@ -7,16 +7,13 @@
 using namespace std;
 
 
-class Curve;
-class ReductionTable;
-
 class OpenCLInterface
 {
   public:
     OpenCLInterface();
 
-    friend Curve;
-    friend ReductionTable;
+    friend class Curve;
+    friend class ReductionTable;
 
   protected:
 
