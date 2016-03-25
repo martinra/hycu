@@ -1,10 +1,10 @@
 #include <set>
 
-#include <block_enumerator.hh>
+#include <block_iterator.hh>
 
 
-BlockEnumerator::
-BlockEnumerator(
+BlockIterator::
+BlockIterator(
     const vector<tuple<int,int>> & bounds
     ) :
   length( bounds.size() );
@@ -19,8 +19,8 @@ BlockEnumerator(
   this->set_initial_position()
 }
 
-BlockEnumerator::
-BlockEnumerator(
+BlockIterator::
+BlockIterator(
     size_t degree,
     const map<size_t, tuple<int,int>> & blocks,
     unsigned int package_size
@@ -47,7 +47,7 @@ BlockEnumerator(
 }
 
 void
-BlockEnumerator::
+BlockIterator::
 initialize_blocks(
     const map<size_t, tuple<int,int>> & blocks,
     unsigned int package_size = 1
@@ -59,7 +59,7 @@ initialize_blocks(
     auto sets_it = sets.find(ix);
 
     if ( !(blocks_it != blocks.end() && sets_it != sets.end()) ) {
-      cerr << "BlockEnumerator: each index must be given by a unique block or set" << endl;
+      cerr << "BlockIterator: each index must be given by a unique block or set" << endl;
       throw;
     }
 
@@ -67,7 +67,7 @@ initialize_blocks(
       this->update_order_sets.push_back(ix);
 
       if ( sets_it->second.empty() ) {
-        cerr << "BlockEnumerator: sets must have size at least 1" << endl;
+        cerr << "BlockIterator: sets must have size at least 1" << endl;
         throw;
       }
     }
@@ -76,7 +76,7 @@ initialize_blocks(
       int lbd, ubd;
       tie(lbd,ubd) = blocks_it->second;
       if ( lbd >= ubd ) {
-        cerr << "BlockEnumerator: block lower and upper bound must differ by at least 1" << endl;
+        cerr << "BlockIterator: block lower and upper bound must differ by at least 1" << endl;
         throw;
       }
 
@@ -101,7 +101,7 @@ initialize_blocks(
 }
 
 void
-BlockEnumerator::
+BlockIterator::
 set_initial_position()
 {
   this->position = vector<int>(length);
@@ -120,7 +120,7 @@ set_initial_position()
 }
 
 vector<tuple<int,int>>
-BlockEnumerator::
+BlockIterator::
 as_position()
 {
   auto position = this->position;
@@ -142,7 +142,7 @@ as_position()
 }
 
 vector<tuple<int,int>>
-BlockEnumerator::
+BlockIterator::
 as_block()
 {
   auto position = this->as_position;
@@ -166,8 +166,8 @@ as_block()
   return bounds;
 }
 
-BlockEnumerator
-BlockEnumerator::
+BlockIterator
+BlockIterator::
 as_block_enumerator()
 {
   auto position = this->as_position();
@@ -190,11 +190,11 @@ as_block_enumerator()
       sets[ix] = {lbd};
   }
 
-  return BlockEnumerator(this->length(), blocks, sets);
+  return BlockIterator(this->length(), blocks, sets);
 }
 
-BlockEnumerator &
-BlockEnumerator::
+BlockIterator &
+BlockIterator::
 step()
 {
   if (this->has_reached_end)
@@ -203,8 +203,8 @@ step()
   return this->step_(!this->blocks.empty(), 0);
 }
 
-BlockEnumerator &
-BlockEnumerator::
+BlockIterator &
+BlockIterator::
 step_(
     int step_type,
     size_t step_ix,

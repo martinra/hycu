@@ -1,9 +1,9 @@
-#include <curve_enumerator.hh>
+#include <curve_iterator.hh>
 
 
-CurveEnumerator::
-CurveEnumerator(
-    const EnumerationTable & table,
+CurveIterator::
+CurveIterator(
+    const FqElementTable & table,
     int genus,
     unsigned int package_size
     )
@@ -51,26 +51,26 @@ CurveEnumerator(
           blocks[kx] = table.block_complete();
 
         this->enumerators.emplace_back(
-            BlockEnumerator(degree+1, blocks, package_size, sets, dependent_sets) );
+            BlockIterator(degree+1, blocks, package_size, sets, dependent_sets) );
       }
     }
   }
 }
 
-CurveEnumerator &
-CurveEnumerator::
+CurveIterator &
+CurveIterator::
 step()
 {
-  if (this->at_end()) return *this;
+  if (this->is_end()) return *this;
 
   this->enumerator_it->step();
-  if ( this->enumerator_it->at_end() )
+  if ( this->enumerator_it->is_end() )
     ++this->enumerator_it;
 }
 
 bool
-CurveEnumerator::
-at_end()
+CurveIterator::
+is_end()
   const
 {
   return this->enumerator_it = this->enumerators.end();

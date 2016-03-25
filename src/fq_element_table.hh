@@ -1,15 +1,15 @@
-#ifndef _H_ENUMERATION_TABLE
-#define _H_ENUMERATION_TABLE
+#ifndef _H_FQ_ELEMENT_TABLE
+#define _H_FQ_ELEMENT_TABLE
 
 
 using namespace std;
 
 
-class EnumerationTable
+class FqElementTable
 {
   public:
-    EnumerationTable( unsigned int prime, unsigned int prime_exponent );
-    ~EnumerationTable();
+    FqElementTable( unsigned int prime, unsigned int prime_exponent );
+    ~FqElementTable();
 
     bool inline is_prime_field() const { return this->prime_exponent == 1; };
 
@@ -28,7 +28,7 @@ class EnumerationTable
     unsigned int inline reduce_index(unsigned int ix) { return ix % this->prime_power_pred; };
 
     friend class Curve;
-    friend class CurveEnumerator;
+    friend class CurveIterator;
 
   protected:
     const unsigned int prime;

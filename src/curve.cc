@@ -40,7 +40,7 @@ operator<<(
 
 Curve::
 Curve(
-    shared_ptr<EnumerationTable> table,
+    shared_ptr<FqElementTable> table,
     const vector<int> poly_coeff_exponents
     ) :
     table( table )

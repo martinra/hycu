@@ -67,15 +67,15 @@ main(
 
   fstream output(argv[4], ios_base::out);
 
-  auto enumeration_table = make_shared<EnumerationTable>(prime, 1);
+  auto enumeration_table = make_shared<FqElementTable>(prime, 1);
   OpenCLInterface opencl();
   ReductionTable reduction_table(prime, genus, opencl);
   IsogenyTypeStore isogeny_type_store(prime);
   // note: we cannot convert between exponent blocks and additive blocks;
   // here we use exponent blocks
-  enumerator = BlockEnumerator( coefficient_bounds );
+  enumerator = BlockIterator( coefficient_bounds );
 
-  for (; !enumerator.at_end(); enumerator.step() ) {
+  for (; !enumerator.is_end(); enumerator.step() ) {
     auto poly_coeff_exponents = enumerator.as_position()
     Curve curve(enumeration_table, poly_coeff_exponents);
     if ( !curve.has_squarefree_rhs() ) continue;

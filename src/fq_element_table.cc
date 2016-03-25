@@ -1,8 +1,8 @@
-#include <enumeration_table.hh>
+#include <fq_element_table.hh>
 
 
-EnumerationTable::
-EnumerationTable(
+FqElementTable::
+FqElementTable(
     unsigned int prime,
     unsigned int prime_exponent
     ) :
@@ -38,8 +38,8 @@ EnumerationTable(
   }
 }
 
-EnumerationTable::
-~EnumerationTable()
+FqElementTable::
+~FqElementTable()
 {
   for ( auto fq : this->fq_elements )
     fq_nmod_clear(fq, this->fq_ctx);
@@ -49,7 +49,7 @@ EnumerationTable::
 
 
 vector<unsigned int>
-EnumerationTable::
+FqElementTable::
 power_coset_representatives(
     unsigned int n
     )

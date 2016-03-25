@@ -1,7 +1,7 @@
 CC = g++ 
 CPPFLAGS = -std=c++14 -O2 -pthread -Ibuild/ -I/usr/include/flint -I/usr/include/openmpi-x86_64 -I/usr/include/yaml-cpp
 BUILDDIR = build
-OBJS_PURE = opencl_interface.o reduction_table.o curve.o block_enumerator.o isogeny_type_store.o
+OBJS_PURE = block_iterator.o curve.o curve_iterator.o fq_element_table.o isogeny_type_store.o opencl_interface.o reduction_table.o
 OBJS = $(foreach OBJ,$(OBJS_PURE),$(BUILDDIR)/$(OBJ))
 OBJS_MPI_PURE = mpi_worker_pool.o 
 OBJS_MPI = $(foreach OBJ,$(OBJS_MPI_PURE),$(BUILDDIR)/$(OBJ))

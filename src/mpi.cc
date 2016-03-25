@@ -71,10 +71,10 @@ main_master(
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
 
-  EnumerationTable enumeration_table(prime, 1);
+  FqElementTable enumeration_table(prime, 1);
 
-  for ( auto curve_enumerator = CurveEnumerator(enumeration_table, genus, package_size);
-        !curve_enumerator.at_end();
+  for ( auto curve_enumerator = CurveIterator(enumeration_table, genus, package_size);
+        !curve_enumerator.is_end();
         curve_enumerator.step() )
     // todo: check whether results are there
     mpi_worker_pool.emit( curve_enumerator.as_block() );
@@ -133,8 +133,8 @@ main_worker(
     output_name << ".curve_count";
     fstream output(output_name.str(), ios_base::out);
 
-    for (auto enumerator = BlockEnumerator(coeff_bounds);
-         !enumerator.at_end();
+    for (auto enumerator = BlockIterator(coeff_bounds);
+         !enumerator.is_end();
          enumerator.step()) {
       Curve curve(enumeration_table, enumerator.as_position());
       auto nmb_points = curve.count(reduction_table);

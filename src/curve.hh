@@ -16,7 +16,7 @@ using namespace std;
 class Curve
 {
   public:
-    Curve(shared_ptr<EnumerationTable> table, const vector<int> poly_coeff_exponents);
+    Curve(shared_ptr<FqElementTable> table, const vector<int> poly_coeff_exponents);
 
     int inline degree() const { return this->poly_coeff_exponents.size() + 1; };
     int genus() const;
@@ -37,7 +37,7 @@ class Curve
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 
   private:
-    const shared_ptr<EnumerationTable> table;
+    const shared_ptr<FqElementTable> table;
     vector<int> poly_coeff_exponents;
 
     vector<tuple<int,int>> nmb_points;

@@ -24,7 +24,7 @@ main(
 
   int prime = atoi(argv[1]);
   if (prime < 0) throw;
-  auto enumeration_table = make_shared<EnumerationTable>(prime, 1);
+  auto enumeration_table = make_shared<FqElementTable>(prime, 1);
 
 
   unsigned int gen = enumeration_table->fq_elements[0];
