@@ -24,7 +24,8 @@ ReductionTable(
   prime( prime ),
   prime_exponent( prime_exponent ),
   prime_power( pow(prime,prime_exponent) ),
-  prime_power_pred( prime_power - 1 )
+  prime_power_pred( prime_power - 1 ),
+  opencl( opencl )
 {
   this->exponent_reduction_table = this->compute_exponent_reduction_table(prime_power);
   this->incrementation_table =

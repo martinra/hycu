@@ -2,7 +2,13 @@
 #define _H_FQ_ELEMENT_TABLE
 
 
+#include <flint/fq_nmod.h>
+
+
 using namespace std;
+
+
+class Curve;
 
 
 class FqElementTable
@@ -13,11 +19,12 @@ class FqElementTable
 
     bool inline is_prime_field() const { return this->prime_exponent == 1; };
 
-    const unsigned int inline operator[](int ix) const
+    inline const unsigned int at_nmod(int ix) const
     {
-      return nmod_poly_get_coeff_ui(this->fq_elements[ix], 0);
+      return nmod_poly_get_coeff_ui(this->fq_elements.at(ix), 0);
     };
-    const fq_nmod_t inline operator[](int ix) const { return this->fq_elements[ix]; };
+    inline const fq_nmod_struct* at(int ix) const { return this->fq_elements[ix]; };
+    inline const fq_nmod_struct* operator[](int ix) const { return this->fq_elements[ix]; };
 
     unsigned int inline zero_index() const { return this->prime_power_pred; };
     // todo: this should be unsigned int
@@ -27,8 +34,9 @@ class FqElementTable
 
     unsigned int inline reduce_index(unsigned int ix) { return ix % this->prime_power_pred; };
 
-    friend class Curve;
+    friend Curve;
     friend class CurveIterator;
+    friend ostream& operator<<(ostream & stream, const Curve & curve);
 
   protected:
     const unsigned int prime;
@@ -39,7 +47,7 @@ class FqElementTable
     unsigned int primeinv_flint;
 
   private:
-    fq_ctx_t fq_ctx;
+    fq_nmod_ctx_t fq_ctx;
     vector<fq_nmod_t> fq_elements;
 };
 

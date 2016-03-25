@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <flint/fq_nmod.h>
 #include <flint/fq_nmod_poly.h>
@@ -29,7 +30,7 @@ operator<<(
   stream << "Y^2 = ";
   for (size_t ix=curve.poly_coeff_exponents.size()-1; ix>=0; --ix) {
     // fixme: is cout.file() correct?
-    fq_nmod_print_file(cout.file(), curve.table[curve.poly_coeff_exponents[ix]]);
+    // fq_nmod_print_file(cout.file(), curve.table[curve.poly_coeff_exponents[ix]]);
     stream << "*X^" << ix;
     if (ix != 0) stream << " + ";
   }
@@ -68,14 +69,14 @@ Curve::
 has_squarefree_rhs()
 {
   if ( this->table->is_prime_field() ) {
-    nmod_poly_t poly = this->rhs_flint_polynomial();
+    nmod_poly_struct * poly = this->rhs_nmod_polynomial();
     bool is_squarefree = nmod_poly_is_squarefree(poly);
     nmod_poly_clear(poly);
 
     return is_squarefree;
   }
   else {
-    fq_nmod_poly_t poly = this->rhs_flint_polynomial();
+    fq_nmod_poly_struct * poly = this->rhs_polynomial();
     bool is_squarefree = fq_nmod_poly_is_squarefree(poly, this->table->fq_ctx);
     fq_nmod_poly_clear(poly, this->table->fq_ctx);
 
@@ -115,7 +116,7 @@ convert_poly_coeff_exponents(
   return converted;
 }
 
-const map<unsigned int, <tuple<int,int>>> &
+void
 Curve::
 count(
     const ReductionTable & reduction_table
@@ -128,13 +129,16 @@ count(
     throw;
   }
 
-  if ( this->nmb_points.find( reduction_table.prime_exponent ) != this->nmb_points.end() ) {
-    return this->nmb_points;
+  if ( this->nmb_points.find( reduction_table.prime_exponent ) != this->nmb_points.end() )
+    return;
+
+
+  int prime_exponent = reduction_table.prime_exponent;
+  int prime_power_pred = reduction_table.prime_power_pred;
 
   // this also checks that the prime exponent is divisible by the one of the curve
   int poly_size = (int)this->poly_coeff_exponents.size();
   vector<int> poly_coeffs_exponents = this->convert_poly_coeff_exponents(reduction_table);
-
 
   auto opencl = reduction_table.opencl;
 
@@ -153,8 +157,8 @@ count(
 
   cl::Kernel kernel_evaluation = cl::Kernel(*opencl.program_evaluation, "evaluate");
   kernel_evaluation.setArg(0, buffer_poly_coeffs_exponents);
-  kernel_evaluation.setArg(1, sizeof(int), &polysize);
-  kernel_evaluation.setArg(2, sizeof(int), &reduction_table.prime_power_pred);
+  kernel_evaluation.setArg(1, sizeof(int), &poly_size);
+  kernel_evaluation.setArg(2, sizeof(int), &prime_power_pred);
   kernel_evaluation.setArg(3, *reduction_table.buffer_exponent_reduction_table);
   kernel_evaluation.setArg(4, *reduction_table.buffer_incrementation_table);
   kernel_evaluation.setArg(4, *reduction_table.buffer_minimal_field_table);
@@ -176,14 +180,15 @@ count(
   auto kernel_reduction = make_unique<cl::Kernel>(*opencl.program_reduction, "reduction");
   kernel_reduction->setArg(0, buffer_nmbs_unramified);
   kernel_reduction->setArg(1, buffer_minimal_fields);
-  kernel_reduction->setArg(2, sizeof(int), &reduction_table.prime_power_pred);
-  kernel_reduction->setArg(3, sizeof(int), &reduction_table.prime_exponent);
-  kernel_reduction->setArg(4, sizeof(int) * reduction_table.prime_exponent, nullptr);
-  kernel_reduction->setArg(5, sizeof(int) * local_size_reduction * reduction_table.prime_exponent, nullptr);
+  kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);
+  kernel_reduction->setArg(3, sizeof(int), &prime_exponent);
+  kernel_reduction->setArg(4, sizeof(int) * prime_exponent, nullptr);
+  kernel_reduction->setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
   kernel_reduction->setArg(6, buffer_sums);
 
-  opencl.queue->enqueueNDRangeKernel(*kernel_reduction, cl::NullRange,
-                             cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction));
+  opencl.queue->enqueueNDRangeKernel(
+      *kernel_reduction, cl::NullRange,
+      cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
   opencl.queue->finish();
 
   int * sums = new int[nmb_groups_reduction];
@@ -197,17 +202,17 @@ count(
   kernel_reduction = make_unique<cl::Kernel>(*opencl.program_reduction, "reduction");
   kernel_reduction->setArg(0, buffer_nmbs_ramified);
   kernel_reduction->setArg(1, buffer_minimal_fields);
-  kernel_reduction->setArg(2, sizeof(int), &reduction_table.prime_power_pred);
-  kernel_reduction->setArg(3, sizeof(int), &reduction_table.prime_exponent);
-  kernel_reduction->setArg(4, sizeof(int) * reduction_table.prime_exponent, nullptr);
-  kernel_reduction->setArg(5, sizeof(int) * local_size_reduction * reduction_table.prime_exponent, nullptr);
+  kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);
+  kernel_reduction->setArg(3, sizeof(int), &prime_exponent);
+  kernel_reduction->setArg(4, sizeof(int) * prime_exponent, nullptr);
+  kernel_reduction->setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
   kernel_reduction->setArg(6, buffer_sums);
 
-  opencl.queue->enqueueNDRangeKernel(*kernel_reduction, cl::NullRange,
-                             cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction));
+  opencl.queue->enqueueNDRangeKernel(
+      *kernel_reduction, cl::NullRange,
+      cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
   opencl.queue->finish();
 
-  int * sums = new int[nmb_groups_reduction];
   opencl.queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
   for (size_t fx=0; fx<reduction_table.prime_exponent; ++fx)
     if ( reduction_table.prime_exponent % fx == 0 )
@@ -216,34 +221,34 @@ count(
 
 
   // point x = 0
-  if (poly_coeffs_exponents.front() == table.prime_power - 1) // constant coefficient is zero
+  if (poly_coeffs_exponents.front() == reduction_table.prime_power - 1) // constant coefficient is zero
     get<1>(this->nmb_points[1])++;
   else if (!(poly_coeffs_exponents.front() & 1)) // constant coefficient is even power of generator
-    get<0>(this->nmb_points[reduction_table.minimal_field_table[poly_coeffs_exponents.front()]+1]) += 2;
+    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeffs_exponents.front()]+1]) += 2;
 
   // point x = infty
   if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
     get<1>(this->nmb_points[1]) += 1;
   else if (!(poly_coeffs_exponents.back() & 1)) // leading coefficient is odd power of generator
-    get<0>(this->nmb_points[reduction_table.minimal_field_table[poly_coeffs_exponents.back()]+1]) += 2;
-
-
-  return this->nmb_points;
+    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeffs_exponents.back()]+1]) += 2;
 }
 
 map<unsigned int, tuple<int,int>>
 Curve::
-nmb_points()
+number_of_points()
 {
   map<unsigned int, tuple<int,int>> nmb_points;
 
-  for ( auto & fx : this->nmb_points.keys() ) {
+  for ( auto & fx_it : this->nmb_points ) {
+    unsigned int fx = fx_it.first;
     if ( fx % this->table->prime_exponent != 0 ) continue;
-    for ( auto & gx : this->nmb_points.keys() )
+    for ( auto & gx_it : this->nmb_points ) {
+      unsigned int gx = gx_it.first;
       if ( fx % gx == 0 ) {
         get<0>(nmb_points[fx]) += get<0>(this->nmb_points[gx]);
         get<1>(nmb_points[fx]) += get<1>(this->nmb_points[gx]);
       }
+    }
   }
 
   return nmb_points;
@@ -251,12 +256,12 @@ nmb_points()
 
 vector<tuple<int,int>>
 Curve::
-nmb_points(
+number_of_points(
     unsigned int max_prime_exponent
     )
 {
   unsigned int prime_exponent = this->table->prime_exponent;
-  auto nmb_points_map = this->nmb_points();
+  auto nmb_points_map = this->number_of_points();
 
   vector<tuple<int,int>> nmb_points;
   nmb_points.reserve(max_prime_exponent/prime_exponent);
@@ -278,14 +283,13 @@ hasse_weil_offsets()
     // todo: implement
   }
 
-  auto nmb_points = this->nmb_points();
-  map<unsigned int, int> hasse_weil_offsets();
-  for ( auto pts_it : nmb_points )
-    hasse_weil_offsets[pts->first] =
-        pow(this->table->prime, fx) + 1
-      - get<0>(pts_it->second) + get<1>(pts_it->second);
+  auto nmb_points = this->number_of_points();
+  map<unsigned int, int> offsets;
+  for ( auto & pts_it : nmb_points )
+    offsets[pts_it.first] =   pow(this->table->prime, pts_it.first) + 1
+                            - get<0>(pts_it.second) + get<1>(pts_it.second);
 
-  return hasse_weil_offsets;
+  return offsets;
 }
 
 vector<int>
@@ -294,16 +298,17 @@ hasse_weil_offsets(
     unsigned int max_prime_exponent
     )
 {
-  auto hasse_weil_offset_map = this->hasse_weil_offsets();
+  unsigned int prime_exponent = this->table->prime_exponent;
+  auto offset_map = this->hasse_weil_offsets();
 
-  vector<int> hasse_weil_offsets();
-  hasse_weil_offsets.reserve(max_prime_exponent / this->prime_exponent);
-  for ( size_t fx=this->prime_exponent;
+  vector<int> offsets;
+  offsets.reserve(max_prime_exponent / prime_exponent);
+  for ( size_t fx=prime_exponent;
         fx<=max_prime_exponent;
-        fx+=this->prime_exponent )
-    hasse_weil_offsets.push_back(hasse_weil_offset_map[fx]);
+        fx+=prime_exponent )
+    offsets.push_back(offset_map[fx]);
 
-  return hasse_weil_offsets;
+  return offsets;
 }
 
 vector<int>
@@ -352,7 +357,7 @@ ramification_type()
 
   ramifications.clear();
   if ( this->table->is_prime_field() ) {
-    nmod_poly_t poly = this->rhs_flint_polynomial();
+    nmod_poly_struct* poly = this->rhs_nmod_polynomial();
     nmod_poly_factor_t poly_factor;
     nmod_poly_factor_init(poly_factor);
     nmod_poly_factor(poly_factor, poly);
@@ -365,51 +370,54 @@ ramification_type()
     nmod_poly_clear(poly);
   }
   else {
-    fq_nmod_poly_t poly = this->rhs_flint_polynomial();
+    fq_nmod_poly_struct* poly = this->rhs_polynomial();
+    fq_nmod_t lead;
+    fq_nmod_init(lead, this->table->fq_ctx);
     fq_nmod_poly_factor_t poly_factor;
-    fq_nmod_poly_factor_init(poly_factor);
-    fq_nmod_poly_factor(poly_factor, poly);
+    fq_nmod_poly_factor_init(poly_factor, this->table->fq_ctx);
+    fq_nmod_poly_factor(poly_factor, lead, poly, this->table->fq_ctx);
 
     for (size_t ix=0; ix<poly_factor->num; ++ix)
       for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
-        ramifications.push_back(fq_nmod_poly_degree(poly_factor->p + ix));
+        ramifications.push_back(fq_nmod_poly_degree(poly_factor->poly + ix, this->table->fq_ctx));
 
-    fq_nmod_poly_factor_clear(poly_factor);
-    fq_nmod_poly_clear(poly);
+    fq_nmod_poly_factor_clear(poly_factor, this->table->fq_ctx);
+    fq_nmod_poly_clear(poly, this->table->fq_ctx);
+    fq_nmod_clear(lead, this->table->fq_ctx);
   }
 
   sort(ramifications.begin(), ramifications.end());
   return ramifications;
 }
 
-nmod_poly_t
+nmod_poly_struct*
 Curve::
-rhs_flint_polynomial()
+rhs_nmod_polynomial()
 {
   if ( this->table->prime_exponent != 1 ) {
     cerr << "Conversion to nmod_poly_t only possible for prime fields" << endl;
     throw;
   }
 
-  nmod_poly_t poly;
+  nmod_poly_struct* poly;
   nmod_poly_init2_preinv( poly, this->table->prime, this->table->primeinv_flint,
-                          this->poly_coeffs_exponents.size() );
+                          this->poly_coeff_exponents.size() );
 
   for (long ix=0; ix<this->poly_coeff_exponents.size(); ++ix)
-    nmod_poly_set_coeff_ui(poly, ix, (*this->table)[this->poly_coeff_exponents[ix]]);
+    nmod_poly_set_coeff_ui(poly, ix, this->table->at_nmod(this->poly_coeff_exponents[ix]));
 
   return poly;
 }
 
-fq_nmod_poly_t
+fq_nmod_poly_struct*
 Curve::
-rhs_flint_polynomial()
+rhs_polynomial()
 {
-  fq_nmod_poly_t poly;
-  fq_nmod_poly_init2( poly, this->table->prime, this->poly_coeffs_exponents.size(), this->table->fq_ctx );
+  fq_nmod_poly_struct* poly;
+  fq_nmod_poly_init2( poly, this->poly_coeff_exponents.size(), this->table->fq_ctx );
 
   for (long ix=0; ix<this->poly_coeff_exponents.size(); ++ix)
-    fq_nmod_poly_set_coeff( poly, ix, (*this->table)[this->poly_coeff_exponents[ix]], this->table->fq_ctx );
+    fq_nmod_poly_set_coeff( poly, ix, this->table->at(this->poly_coeff_exponents[ix]), this->table->fq_ctx );
 
   return poly;
 }

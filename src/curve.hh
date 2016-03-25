@@ -6,6 +6,7 @@
 #include <tuple>
 #include <CL/cl.hpp>
 
+#include <fq_element_table.hh>
 #include <reduction_table.hh>
 #include <opencl_interface.hh>
 
@@ -22,15 +23,15 @@ class Curve
     int genus() const;
 
     bool has_squarefree_rhs();
-    nmod_poly_t rhs_flint_polynomial();
-    fq_nmod_poly_t rhs_flint_polynomial();
+    nmod_poly_struct* rhs_nmod_polynomial();
+    fq_nmod_poly_struct* rhs_polynomial();
 
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
-    const vector<tuple<int,int>> & count(const ReductionTable & table);
+    void count(const ReductionTable & table);
 
-    map<unsigned int, int> nmb_points();
-    vector<int> nmb_points(unsigned int max_prime_exponent);
+    map<unsigned int, tuple<int,int>> number_of_points();
+    vector<tuple<int,int>> number_of_points(unsigned int max_prime_exponent);
 
     map<unsigned int, int> hasse_weil_offsets();
     vector<int> hasse_weil_offsets(unsigned int max_prime_exponent);

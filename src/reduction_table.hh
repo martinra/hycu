@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <CL/cl.hpp>
+#include <opencl_interface.hh>
+
 
 using namespace std;
 
@@ -30,6 +32,8 @@ class ReductionTable
     const int prime_exponent;
     const int prime_power;
     const int prime_power_pred;
+
+    OpenCLInterface & opencl;
 
     // the reduction table is the reduction table modulo q-1 for integers less than max(r,2)*(q-1)
     shared_ptr<vector<int>> exponent_reduction_table;
