@@ -48,7 +48,7 @@ main_master(
 
   auto config = YAML::LoadFile(argv[1]);
 
-  if (   !config["prime"] || !config["primeExponent"] || !config["maxPrimeExponent"]
+  if (   !config["prime"] || !config["primeExponent"]
       || !config["genus"] || !config["resultFolder"] ) {
     cerr << "configuration file must give prime, prime exponent, maximal prime exponent, "
          << "genus, and result folder" << endl;
@@ -57,7 +57,6 @@ main_master(
 
   int prime = config["prime"].as<int>();
   int prime_exponent = config["primeExponent"].as<int>();
-  int max_prime_exponent = config["maxPrimeExponent"].as<int>();
   int genus = config["genus"].as<int>();
   int package_size = config["packageSize"].as<int>();
   string result_folder = config["resultFolder"].as<string>();
@@ -67,7 +66,6 @@ main_master(
   auto mpi_worker_pool = MPIWorkerPool(mpi_world);
   mpi::broadcast(mpi_world, prime, 0);
   mpi::broadcast(mpi_world, prime_exponent, 0);
-  mpi::broadcast(mpi_world, max_prime_exponent, 0);
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
 
@@ -85,7 +83,6 @@ main_master(
   return 0;
 }
 
-// todo: use OpenMP to parallelize the GPU and the factoring
 int
 main_worker(
     mpi::communicator & mpi_world
@@ -93,21 +90,16 @@ main_worker(
 {
   int prime;
   int prime_exponent;
-  int max_prime_exponent;
   int genus;
   string result_folder;
 
   mpi::broadcast(mpi_world, prime, 0);
   mpi::broadcast(mpi_world, prime_exponent, 0);
-  mpi::broadcast(mpi_world, max_prime_exponent, 0);
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
-  int degree = 2*genus + 2;
-
 
   auto opencl = OpenCLInterface();
-
-  ReductionTable reduction_table(prime, max_prime_exponent, opencl);
+  ReductionTable reduction_table(prime, prime_exponent*genus, opencl);
 
 
   while (true) {
@@ -124,30 +116,44 @@ main_worker(
     }
 
     // use a skeleton here
-    vector<tuple<int,int>> coeff_bounds;
-    mpi_world.recv(0, 0, coeff_bounds);
-
-    stringstream output_name(ios_base::out);
-    output_name << result_folder << "/coeff_bounds";
-    for (auto bds : coeff_bounds)
-      output_name << "__" << get<0>(bds) << "_" << get<1>(bds);
-    output_name << ".curve_count";
-    fstream output(output_name.str(), ios_base::out);
-
-    for (auto enumerator = BlockIterator(coeff_bounds);
+    vector<tuple<int,int>> bounds;
+    mpi_world.recv(0, 0, bounds);
+    
+    IsogenyRepresentativeStore isogeny_representative_store();
+    for (auto enumerator = BlockIterator(bounds);
          !enumerator.is_end();
          enumerator.step()) {
       Curve curve(enumeration_table, enumerator.as_position());
-      auto nmb_points = curve.count(reduction_table);
+      curve.count(reduction_table);
+      isogeny_representative_store.register_curve(curve);
+     // todo: use this to sign off computation, and assert that process was not killed
+     // mpi::send(0, 1, bounds);
+    }
 
-      for (auto c : poly_coeff_exponents)
-        output << c << " ";
-      output << ": ";
-      for (auto pts : nmb_points)
-        output << get<0>(pts) << " " << get<1>(pts) << " ";
-      output << endl;
-
-    // todo: use this to sign off computation, and assert that process was not killed
-    // mpi::send(0, 1, coeff_bounds);
+    output( representative_output_name(prime_power, max_prime_exponent, bounds),
+            ios_base::out )
+      << isogeny_representative_store;
   }
+}
+
+string
+representative_output_name(
+    unsigned int prime_power,
+    unsigned int genus,
+    const vector<tuple<int,int>> & bounds
+    )
+{
+  stringstream output_name(ios_base::out);
+
+  output_name << result_folder << "/isogeny_representatives"
+
+  output_name << "__prime_power_" << prime_power;
+  output_name << "__genus_" << genus;
+  output_name << "__coeff_exponent_bounds";
+  for ( auto bds : bounds )
+    output_name << "__" << get<0>(bds) << "_" << get<1>(bds);
+
+  output_name << ".data";
+
+  return output_name.str();
 }
