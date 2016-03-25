@@ -14,7 +14,7 @@ LIBRARIES_MPI+= -L/usr/lib64/openmpi/lib -lboost_mpi -lmpi_cxx -lmpi -Wl,-rpath,
 
 .PHONY : all, clean, sync_src
 
-all : single block mpi
+all : single legacy mpi
 
 sync_src :
 	rsync -a src/ $(BUILDDIR)
@@ -22,11 +22,11 @@ sync_src :
 single : sync_src $(BUILDDIR)/single.cc $(OBJS)
 	$(CC) $(CPPFLAGS) -o single $(BUILDDIR)/single.cc $(OBJS) $(LIBRARIES)
 
-block : sync_src $(BUILDDIR)/block.cc $(OBJS)
-	$(CC) $(CPPFLAGS) -o block $(BUILDDIR)/block.cc $(OBJS) $(LIBRARIES)
+legacy : sync_src $(BUILDDIR)/legacy.cc $(OBJS)
+	$(CC) $(CPPFLAGS) -o legacy $(BUILDDIR)/legacy.cc $(OBJS) $(LIBRARIES)
 
 mpi : sync_src $(BUILDDIR)/mpi.cc $(OBJS) $(OBJS_MPI)
 	$(CC) $(CPPFLAGS) -o mpi $(BUILDDIR)/mpi.cc $(OBJS) $(OBJS_MPI) $(LIBRARIES) $(LIBRARIES_MPI)
 
 clean :
-	rm -f single block mpi $(BUILDDIR)/*
+	rm -f single legacy mpi $(BUILDDIR)/*

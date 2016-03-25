@@ -5,95 +5,54 @@
 
 BlockEnumerator::
 BlockEnumerator(
-    int degree,
-    const map<int,tuple<int,int>> & blocks,
-    const map<int,vector<int>> & sets,
-    const vector<vector<int>> couplings,
+    const vector<tuple<int,int>> & bounds
+    ) :
+  length( bounds.size() );
+  
+{
+  map<size_t, tuple<int,int>> blocks;
+  for (size_t ix=0; ix<this->length; ++ix)
+    blocks[ix] = bounds[ix];
+
+  this->initialize_blocks(blocks, 1);
+
+  this->set_initial_position()
+}
+
+BlockEnumerator::
+BlockEnumerator(
+    size_t degree,
+    const map<size_t, tuple<int,int>> & blocks,
     unsigned int package_size
+    map<size_t, vector<int>> sets,
+    map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets,
     ) :
   length_( length ),
 {
   // note: behavior of indices that are not coupled, nor have a set of block attached is undefined
 
-  for ( auto coupling : couplings ) {
-    int attached_set_ix = -1;
-    vector<int> free_coupled;
-    for ( auto c : coupling ) {
-      auto block_it = blocks.find(c);
-      if ( block_it != blocks.end() ) {
-        cerr << "coupling allows only between sets" << endl;
-        throw;
-      }
+  this->initialize_blocks(blocks, package_size);
 
-      auto set_it = sets.find(c);
-      if ( set_it == sets.end() )
-        free_coupled.push_back(c);
-      else {
-        if ( attached_set_ix != -1 ) {
-          cerr << "each coupled set may only have one set attached to it" << endl;
-          throw;
-        }
-        attached_set_ix = c;
-      }
-    }
+  this->sets = move(sets);
+  for ( auto & sets_it : this->sets )
+    this->update_order_sets.push_back(sets_it->first);
 
-  int dx = this->dx;
-  if (dx == 0) {
-    this->poly_coeffs[dx] += this->package_size;
-    if (this->poly_coeffs[dx] >= this->prime) {
-      this->poly_coeffs[dx] = 0;
-      ++this->dx;
-      return this->step();
-    } else
-      return *this;
-
-  } else if (dx == this->poly_coeffs.size()) {
-    if (this->poly_coeffs.size() == this->degree()) {
-      this->poly_coeffs = vector<int>(this->degree()+1, 0);
-      this->poly_coeffs.back() = 1;
-      this->dx = 0;
-      return this->step();
-    } else {
-      this->is_end_ = true;
-      return *this;
-    }
-
-  } else if (dx == this->poly_coeffs.size() - 1) {
-    if (this->prime != 2 && this->poly_coeffs.back() == 1) {
-      this->poly_coeffs.back() = this->fp_non_square();
-      fill(poly_coeffs.begin(), poly_coeffs.end()-1, 0);
-      this->dx = 0;
-      return this->step();
-    } else {
-      ++this->dx;
-      return this->step();
-    }
-
-  } else if (dx == this->poly_coeffs.size() - 2) {
-    ++this->dx;
-    return this->step();
-
-  } else {
-    ++this->poly_coeffs[dx];
-    if (this->poly_coeffs[dx] >= this->prime) {
-      fill(poly_coeffs.begin(), poly_coeffs.begin()+dx, 0);
-      ++this->dx;
-      return this->step();
-    } else {
-      this->dx = 0;
-      return *this;
-    }
-  }
-
-    if ( attached_set_ix == -1 ) {
-      cerr << "each coupling must have a set attached to it" << endl;
-      throw;
-    }
-
-    this->couplings[attached_set_ix] = free_coupled;
-  }
+  // note: dependent sets may only depend on blocks and sets
+  this->dependent_sets = move(dependent_sets);
+  for ( auto & sets_it : this->dependent_sets )
+    this->update_order_dependend_sets.push_back(sets_it->first);
 
 
+  this->set_initial_position()
+}
+
+void
+BlockEnumerator::
+initialize_blocks(
+    const map<size_t, tuple<int,int>> & blocks,
+    unsigned int package_size = 1
+    )
+{
   vector<unsigned int> block_size;
   for (size_t ix=0; ix<size; ++ix) {
     auto blocks_it = blocks.find(ix);
@@ -121,14 +80,13 @@ BlockEnumerator(
         throw;
       }
 
-      this->blocks[ix] = make_tuple(lbd, ubd, ubd - lbd);
+      this->blocks[ix] = make_tuple(lbd, ubd, 1);
       this->update_order_blocks.push_back(ix);
       block_sizes.push_back(ubd - lbd);
     }
   }
-  this->sets = sets;
 
-
+  // split block
   if ( !blocks.empty() && package_size != 1 ) {
     // we put the whole block size into one block
     vector<int> block_rests;
@@ -140,19 +98,19 @@ BlockEnumerator(
           this->update_order_blocks.begin() + min_block_rest_ix );
     get<2>( this->blocks[this->update_order_blocks.front()] ) = package_size;
   }
-  
+}
 
+void
+BlockEnumerator::
+set_initial_position()
+{
   this->position = vector<int>(length);
   for ( size_t ix : this->update_order_blocks )
     this->position[ix] = get<0>(this->blocks[ix]);
-  for ( size_t ix : this->update_order_sets ) {
+  for ( size_t ix : this->update_order_sets )
     this->position[ix] = 0;
-
-    auto couplings_it = this->couplings.find(ix);
-    if ( couplings_it != this->couplings.end() )
-      for ( size_t jx : couplings_it->second )
-        this->position[jx] = 0;
-  }
+  for ( size_t ix : this->update_order_dependend_sets )
+    this->position[ix] = 0;
 
 
   if ( length > 0 )
@@ -162,31 +120,41 @@ BlockEnumerator(
 }
 
 vector<tuple<int,int>>
-CurveEnumerator::
+BlockEnumerator::
 as_position()
 {
   auto position = this->position;
 
-  for ( auto set_it : this->sets ) {
+  for ( auto & set_it : this->sets ) {
     size_t ix = set_it->first;
-
     position[ix] = set_it->second[position[ix]];
-    for ( auto cx : this->couplings[ix] )
-      position[cx] = position[ix];
+  }
+
+  for ( auto & set_it : this->dependent_sets ) {
+    size_t ix = set_it->first;
+    size_t jx = get<0>(set_it->second);
+    auto & map_set = get<1>(set_it->second);
+    
+    position[ix] = map_set[position[jx]][position[ix]];
   }
 
   return position;
 }
 
 vector<tuple<int,int>>
-CurveEnumerator::
+BlockEnumerator::
 as_block()
 {
-  auto bounds = vector<tuple<int,int>>(this->length_, make_tuple(0,0));
+  auto position = this->as_position;
+  vector<tuple<int,int>> bounds;
+  bounds.reserve(position.size());
+
+  for ( int c : position )
+    bounds.push_back(make_tuple(c,c+1));
 
   for ( auto block_it : this->blocks ) {
     size_t ix = block_it->first;
-    int lbd = this->position[ix];
+    int lbd = get<0>(this->bounds[ix]);
 
     int ubd = lbd + get<2>(blocks_it->second);
     if (ubd > get<1>(blocks_it->second))
@@ -195,22 +163,38 @@ as_block()
     bounds[ix] = make_tuple(lbd,ubd);
   }
 
-  for ( auto set_it : this->sets ) {
-    size_t ix = set_it->first;
-
-    int lbd = set_it->second[this->position[ix]];
-    int ubd = lbd+1;
-
-    bounds[ix] = make_tuple(lbd,ubd);
-    for ( auto cx : this->couplings[ix] )
-      bounds[cx] = make_tuple(lbd,ubd);
-  }
-
   return bounds;
 }
 
-CurveEnumerator &
-CurveEnumerator::
+BlockEnumerator
+BlockEnumerator::
+as_block_enumerator()
+{
+  auto position = this->as_position();
+
+  auto blocks = map<size_t, tuple<int,int>>();
+  auto sets = map<size_t, vector<int>>();
+
+  for ( auto block_it : this->blocks ) {
+    size_t ix = block_it->first;
+    int lbd = get<0>(this->bounds[ix]);
+
+    if ( get<2>(blocks_it->second) != 1 ) {
+      int ubd = lbd + get<2>(blocks_it->second);
+      if (ubd > get<1>(blocks_it->second))
+        ubd = get<1>(blocks_it->second);
+
+      blocks[ix] = make_tuple(lbd,ubd);
+    }
+    else
+      sets[ix] = {lbd};
+  }
+
+  return BlockEnumerator(this->length(), blocks, sets);
+}
+
+BlockEnumerator &
+BlockEnumerator::
 step()
 {
   if (this->has_reached_end)
@@ -219,15 +203,16 @@ step()
   return this->step_(!this->blocks.empty(), 0);
 }
 
-CurveEnumerator &
-CurveEnumerator::
+BlockEnumerator &
+BlockEnumerator::
 step_(
-    bool step_block_or_set,
-    size_t step_ix
+    int step_type,
+    size_t step_ix,
     )
 {
-  if ( step_block_or_set ) {
-    px = this->update_order_blocks[step_ix];
+  // stepping a block
+  if ( step_type == 0 ) {
+    size_t px = this->update_order_blocks[step_ix];
   
     this->position[px] += get<2>(this->blocks[px]);
     if ( this->position[px] >= get<1>(this->blocks[px]) ) {
@@ -235,51 +220,48 @@ step_(
   
       ++step_ix;
       if ( step_ix < this->update_order_blocks.size() )
-        return this->step_(true, step_ix);
+        return this->step_(0, step_ix);
       else if ( !this->update_order_sets.empty() )
-        return this->step_(false, 0);
+        return this->step_(1, 0);
+      else if ( !this->update_order_dependend_sets.empty() )
+        return this->step_(2, 0);
       else {
         this->has_reached_end = true;
-        return *this;
       }
     }
   }
-  else {
-    px = this->update_order_sets[step_ix];
-    auto coupling_it = this->couplings.find(px);
+  // stepping a set
+  else if ( step_type == 1 ){
+    size_t px = this->update_order_sets[step_ix];
     
     ++this->position[px];
-    if ( coupling_it != this->couplings.end() )
-      for ( cx : coupling_it->second )
-        ++this->position[cx];
-
     if ( this->position[px] >= this->sets[px].size() ) {
       this->position[px] = 0;
-      if ( coupling_it != this->couplings.end() )
-        for ( cx : coupling_it->second )
-          this->position[cx] = 0;
 
       ++step_ix;
       if ( step_ix < this->update_order_sets.size() )
-        return this->size_(true, step_ix);
+        return this->step_(1, step_ix);
+      else if ( !this->update_order_dependend_sets.empty() )
+        return this->step_(2, 0);
       else
         this->has_reached_end = true;
     }
   }
+  // stepping a dependent set
+  else {
+    size_t px = this->update_order_dependend_sets[step_ix];
+    
+    ++this->position[px];
+    auto & px_set = get<1>(this->dependent_sets[px]);
+    if ( this->position[px] >= px_set[this->position[get<0>(this->dependent_sets[px])]].size() ) {
+      this->position[px] = 0;
+
+      ++step_ix;
+      if ( step_ix < this->update_order_dependend_sets.size() )
+        return this->step_(2, 0);
+      else
+        this->has_reached_end = true;
+    }
 
   return *this;
-}
-
-// todo: move to tables
-int
-CurveEnumerator::
-fp_non_square()
-{
-  set<int> squares;
-  for (int x=1; x<this->prime; ++x)
-    squares.insert(x*x % this->prime);
-
-  for (int x=1; x<this->prime; ++x)
-    if (squares.find(x) == squares.end())
-      return x;
 }

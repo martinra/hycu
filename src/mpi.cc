@@ -11,6 +11,7 @@
 #include <block_enumerator.hh>
 #include <mpi_worker_pool.hh>
 
+
 namespace mpi = boost::mpi;
 using namespace std;
 
@@ -47,12 +48,16 @@ main_master(
 
   auto config = YAML::LoadFile(argv[1]);
 
-  if (!config["prime"] || !config["genus"] || !config["resultFolder"]) {
-    cerr << "configuration file must give prime, genus, and result folder" << endl;
+  if (   !config["prime"] || !config["primeExponent"] || !config["maxPrimeExponent"]
+      || !config["genus"] || !config["resultFolder"] ) {
+    cerr << "configuration file must give prime, prime exponent, maximal prime exponent, "
+         << "genus, and result folder" << endl;
     exit(1);
   }
 
   int prime = config["prime"].as<int>();
+  int prime_exponent = config["primeExponent"].as<int>();
+  int max_prime_exponent = config["maxPrimeExponent"].as<int>();
   int genus = config["genus"].as<int>();
   int package_size = config["packageSize"].as<int>();
   string result_folder = config["resultFolder"].as<string>();
@@ -61,15 +66,18 @@ main_master(
 
   auto mpi_worker_pool = MPIWorkerPool(mpi_world);
   mpi::broadcast(mpi_world, prime, 0);
+  mpi::broadcast(mpi_world, prime_exponent, 0);
+  mpi::broadcast(mpi_world, max_prime_exponent, 0);
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
 
+  EnumerationTable enumeration_table(prime, 1);
 
-  for ( auto curve_enumerator = CurveEnumerator(prime, genus, package_size);
-        !curve_enumerator.is_end();
+  for ( auto curve_enumerator = CurveEnumerator(enumeration_table, genus, package_size);
+        !curve_enumerator.at_end();
         curve_enumerator.step() )
     // todo: check whether results are there
-    mpi_worker_pool.emit( curve_enumerator.as_bounds() );
+    mpi_worker_pool.emit( curve_enumerator.as_block() );
 
 
   mpi_worker_pool.close_pool();
@@ -83,10 +91,14 @@ main_worker(
     )
 {
   int prime;
+  int prime_exponent;
+  int max_prime_exponent;
   int genus;
   string result_folder;
 
   mpi::broadcast(mpi_world, prime, 0);
+  mpi::broadcast(mpi_world, prime_exponent, 0);
+  mpi::broadcast(mpi_world, max_prime_exponent, 0);
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
   int degree = 2*genus + 2;
@@ -94,9 +106,7 @@ main_worker(
 
   auto opencl = OpenCLInterface();
 
-  vector<ReductionTable> tables;
-  for (int px = 1; px <= genus; ++px)
-    tables.emplace_back(ReductionTable(prime,px, opencl));
+  ReductionTable reduction_table(prime, max_prime_exponent, opencl);
 
 
   while (true) {
@@ -123,17 +133,20 @@ main_worker(
     output_name << ".curve_count";
     fstream output(output_name.str(), ios_base::out);
 
-    CurveCounter(prime, coeff_bounds)
-      .count( [&output](auto poly_coeffs, auto nmb_points)
-              {
-                 for (auto c : poly_coeffs) output << c << " ";
-                 output << ": ";
-                 for (auto pts : nmb_points) output << get<0>(pts) << " " << get<1>(pts) << " ";
-                 output << endl;
-              },
-              tables, opencl );
+    for (auto enumerator = BlockEnumerator(coeff_bounds);
+         !enumerator.at_end();
+         enumerator.step()) {
+      Curve curve(enumeration_table, enumerator.as_position());
+      auto nmb_points = curve.count(reduction_table);
 
-    // use this to sign off computation, and assert that process was not killed
+      for (auto c : poly_coeff_exponents)
+        output << c << " ";
+      output << ": ";
+      for (auto pts : nmb_points)
+        output << get<0>(pts) << " " << get<1>(pts) << " ";
+      output << endl;
+
+    // todo: use this to sign off computation, and assert that process was not killed
     // mpi::send(0, 1, coeff_bounds);
   }
 }

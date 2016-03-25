@@ -22,57 +22,20 @@ IsogenyTypeStore::
 
 void
 IsogenyTypeStore::
-register_poly(
-    const vector<int> & poly_coeffs,
-    const vector<tuple<int,int>> & nmb_points
+register_curve(
+    const Curve & curve
     )
 {
-  vector<int> ramifications;
+  unsigned int genus = curve.genus();
 
-  int nmb_ramified = 0;
-  for (size_t ix=0; ix<nmb_points.size(); ++ix) {
-    for ( size_t jx=0;
-          jx < get<1>(nmb_points[ix]) - nmb_ramified;
-          jx+=ix+1 )
-      ramifications.push_back(ix+1);
-    nmb_ramified += get<1>(nmb_points[ix]);
+  auto hasse_weil_offsets = curve.hasse_weil_offsets();
+  if ( hasse_weil_offsets.size() < genus ) {
+    cerr << "IsogenyTypeStore.register_curve: insufficient number of field extensions computed" << endl;
+    throw;
   }
-  int ramification_sum = accumulate(ramifications.cbegin(), ramifications.cend(), 0);
 
-  int ramification_difference = poly_coeffs.size()-1 - ramification_sum;
-  if (    ramification_difference != 0
-       && ramification_difference < 2*(nmb_points.size()+1) )
-    ramifications.push_back(ramification_difference);
-  else {
-    ramifications.clear();
-
-    nmod_poly_factor_t poly_factor;
-    nmod_poly_factor_init(poly_factor);
-
-    if (nmod_poly_length(this->poly) != poly_coeffs.size())
-      nmod_poly_realloc(this->poly, poly_coeffs.size());
-    for (long ix=0; ix<poly_coeffs.size(); ++ix)
-      nmod_poly_set_coeff_ui(this->poly, ix, poly_coeffs[ix]);
-
-    nmod_poly_factor(poly_factor, this->poly);
-
-
-    for (size_t ix=0; ix<poly_factor->num; ++ix)
-      for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
-        ramifications.push_back(nmod_poly_degree(poly_factor->p + ix));
-
-    sort(ramifications.begin(), ramifications.end());
-
-    nmod_poly_factor_clear(poly_factor);
-  } 
-
-
-  vector<int> hasse_weil_offsets;
-  for (size_t ix=0; ix<nmb_points.size(); ++ix)
-    hasse_weil_offsets.push_back(
-      pow(prime,ix+1) + 1 - (get<0>(nmb_points[ix]) + get<1>(nmb_points[ix])) );
-
-  auto store_key = make_tuple(ramifications,hasse_weil_offsets);
+  hasse_weil_offsets.resize(genus);
+  auto store_key = make_tuple(curve.ramifications(),hasse_weil_offsets);
   auto store_it = this->store.find(store_key);
   if (store_it == this->store.end())
     this->store[store_key] = 1;

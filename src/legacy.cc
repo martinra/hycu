@@ -67,19 +67,22 @@ main(
 
   fstream output(argv[4], ios_base::out);
 
-  auto opencl = OpenCLInterface();
-
-  vector<ReductionTable> tables;
-  for (int px = 1; px <= genus; ++px)
-    tables.emplace_back(ReductionTable(prime,px, opencl));
-
+  auto enumeration_table = make_shared<EnumerationTable>(prime, 1);
+  OpenCLInterface opencl();
+  ReductionTable reduction_table(prime, genus, opencl);
   IsogenyTypeStore isogeny_type_store(prime);
-  CurveCounter(prime, coefficient_bounds)
-    .count( [&isogeny_type_store](auto & poly_coeffs, auto & nmb_points)
-            {
-              isogeny_type_store.register_poly(poly_coeffs, nmb_points);
-            },
-            tables, opencl );
+  // note: we cannot convert between exponent blocks and additive blocks;
+  // here we use exponent blocks
+  enumerator = BlockEnumerator( coefficient_bounds );
+
+  for (; !enumerator.at_end(); enumerator.step() ) {
+    auto poly_coeff_exponents = enumerator.as_position()
+    Curve curve(enumeration_table, poly_coeff_exponents);
+    if ( !curve.has_squarefree_rhs() ) continue;
+
+    curve.count(reduction_table);
+    isogeny_type_store.register_curve(curve);
+  }
 
   isogeny_type_store.output_legacy(output);
 

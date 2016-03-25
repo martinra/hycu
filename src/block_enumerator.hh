@@ -11,32 +11,37 @@ using namespace std;
 class BlockEnumerator
 {
   public:
-    // BlockEnumerator(int prime, int degree, int block_size);
-    BlockEnumerator( int length,
-                     const map<int, tuple<int,int>> & blocks,
-                     const map<int, vector<int>> & sets,
-                     const vector<vector<int>> couplings,
-                     unsigned int package_size );
+    BlockEnumerator( const vector<tuple<int,int>> & bounds);
+    BlockEnumerator( size_t length,
+                     const map<size_t, tuple<int,int>> & blocks,
+                     unsigned int package_size = 1,
+                     auto sets = map<size_t, vector<int>>(),
+                     auto dependent_sets = map<size_t, tuple<size_t, map<int, vector<int>>>>(),
+                     );
 
-    int inline length() const { return length_; };
-
-    bool inline valid_position() const { return has_reached_end; };
-    vector<int> as_position();
-    vector<tuple<int,int>> as_block();
+    size_t inline length() const { return length_; };
 
     BlockEnumerator & step();
+    bool inline at_end() const { return has_reached_end; };
+
+    vector<int> as_position();
+    vector<tuple<int,int>> as_block();
+    BlockEnumerator as_block_enumerator();
 
   private:
-    BlockEnumerator & step_(bool step_block_or_set, size_t step_ix);
+    void initialize_blocks(const vector<tuple<int,int>> & block, unsigned int package_size);
+    void set_initial_position();
+    BlockEnumerator & step_(int step_type, size_t step_ix);
 
-    const int length_;
+    const size_t length_;
 
-    vector<int> update_order_blocks;
-    vector<int> update_order_sets;
-    map<int, vector<int>> couplings;
+    vector<size_t> update_order_blocks;
+    vector<size_t> update_order_sets;
+    vector<size_t> update_order_dependend_sets;
 
-    map<int, tuple<int,int,unsigned int>> blocks;
-    map<int, vector<int>> sets;
+    map<size_t, tuple<int,int,unsigned int>> blocks;
+    map<size_t, vector<int>> sets;
+    map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets,
 
     vector<int> position;
     bool has_reached_end;

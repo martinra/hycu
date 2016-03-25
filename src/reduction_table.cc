@@ -2,13 +2,9 @@
 #include <flint/fq_nmod.h>
 #include <flint/fmpz.h>
 #include <flint/nmod_poly.h>
+#include <flint/ulong_extras.h>
 #include <map>
 #include <memory>
-// #include <numeric>
-// #include <iostream>
-// #include <set>
-// #include <string>
-// #include <sstream>
 #include <tuple>
 #include <vector>
 #include <CL/cl.hpp>
@@ -27,16 +23,21 @@ ReductionTable(
     ) :
   prime( prime ),
   prime_exponent( prime_exponent ),
-  prime_power( pow(prime,prime_exponent) )
+  prime_power( pow(prime,prime_exponent) ),
+  prime_power_pred( prime_power - 1 )
 {
   this->exponent_reduction_table = this->compute_exponent_reduction_table(prime_power);
-  tie(this->incrementation_table, this->fp_exponents) =
-      this->compute_incrementation_fp_exponents_tables(prime, prime_exponent, prime_power);
+  this->incrementation_table =
+      this->compute_incrementation_table(prime, prime_exponent, prime_power);
+  this->minimal_field_table =
+      this->compute_minimal_field_table(prime, prime_exponent, prime_power);
 
   this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
       *opencl.context, CL_MEM_READ_ONLY, sizeof(int) * this->exponent_reduction_table->size() );
   this->buffer_incrementation_table = make_shared<cl::Buffer>(
       *opencl.context, CL_MEM_READ_ONLY, sizeof(int) * this->incrementation_table->size() );
+  this->buffer_minimal_field_table = make_shared<cl::Buffer>(
+      *opencl.context, CL_MEM_READ_ONLY, sizeof(int) * this->minimal_field_table->size() );
 
   opencl.queue->enqueueWriteBuffer(*this->buffer_exponent_reduction_table, CL_TRUE, 0,
       sizeof(int)*this->exponent_reduction_table->size(),
@@ -44,6 +45,9 @@ ReductionTable(
   opencl.queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_TRUE, 0,
       sizeof(int)*this->incrementation_table->size(),
       this->incrementation_table->data() );
+  opencl.queue->enqueueWriteBuffer(*this->buffer_minimal_field_table, CL_TRUE, 0,
+      sizeof(int)*this->minimal_field_table->size(),
+      this->minimal_field_table->data() );
 }
 
 shared_ptr<vector<int>>
@@ -62,9 +66,9 @@ compute_exponent_reduction_table(
   return reductions;
 }
 
-tuple<shared_ptr<vector<int>>, shared_ptr<vector<int>>>
+shared_ptr<vector<int>>
 ReductionTable::
-compute_incrementation_fp_exponents_tables(
+compute_incrementation_table(
     int prime,
     int prime_exponent,
     int prime_power
@@ -86,9 +90,6 @@ compute_incrementation_fp_exponents_tables(
   auto incrementations = make_shared<vector<int>>(prime_power);
   incrementations->at(prime_power-1) = 0; // special index for 0
 
-  auto fp_exponents = make_shared<vector<int>>(prime);
-  fp_exponents->at(0) = prime_power - 1; // special index for 0
-
   map<int,int> gen_powers;
   gen_powers[0] = prime_power - 1; // special index for 0
 
@@ -105,8 +106,6 @@ compute_incrementation_fp_exponents_tables(
     }
 
     gen_powers[coeff_sum] = ix;
-    if (coeff_sum < prime)
-      fp_exponents->at(coeff_sum) = ix;
 
     fq_nmod_mul(a, a, gen, ctx);
     fq_nmod_reduce(a, ctx);
@@ -123,6 +122,25 @@ compute_incrementation_fp_exponents_tables(
   fq_nmod_clear(a, ctx); 
   fq_nmod_ctx_clear(ctx);
 
-  return make_tuple(incrementations, fp_exponents);
+  return incrementations;
 }
 
+shared_ptr<vector<int>>
+ReductionTable::
+compute_minimal_field_table(
+    int prime,
+    int prime_exponent,
+    int prime_power
+    )
+{
+  auto minimal_field = make_shared<vector<int>>(prime_power, prime_exponent-1);
+
+  minimal_field[prime_power-1] = 1;
+  for ( int ex=prime_exponent-2; ex>=0; --ex ) {
+    int factor_exponent = (prime_pwoer - 1) / pow(prime, ex+1);
+    for ( int ix=0; ix<prime_power-1; ix += factor_exponent )
+      minimal_field[ix] = ex;
+  }
+
+  return minimal_field;
+}

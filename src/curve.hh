@@ -16,47 +16,31 @@ using namespace std;
 class Curve
 {
   public:
-    Curve(int prime, const vector<int>& poly_coeffs);
+    Curve(shared_ptr<EnumerationTable> table, const vector<int> poly_coeff_exponents);
 
-    int inline degree() const { return this->poly_coeffs.size() + 1; };
+    int inline degree() const { return this->poly_coeff_exponents.size() + 1; };
     int genus() const;
 
     bool has_squarefree_rhs();
+    nmod_poly_t rhs_flint_polynomial();
+    fq_nmod_poly_t rhs_flint_polynomial();
 
-    vector<int> poly_coefficients_as_generator_exponents(const ReductionTable & table);
+    vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
-    tuple<int,int> count(const ReductionTable & table, const OpenCLInterface&);
+    const vector<tuple<int,int>> & count(const ReductionTable & table);
 
-    vector<tuple<int,int>> isogeny_nmb_points(const vector<ReductionTable>& tables, const OpenCLInterface&);
+    vector<int> hasse_weil_offsets();
+    vector<int> ramification_type();
+    // todo: how does one compute the number of automorphisms?
+    unsigned int nmb_automorphisms();
 
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 
   private:
-    const int prime;
-    vector<int> poly_coeffs;
-};
+    const shared_ptr<EnumerationTable> table;
+    vector<int> poly_coeff_exponents;
 
-// todo: rename to CurveBlockCounter
-// todo: unify with CurveEnumerator
-class CurveCounter
-{
-  public:
-    CurveCounter(int prime, vector<tuple<int,int>> coeff_bounds);
-
-    int inline genus() const { return genus_; };
-    int inline degree() const { return coeff_bounds.size()-1; };
-
-    void count(function<void(vector<int>&, vector<tuple<int,int>>&)>,
-               const vector<ReductionTable> &, const OpenCLInterface &);
-
-  private:
-    const int prime;
-    int genus_;
-
-    vector<tuple<int,int>> coeff_bounds;
-
-    void count_recursive(function<void(vector<int> &, vector<tuple<int,int>> &)>,
-                         const vector<ReductionTable> &, const OpenCLInterface &, vector<int> & poly_coeffs);
+    vector<tuple<int,int>> nmb_points;
 };
 
 #endif
