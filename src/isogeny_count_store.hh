@@ -18,7 +18,7 @@ class IsogenyCountStore
     IsogenyCountStore(int prime);
     ~IsogenyCountStore();
 
-    void register_poly(const vector<int> & poly_coeffs, const vector<tuple<int,int>> & nmb_points);
+    void register_curve(const Curve & curve);
 
     ostream & output_legacy(ostream & stream);
 
