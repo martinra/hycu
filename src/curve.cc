@@ -115,7 +115,7 @@ convert_poly_coeff_exponents(
   return converted;
 }
 
-const map<unsigned int, <tuple<int,int>> &
+const map<unsigned int, <tuple<int,int>>> &
 Curve::
 count(
     const ReductionTable & reduction_table
@@ -231,6 +231,42 @@ count(
   return this->nmb_points;
 }
 
+map<unsigned int, tuple<int,int>>
+Curve::
+nmb_points()
+{
+  map<unsigned int, tuple<int,int>> nmb_points;
+
+  for ( auto & fx : this->nmb_points.keys() ) {
+    if ( fx % this->table->prime_exponent != 0 ) continue;
+    for ( auto & gx : this->nmb_points.keys() )
+      if ( fx % gx == 0 ) {
+        get<0>(nmb_points[fx]) += get<0>(this->nmb_points[gx]);
+        get<1>(nmb_points[fx]) += get<1>(this->nmb_points[gx]);
+      }
+  }
+
+  return nmb_points;
+}
+
+vector<tuple<int,int>>
+Curve::
+nmb_points(
+    unsigned int max_prime_exponent
+    )
+{
+  unsigned int prime_exponent = this->table->prime_exponent;
+  auto nmb_points_map = this->nmb_points();
+
+  vector<tuple<int,int>> nmb_points;
+  nmb_points.reserve(max_prime_exponent/prime_exponent);
+  for ( size_t fx=prime_exponent;
+        fx<=max_prime_exponent;
+        fx+=prime_exponent )
+    nmb_points.push_back(nmb_points_map[fx]);
+
+  return nmb_points;
+}
 
 map<unsigned int, int>
 Curve::
@@ -242,15 +278,12 @@ hasse_weil_offsets()
     // todo: implement
   }
 
+  auto nmb_points = this->nmb_points();
   map<unsigned int, int> hasse_weil_offsets();
-  for ( auto & fx : this->nmb_points.keys() )
-    hasse_weil_offsets[fx] = pow(this->table->prime, fx+1) + 1;
-  for ( auto & pts_it : this->nmb_points ) {
-    int pts_sum = get<0>(pts_it->second) + get<1>(pts_it->second);
-    for ( auto & fx : this->nmb_points.keys() )
-      if ( pts_it->first % fx == 0 )
-        hasse_weil_offsets[pts_it->first] -= pts_sum;
-  }
+  for ( auto pts_it : nmb_points )
+    hasse_weil_offsets[pts->first] =
+        pow(this->table->prime, fx) + 1
+      - get<0>(pts_it->second) + get<1>(pts_it->second);
 
   return hasse_weil_offsets;
 }
@@ -272,7 +305,6 @@ hasse_weil_offsets(
 
   return hasse_weil_offsets;
 }
-
 
 vector<int>
 Curve::
