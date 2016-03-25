@@ -254,6 +254,24 @@ hasse_weil_offsets()
   return hasse_weil_offsets;
 }
 
+vector<int>
+Curve::
+hasse_weil_offsets(
+    unsigned int max_prime_exponent
+    )
+{
+  auto hasse_weil_offset_map = this->hasse_weil_offsets();
+
+  vector<int> hasse_weil_offsets();
+  hasse_weil_offsets.reserve(max_prime_exponent / this->prime_exponent);
+  for ( size_t fx=this->prime_exponent;
+        fx<=max_prime_exponent;
+        fx+=this->prime_exponent )
+    hasse_weil_offsets.push_back(hasse_weil_offset_map[fx]);
+
+  return hasse_weil_offsets;
+}
+
 
 vector<int>
 Curve::
