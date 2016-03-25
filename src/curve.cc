@@ -1,5 +1,6 @@
 #include <cmath>
 #include <flint/fq_nmod.h>
+#include <flint/fq_nmod_poly.h>
 #include <flint/fmpz.h>
 #include <flint/nmod_poly.h>
 #include <map>
@@ -277,22 +278,40 @@ vector<int>
 Curve::
 ramification_type()
 {
-  if ( !this->table->is_prime_field() ) {
-    cerr << "ramification_type implemented only for prime fields" << endl;
-    throw;
-    // todo: implement
+  unsigned int prime_exponent = this->table->prime_exponent;
+  vector<int> ramifications;
+  unsigned int ramification_sum = 0;
+
+  size_t fx;
+  for ( fx=1; fx<prime_exponent; ++fx) {
+    if ( prime_exponent % fx != 0 ) continue;
+
+    auto nmb_points_it = this->nmb_points.find(fx);
+    if ( nmb_points_it != this->nmb_points.end() ) {
+      ramification_sum += get<1>(nmb_points_it->second);
+      for ( size_t jx=0; jx < get<1>(nmb_points_it->second); ++jx )
+        ramifications.push_back(1);
+    }
+    else
+      break;
+  }
+  if ( fx == prime_exponent ) {
+    for ( fx = prime_exponent;
+          fx < this->degree() * prime_exponent;
+          fx += prime_exponent ) {
+      auto nmb_points_it = this->nmb_points.find(fx);
+      if ( nmb_points_it != this->nmb_points.end() ) {
+        ramification_sum += get<1>(nmb_points_it->second);
+        for ( size_t jx=0; jx < get<1>(nmb_points_it->second) / prime_exponent; ++jx )
+          ramifications.push_back(fx / prime_exponent);
+      }
+      else
+        break;
+    }
   }
 
-  vector<int> ramifications;
-
-  for (size_t ix=0; ix<nmb_points.size(); ++ix)
-    for ( size_t jx=0; jx < get<1>(this->nmb_points[ix]); jx+=ix+1 )
-      ramifications.push_back(ix+1);
-  int ramification_sum = accumulate(ramifications.cbegin(), ramifications.cend(), 0);
-
-
   int ramification_difference = this->degree() - ramification_sum;
-  if ( ramification_difference < 2*(this->nmb_points.size()+1) ) {
+  if ( ramification_difference < 2 * (fx / prime_exponent) ) {
     if ( ramification_difference != 0 )
       ramifications.push_back(ramification_difference);
     return ramifications;
@@ -300,18 +319,32 @@ ramification_type()
 
 
   ramifications.clear();
+  if ( this->table->is_prime_field() ) {
+    nmod_poly_t poly = this->rhs_flint_polynomial();
+    nmod_poly_factor_t poly_factor;
+    nmod_poly_factor_init(poly_factor);
+    nmod_poly_factor(poly_factor, poly);
 
-  nmod_poly_t poly = this->rhs_flint_polynomial();
-  nmod_poly_factor_t poly_factor;
-  nmod_poly_factor_init(poly_factor);
-  nmod_poly_factor(poly_factor, poly);
+    for (size_t ix=0; ix<poly_factor->num; ++ix)
+      for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
+        ramifications.push_back(nmod_poly_degree(poly_factor->p + ix));
 
-  for (size_t ix=0; ix<poly_factor->num; ++ix)
-    for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
-      ramifications.push_back(nmod_poly_degree(poly_factor->p + ix));
+    nmod_poly_factor_clear(poly_factor);
+    nmod_poly_clear(poly);
+  }
+  else {
+    fq_nmod_poly_t poly = this->rhs_flint_polynomial();
+    fq_nmod_poly_factor_t poly_factor;
+    fq_nmod_poly_factor_init(poly_factor);
+    fq_nmod_poly_factor(poly_factor, poly);
 
-  nmod_poly_factor_clear(poly_factor);
-  nmod_poly_clear(poly);
+    for (size_t ix=0; ix<poly_factor->num; ++ix)
+      for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
+        ramifications.push_back(fq_nmod_poly_degree(poly_factor->p + ix));
+
+    fq_nmod_poly_factor_clear(poly_factor);
+    fq_nmod_poly_clear(poly);
+  }
 
   sort(ramifications.begin(), ramifications.end());
   return ramifications;
