@@ -93,8 +93,9 @@ convert_poly_coeff_exponents(
     throw;
   }
 
-  if ( this->table->prime_exponent > table.prime_exponent ) {
-    cerr << "Curve.convert_poly_coeff_exponents: Can not convert to lower prime exponent" << endl;
+  if ( table.prime_exponent % this->table->prime_exponent != 0  ) {
+    cerr << "Curve.convert_poly_coeff_exponents: Can not convert to prime exponent "
+         << "that does not divide the one of the curve" << endl;
     throw;
   }
   else if ( this->table->prime_exponent == table.prime_exponent ) {
@@ -113,27 +114,28 @@ convert_poly_coeff_exponents(
   return converted;
 }
 
-const vector<tuple<int,int>> &
+const map<unsigned int, <tuple<int,int>> &
 Curve::
 count(
     const ReductionTable & reduction_table
   )
 {
+  // todo: Use error checking for all calls. Some implementations don't seem to support try/catch, but doublecheck this.
+
   if ( reduction_table.prime != this->table->prime ) {
     cerr << "Curve.count: primes of curve and table must coincide" << endl;
     throw;
   }
 
-  if ( reduction_table.prime_exponent <= this->nmb_points.size() )
-    return vector<int>(this->nmb_points.cbegin(), this->nmb_points.cbegin() + reduction_table.prime_exponent);
-  this->nmb_points.resize(resize.prime_exponent);
+  if ( this->nmb_points.find( reduction_table.prime_exponent ) != this->nmb_points.end() ) {
+    return this->nmb_points;
+
+  // this also checks that the prime exponent is divisible by the one of the curve
+  int poly_size = (int)this->poly_coeff_exponents.size();
+  vector<int> poly_coeffs_exponents = this->convert_poly_coeff_exponents(reduction_table);
 
 
   auto opencl = reduction_table.opencl;
-
-  // todo: Use error checking for all calls. Some implementations don't seem to support try/catch, but doublecheck this.
-  int poly_size = (int)this->poly_coeff_exponents.size();
-  vector<int> poly_coeffs_exponents = this->convert_poly_coeff_exponents(reduction_table);
 
   cl::Buffer buffer_poly_coeffs_exponents(
                *opencl.context, CL_MEM_READ_ONLY,
@@ -185,9 +187,10 @@ count(
 
   int * sums = new int[nmb_groups_reduction];
   opencl.queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
-  for (size_t fx=0; fx<reduction_table.prime_exponent; ++fx)
-    for (size_t ix=fx*nmb_groups_reduction; ix<(fx+1)*nmb_groups_reduction; ++ix)
-      get<0>(this->nmb_points[fx]) += sums[ix];
+  for (size_t fx=1; fx<=reduction_table.prime_exponent; ++fx)
+    if ( reduction_table.prime_exponent % fx == 0 )
+      for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
+        get<0>(this->nmb_points[fx]) += sums[ix];
 
 
   kernel_reduction = make_unique<cl::Kernel>(*opencl.program_reduction, "reduction");
@@ -195,8 +198,8 @@ count(
   kernel_reduction->setArg(1, buffer_minimal_fields);
   kernel_reduction->setArg(2, sizeof(int), &reduction_table.prime_power_pred);
   kernel_reduction->setArg(3, sizeof(int), &reduction_table.prime_exponent);
-  kernel_reduction->setArg(4, sizeof(int)*reduction_table.prime_exponent, nullptr);
-  kernel_reduction->setArg(5, sizeof(int)*local_size_reduction*reduction_table.prime_exponent, nullptr);
+  kernel_reduction->setArg(4, sizeof(int) * reduction_table.prime_exponent, nullptr);
+  kernel_reduction->setArg(5, sizeof(int) * local_size_reduction * reduction_table.prime_exponent, nullptr);
   kernel_reduction->setArg(6, buffer_sums);
 
   opencl.queue->enqueueNDRangeKernel(*kernel_reduction, cl::NullRange,
@@ -206,28 +209,29 @@ count(
   int * sums = new int[nmb_groups_reduction];
   opencl.queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
   for (size_t fx=0; fx<reduction_table.prime_exponent; ++fx)
-    for (size_t ix=fx*nmb_groups_reduction; ix<(fx+1)*nmb_groups_reduction; ++ix)
-      get<1>(this->nmb_points[fx]) += sums[ix];
+    if ( reduction_table.prime_exponent % fx == 0 )
+      for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
+        get<1>(this->nmb_points[fx]) += sums[ix];
 
 
   // point x = 0
   if (poly_coeffs_exponents.front() == table.prime_power - 1) // constant coefficient is zero
-    get<1>(this->nmb_points[0])++;
+    get<1>(this->nmb_points[1])++;
   else if (!(poly_coeffs_exponents.front() & 1)) // constant coefficient is even power of generator
-    get<0>(this->nmb_points[reduction_table.minimal_field_table[poly_coeffs_exponents.front()]]) += 2;
+    get<0>(this->nmb_points[reduction_table.minimal_field_table[poly_coeffs_exponents.front()]+1]) += 2;
 
   // point x = infty
   if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
-    get<1>(this->nmb_points[0]) += 1;
+    get<1>(this->nmb_points[1]) += 1;
   else if (!(poly_coeffs_exponents.back() & 1)) // leading coefficient is odd power of generator
-    get<0>(this->nmb_points[reduction_table.minimal_field_table[poly_coeffs_exponents.back()]]) += 2;
+    get<0>(this->nmb_points[reduction_table.minimal_field_table[poly_coeffs_exponents.back()]+1]) += 2;
 
 
   return this->nmb_points;
 }
 
 
-vector<int>
+map<unsigned int, int>
 Curve::
 hasse_weil_offsets()
 {
@@ -237,11 +241,17 @@ hasse_weil_offsets()
     // todo: implement
   }
 
-  vector<int> hasse_weil_offsets();
-  hasse_weil_offsets.reserve(this->nmb_points.size());
-  for (size_t ix=0; ix<nmb_points.size(); ++ix)
-    hasse_weil_offsets.push_back(
-      pow(this->table->prime, ix+1) + 1 - (get<0>(this->nmb_points[ix]) + get<1>(this->nmb_points[ix])) );
+  map<unsigned int, int> hasse_weil_offsets();
+  for ( auto & fx : this->nmb_points.keys() )
+    hasse_weil_offsets[fx] = pow(this->table->prime, fx+1) + 1;
+  for ( auto & pts_it : this->nmb_points ) {
+    int pts_sum = get<0>(pts_it->second) + get<1>(pts_it->second);
+    for ( auto & fx : this->nmb_points.keys() )
+      if ( pts_it->first % fx == 0 )
+        hasse_weil_offsets[pts_it->first] -= pts_sum;
+  }
+
+  return hasse_weil_offsets;
 }
 
 

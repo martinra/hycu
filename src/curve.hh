@@ -40,7 +40,7 @@ class Curve
     const shared_ptr<FqElementTable> table;
     vector<int> poly_coeff_exponents;
 
-    vector<tuple<int,int>> nmb_points;
+    map<unsigned int, tuple<int,int>> nmb_points;
 };
 
 #endif

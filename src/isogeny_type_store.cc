@@ -26,16 +26,13 @@ register_curve(
     const Curve & curve
     )
 {
-  unsigned int genus = curve.genus();
-
-  auto hasse_weil_offsets = curve.hasse_weil_offsets();
-  if ( hasse_weil_offsets.size() < genus ) {
-    cerr << "IsogenyTypeStore.register_curve: insufficient number of field extensions computed" << endl;
+  if ( !curve.table->is_prime_field() ) {
+    cerr << "register_curve implemented only for prime fields" << endl;
     throw;
+    // todo: implement
   }
 
-  hasse_weil_offsets.resize(genus);
-  auto store_key = make_tuple(curve.ramifications(),hasse_weil_offsets);
+  auto store_key = make_tuple(curve.ramifications(),curve.hasse_weil_offsets(curve.genus()));
   auto store_it = this->store.find(store_key);
   if (store_it == this->store.end())
     this->store[store_key] = 1;
