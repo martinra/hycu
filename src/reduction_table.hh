@@ -41,11 +41,6 @@ class ReductionTable
     // given an exponent determine the minimal prime exponent for which it occurs as an element
     shared_ptr<vector<int>> minimal_field_table;
 
-    // given an element in fp give the exponent of a that corresponds to it
-    // 0 is mapped to q-1
-    // fixme: only used to convert poly_coefficients; should be removed later
-    // shared_ptr<vector<int>> fp_exponents;
-
     // opencl buffers that store the corresponding table
     shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
     shared_ptr<cl::Buffer> buffer_incrementation_table;
