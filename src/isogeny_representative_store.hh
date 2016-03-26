@@ -6,6 +6,9 @@
 #include <tuple>
 #include <vector>
 
+#include <curve.hh>
+
+
 using namespace std;
 
 

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <isogeny_representative_store.hh>
 
 
@@ -8,7 +9,7 @@ register_curve(
     )
 {
   auto store_key =
-    make_tuple( curve.ramifications(),
+    make_tuple( curve.ramification_type(),
                 curve.hasse_weil_offsets(curve.table->prime_exponent * curve.genus()) );
   auto store_it = this->store.find(store_key);
   if (store_it != this->store.end())
@@ -21,10 +22,10 @@ operator<<(
     const IsogenyRepresentativeStore & store
     )
 {
-  for ( auto store_it : this->store ) {
-    auto & ramifications = get<0>(store_it->first);
-    auto & hasse_weil_offsets = get<1>(store_it->first);
-    auto & poly_coeff_exponents = store_it->second;
+  for ( auto & store_it : store.store ) {
+    auto & ramifications = get<0>(store_it.first);
+    auto & hasse_weil_offsets = get<1>(store_it.first);
+    auto & poly_coeff_exponents = store_it.second;
 
 
     if ( !ramifications.empty() ) {

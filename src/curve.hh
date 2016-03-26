@@ -5,6 +5,8 @@
 #include <vector>
 #include <tuple>
 #include <CL/cl.hpp>
+#include <flint/fq_nmod_poly.h>
+#include <flint/nmod_poly.h>
 
 #include <fq_element_table.hh>
 #include <reduction_table.hh>
@@ -23,25 +25,26 @@ class Curve
     int genus() const;
 
     bool has_squarefree_rhs();
-    nmod_poly_struct* rhs_nmod_polynomial();
-    fq_nmod_poly_struct* rhs_polynomial();
+    nmod_poly_struct* rhs_nmod_polynomial() const;
+    fq_nmod_poly_struct* rhs_polynomial() const;
 
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
     void count(const ReductionTable & table);
 
-    map<unsigned int, tuple<int,int>> number_of_points();
-    vector<tuple<int,int>> number_of_points(unsigned int max_prime_exponent);
+    map<unsigned int, tuple<int,int>> number_of_points() const;
+    vector<tuple<int,int>> number_of_points(unsigned int max_prime_exponent) const;
 
-    map<unsigned int, int> hasse_weil_offsets();
-    vector<int> hasse_weil_offsets(unsigned int max_prime_exponent);
+    map<unsigned int, int> hasse_weil_offsets() const;
+    vector<int> hasse_weil_offsets(unsigned int max_prime_exponent) const;
 
-    vector<int> ramification_type();
+    vector<int> ramification_type() const;
     // todo: how does one compute the number of automorphisms?
     unsigned int nmb_automorphisms();
 
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 
+    friend class IsogenyCountStore;
     friend class IsogenyRepresentativeStore;
 
   protected:

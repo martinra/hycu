@@ -58,9 +58,10 @@ kernel_evaluation_code =
   "    }\n"
   "  }\n"
   "  \n"
-  "  int minimal_field_x = minimal_field_table[x];
-  "  int minimal_field_f = minimal_field_table[f];
-  "  minimal_fields[x] = minimal_fields_x < minimal_fields_f ? minimal_fields_x : minimal_fields_f;
+  "  int minimal_field_x = minimal_field_table[x];\n"
+  "  int minimal_field_f = minimal_field_table[f];\n"
+  "  minimal_fields[x] = minimal_fields_x < minimal_fields_f ?\n"
+  "                        minimal_fields_x : minimal_fields_f;\n"
   "  \n"
   "  if (f == nmb_units) {\n"
   "    nmbs_unramified[x] = 0;\n"
@@ -93,8 +94,8 @@ kernel_reduction_code =
   "  int gix = get_global_id(0);\n"
   "  int lsz = get_local_size(0);\n"
   "  int lix = get_local_id(0);\n"
-  "  int bsz = get_nmb_groups(0);\m"
-  "  int nmb_groups = gsz / lsz;\m"
+  "  int bsz = get_nmb_groups(0);\n"
+  "  int nmb_groups = gsz / lsz;\n"
   "\n"
   "  for (int bix=0; bix<bsz; ++bix)\n"
   "    acc_a[ix] = 0;\n"

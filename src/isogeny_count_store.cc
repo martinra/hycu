@@ -1,6 +1,9 @@
 #include <iostream>
+#include <map>
+#include <flint/fq_nmod_poly.h>
 
-#include <isogeny_type_store.hh>
+#include <curve.hh>
+#include <isogeny_count_store.hh>
 
 
 void
@@ -10,7 +13,7 @@ register_curve(
     )
 {
   auto store_key =
-    make_tuple( curve.ramifications(),
+    make_tuple( curve.ramification_type(),
                 curve.hasse_weil_offsets(curve.table->prime_exponent * curve.genus()) );
   auto store_it = this->store.find(store_key);
   if (store_it == this->store.end())

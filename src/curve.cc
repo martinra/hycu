@@ -236,6 +236,7 @@ count(
 map<unsigned int, tuple<int,int>>
 Curve::
 number_of_points()
+  const
 {
   map<unsigned int, tuple<int,int>> nmb_points;
 
@@ -245,8 +246,8 @@ number_of_points()
     for ( auto & gx_it : this->nmb_points ) {
       unsigned int gx = gx_it.first;
       if ( fx % gx == 0 ) {
-        get<0>(nmb_points[fx]) += get<0>(this->nmb_points[gx]);
-        get<1>(nmb_points[fx]) += get<1>(this->nmb_points[gx]);
+        get<0>(nmb_points[fx]) += get<0>(this->nmb_points.at(gx));
+        get<1>(nmb_points[fx]) += get<1>(this->nmb_points.at(gx));
       }
     }
   }
@@ -259,6 +260,7 @@ Curve::
 number_of_points(
     unsigned int max_prime_exponent
     )
+  const
 {
   unsigned int prime_exponent = this->table->prime_exponent;
   auto nmb_points_map = this->number_of_points();
@@ -276,6 +278,7 @@ number_of_points(
 map<unsigned int, int>
 Curve::
 hasse_weil_offsets()
+  const
 {
   if ( !this->table->is_prime_field() ) {
     cerr << "hasse_weil_offsets implemented only for prime fields" << endl;
@@ -297,6 +300,7 @@ Curve::
 hasse_weil_offsets(
     unsigned int max_prime_exponent
     )
+  const
 {
   unsigned int prime_exponent = this->table->prime_exponent;
   auto offset_map = this->hasse_weil_offsets();
@@ -314,6 +318,7 @@ hasse_weil_offsets(
 vector<int>
 Curve::
 ramification_type()
+  const
 {
   unsigned int prime_exponent = this->table->prime_exponent;
   vector<int> ramifications;
@@ -393,6 +398,7 @@ ramification_type()
 nmod_poly_struct*
 Curve::
 rhs_nmod_polynomial()
+  const
 {
   if ( this->table->prime_exponent != 1 ) {
     cerr << "Conversion to nmod_poly_t only possible for prime fields" << endl;
@@ -412,6 +418,7 @@ rhs_nmod_polynomial()
 fq_nmod_poly_struct*
 Curve::
 rhs_polynomial()
+  const
 {
   fq_nmod_poly_struct* poly;
   fq_nmod_poly_init2( poly, this->poly_coeff_exponents.size(), this->table->fq_ctx );
