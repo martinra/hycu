@@ -1,7 +1,8 @@
 #ifndef _H_FQ_ELEMENT_TABLE
 #define _H_FQ_ELEMENT_TABLE
 
-
+#include <tuple>
+#include <vector>
 #include <flint/fq_nmod.h>
 
 
@@ -47,7 +48,7 @@ class FqElementTable
 
   private:
     fq_nmod_ctx_t fq_ctx;
-    vector<fq_nmod_t> fq_elements;
+    vector<fq_nmod_struct*> fq_elements;
 };
 
 #endif

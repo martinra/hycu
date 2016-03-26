@@ -1,3 +1,4 @@
+#include <cmath>
 #include <fq_element_table.hh>
 
 
@@ -48,18 +49,18 @@ FqElementTable::
 }
 
 
-vector<unsigned int>
+vector<int>
 FqElementTable::
 power_coset_representatives(
     unsigned int n
     )
   const
 {
-  n = n_gcd(n, this->prime_power-1);
+  // n = n_gcd(n, this->prime_power-1);
 
-  vector<unsigned int> cosets;
+  vector<int> cosets;
   cosets.reserve(n);
-  for (unsigned int i=0; i<n; ++i)
+  for (int i=0; i<n; ++i)
     cosets.push_back(i);
 
   return cosets;
