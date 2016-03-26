@@ -55,6 +55,8 @@ CurveIterator(
       }
     }
   }
+
+  this->enumerator_it = this->enumerators.begin();
 }
 
 CurveIterator &
@@ -73,5 +75,5 @@ CurveIterator::
 is_end()
   const
 {
-  return this->enumerator_it = this->enumerators.end();
+  return ( this->enumerator_it == this->enumerators.end() );
 }

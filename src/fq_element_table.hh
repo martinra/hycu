@@ -26,13 +26,12 @@ class FqElementTable
     inline const fq_nmod_struct* at(int ix) const { return this->fq_elements[ix]; };
     inline const fq_nmod_struct* operator[](int ix) const { return this->fq_elements[ix]; };
 
-    unsigned int inline zero_index() const { return this->prime_power_pred; };
-    // todo: this should be unsigned int
+    int inline zero_index() const { return this->prime_power_pred; };
     tuple<int,int> inline block_non_zero() const { return make_tuple(0, this->prime_power_pred); };
     tuple<int,int> inline block_complete() const { return make_tuple(0, this->prime_power); };
-    vector<unsigned int> power_coset_representatives(unsigned int n);
+    vector<int> power_coset_representatives(unsigned int n) const;
 
-    unsigned int inline reduce_index(unsigned int ix) { return ix % this->prime_power_pred; };
+    unsigned int inline reduce_index(unsigned int ix) const { return ix % this->prime_power_pred; };
 
     friend Curve;
     friend class CurveIterator;

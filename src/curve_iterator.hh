@@ -1,10 +1,12 @@
 #ifndef _H_CURVE_ITERATOR
 #define _H_CURVE_ITERATOR
 
+#include <memory>
 #include <vector>
 #include <tuple>
 
 #include <block_iterator.hh>
+#include <fq_element_table.hh>
 
 
 using namespace std;
@@ -23,8 +25,8 @@ class CurveIterator
     BlockIterator inline as_block_enumerator() { return this->enumerator_it->as_block(); };
 
   private:
-    vector<shared_ptr<BlockIterator>> block_enumerators();
-    vector<shared_ptr<BlockIterator>>::iterator enumerator_it;
+    vector<BlockIterator> enumerators;
+    vector<BlockIterator>::iterator enumerator_it;
 };
 
 #endif

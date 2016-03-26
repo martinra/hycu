@@ -53,6 +53,7 @@ FqElementTable::
 power_coset_representatives(
     unsigned int n
     )
+  const
 {
   n = n_gcd(n, this->prime_power-1);
 
