@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 #include <sstream>
 #include <tuple>
@@ -27,7 +28,7 @@ main(
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
 
 
-  unsigned int gen = enumeration_table->fq_elements[0];
+  unsigned int gen = enumeration_table->at_nmod(1);
   unsigned int a = 1;
   map<unsigned int, unsigned int> fp_to_exponent;
   fp_to_exponent[0] = prime-1;
@@ -36,12 +37,12 @@ main(
     a = (a*gen) % (prime-1);
   }
 
-  vector<int> poly_coeffs;
+  vector<int> poly_coeff_exponents;
   for (int ix=2; ix < argc; ++ix)
-    poly_coeffs.push_back(fp_to_exponent[atoi(argv[ix])]);
+    poly_coeff_exponents.push_back(fp_to_exponent[atoi(argv[ix])]);
 
 
-  int degree = poly_coeffs.size() - 1;
+  int degree = poly_coeff_exponents.size() - 1;
   int genus;
   if (degree % 2 == 0)
     genus = (degree - 2)/2;
@@ -49,17 +50,17 @@ main(
     genus = (degree - 1)/2;
 
 
-  auto opencl = OpenCLInterface();
-  vector<ReductionTable> reduction_table(prime, genus, opencl);
+  OpenCLInterface opencl;
+  ReductionTable reduction_table(prime, genus, opencl);
   auto curve = Curve(enumeration_table, poly_coeff_exponents);
-  auto nmb_points = curve.count(reduction_table);
+  curve.count(reduction_table);
 
-
-  for (auto pts : nmb_points)
+    
+  for ( auto & pts : curve.number_of_points(genus) )
     cout << get<0>(pts) << " " << get<1>(pts) << ";  ";
   cout << endl;
 
-  if (genus=2) {
+  if ( genus=2 ) {
     auto hasse_weil_offsets = curve.hasse_weil_offsets(); 
 
     int a1 = hasse_weil_offsets[0];
