@@ -8,7 +8,9 @@
 #include <opencl_interface.hh>
 #include <reduction_table.hh>
 #include <curve.hh>
-#include <block_enumerator.hh>
+#include <block_iterator.hh>
+#include <curve_iterator.hh>
+#include <isogeny_representative_store.hh>
 #include <mpi_worker_pool.hh>
 
 
@@ -18,6 +20,8 @@ using namespace std;
 
 int main_master(int argc, char** argv, mpi::communicator & mpi_world);
 int main_worker(mpi::communicator & mpi_world);
+string representative_output_name(
+    string result_folder, unsigned int prime_power, const vector<tuple<int,int>> & bounds);
 
 int
 main(
@@ -69,7 +73,7 @@ main_master(
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
 
-  FqElementTable enumeration_table(prime, 1);
+  FqElementTable enumeration_table(prime, prime_exponent);
 
   for ( auto curve_enumerator = CurveIterator(enumeration_table, genus, package_size);
         !curve_enumerator.is_end();
@@ -98,6 +102,9 @@ main_worker(
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
 
+  int prime_power = pow(prime, prime_exponent);
+
+  auto enumeration_table = make_shared<FqElementTable>(prime, prime_exponent);
   auto opencl = OpenCLInterface();
   ReductionTable reduction_table(prime, prime_exponent*genus, opencl);
 
@@ -119,7 +126,7 @@ main_worker(
     vector<tuple<int,int>> bounds;
     mpi_world.recv(0, 0, bounds);
     
-    IsogenyRepresentativeStore isogeny_representative_store();
+    IsogenyRepresentativeStore isogeny_representative_store;
     for (auto enumerator = BlockIterator(bounds);
          !enumerator.is_end();
          enumerator.step()) {
@@ -130,25 +137,24 @@ main_worker(
      // mpi::send(0, 1, bounds);
     }
 
-    output( representative_output_name(prime_power, max_prime_exponent, bounds),
-            ios_base::out )
+    fstream( representative_output_name(result_folder, prime_power, bounds),
+             ios_base::out )
       << isogeny_representative_store;
   }
 }
 
 string
 representative_output_name(
+    string result_folder,
     unsigned int prime_power,
-    unsigned int genus,
     const vector<tuple<int,int>> & bounds
     )
 {
   stringstream output_name(ios_base::out);
 
-  output_name << result_folder << "/isogeny_representatives"
+  output_name << result_folder << "/isogeny_representatives";
 
   output_name << "__prime_power_" << prime_power;
-  output_name << "__genus_" << genus;
   output_name << "__coeff_exponent_bounds";
   for ( auto bds : bounds )
     output_name << "__" << get<0>(bds) << "_" << get<1>(bds);
