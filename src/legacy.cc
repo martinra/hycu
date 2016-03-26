@@ -8,8 +8,8 @@
 #include <opencl_interface.hh>
 #include <reduction_table.hh>
 #include <curve.hh>
-#include <block_enumerator.hh>
-#include <isogeny_type_store.hh>
+#include <block_iterator.hh>
+#include <isogeny_count_store.hh>
 
 using namespace std;
 
@@ -68,23 +68,23 @@ main(
   fstream output(argv[4], ios_base::out);
 
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
-  OpenCLInterface opencl();
+  OpenCLInterface opencl;
   ReductionTable reduction_table(prime, genus, opencl);
-  IsogenyCountStore isogeny_type_store(prime);
+  IsogenyCountStore isogeny_count_store;
   // note: we cannot convert between exponent blocks and additive blocks;
   // here we use exponent blocks
-  enumerator = BlockIterator( coefficient_bounds );
+  BlockIterator enumerator(coefficient_bounds);
 
   for (; !enumerator.is_end(); enumerator.step() ) {
-    auto poly_coeff_exponents = enumerator.as_position()
+    auto poly_coeff_exponents = enumerator.as_position();
     Curve curve(enumeration_table, poly_coeff_exponents);
     if ( !curve.has_squarefree_rhs() ) continue;
 
     curve.count(reduction_table);
-    isogeny_type_store.register_curve(curve);
+    isogeny_count_store.register_curve(curve);
   }
 
-  isogeny_type_store.output_legacy(output);
+  isogeny_count_store.output_legacy(output);
 
   return 0;
 }
