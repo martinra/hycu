@@ -136,13 +136,13 @@ compute_minimal_field_table(
 {
   auto minimal_field = make_shared<vector<int>>(prime_power, prime_exponent-1);
 
-  minimal_field[prime_power-1] = 0;
+  (*minimal_field)[prime_power-1] = 0;
   for ( int ex=prime_exponent-2; ex>=0; --ex ) {
     if ( prime_exponent % (ex+1) != 0 ) continue;
 
     int factor_exponent = (prime_power - 1) / (pow(prime, ex+1) - 1);
     for ( int ix=0; ix<prime_power-1; ix += factor_exponent )
-      minimal_field[ix] = ex;
+      (*minimal_field)[ix] = ex;
   }
 
   return minimal_field;
