@@ -9,6 +9,7 @@
 #include <reduction_table.hh>
 #include <curve.hh>
 
+
 using namespace std;
 
 
@@ -26,7 +27,6 @@ main(
   int prime = atoi(argv[1]);
   if (prime < 0) throw;
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
-
 
   unsigned int gen = enumeration_table->at_nmod(1);
   unsigned int a = 1;
@@ -50,7 +50,7 @@ main(
     genus = (degree - 1)/2;
 
 
-  OpenCLInterface opencl;
+  auto opencl = make_shared<OpenCLInterface>();
   ReductionTable reduction_table(prime, genus, opencl);
   auto curve = Curve(enumeration_table, poly_coeff_exponents);
   curve.count(reduction_table);
@@ -71,6 +71,7 @@ main(
 
     cout << "x^4 + " << c3 << "x^3 + " << c2 << "x^2 + ..." << endl;
   }
+
 
   return 0;
 }

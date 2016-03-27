@@ -18,7 +18,7 @@ class ReductionTable
     // a fixed generator for F_q is referred to by a
     // in the current implemnentation it is given by the Conway polynomial
     // ReductionTable(int prime, int prime_exponent);
-    ReductionTable(int prime, int prime_exponent, OpenCLInterface & opencl);
+    ReductionTable(int prime, int prime_exponent, shared_ptr<OpenCLInterface> opencl);
 
     // init_opencl_buffers(OpenCLInterface & opencl);
     
@@ -33,7 +33,7 @@ class ReductionTable
     const int prime_power;
     const int prime_power_pred;
 
-    OpenCLInterface & opencl;
+    shared_ptr<OpenCLInterface> opencl;
 
     // the reduction table is the reduction table modulo q-1 for integers less than max(r,2)*(q-1)
     shared_ptr<vector<int>> exponent_reduction_table;

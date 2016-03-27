@@ -68,7 +68,7 @@ main(
   fstream output(argv[4], ios_base::out);
 
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
-  OpenCLInterface opencl;
+  auto opencl = make_shared<OpenCLInterface>();
   ReductionTable reduction_table(prime, genus, opencl);
   IsogenyCountStore isogeny_count_store;
   // note: we cannot convert between exponent blocks and additive blocks;

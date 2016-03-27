@@ -18,6 +18,7 @@
 #include <reduction_table.hh>
 #include <curve.hh>
 
+
 using namespace std;
 
 
@@ -138,25 +139,28 @@ count(
 
   // this also checks that the prime exponent is divisible by the one of the curve
   int poly_size = (int)this->poly_coeff_exponents.size();
-  vector<int> poly_coeffs_exponents = this->convert_poly_coeff_exponents(reduction_table);
+  vector<int> poly_coeff_exponents = this->convert_poly_coeff_exponents(reduction_table);
+
 
   auto opencl = reduction_table.opencl;
 
-  cl::Buffer buffer_poly_coeffs_exponents(
-               *opencl.context, CL_MEM_READ_ONLY,
+  cl::Buffer buffer_poly_coeff_exponents(
+               *opencl->context, CL_MEM_READ_ONLY,
                sizeof(int) * poly_size);
-  opencl.queue->enqueueWriteBuffer(buffer_poly_coeffs_exponents, CL_TRUE, 0,
-                           sizeof(int) * poly_size, poly_coeffs_exponents.data());
+  opencl->queue->enqueueWriteBuffer(buffer_poly_coeff_exponents, CL_TRUE, 0,
+                           sizeof(int) * poly_size, poly_coeff_exponents.data());
+
 
   cl::Buffer buffer_nmbs_unramified(
-               *opencl.context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
+               *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
   cl::Buffer buffer_nmbs_ramified(
-               *opencl.context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
+               *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
   cl::Buffer buffer_minimal_fields(
-               *opencl.context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
+               *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
 
-  cl::Kernel kernel_evaluation = cl::Kernel(*opencl.program_evaluation, "evaluate");
-  kernel_evaluation.setArg(0, buffer_poly_coeffs_exponents);
+
+  cl::Kernel kernel_evaluation(*opencl->program_evaluation, "evaluate");
+  kernel_evaluation.setArg(0, buffer_poly_coeff_exponents);
   kernel_evaluation.setArg(1, sizeof(int), &poly_size);
   kernel_evaluation.setArg(2, sizeof(int), &prime_power_pred);
   kernel_evaluation.setArg(3, *reduction_table.buffer_exponent_reduction_table);
@@ -166,7 +170,7 @@ count(
   kernel_evaluation.setArg(6, buffer_nmbs_ramified);
   kernel_evaluation.setArg(7, buffer_minimal_fields);
 
-  opencl.queue->enqueueNDRangeKernel( kernel_evaluation,
+  opencl->queue->enqueueNDRangeKernel( kernel_evaluation,
       cl::NullRange, cl::NDRange(reduction_table.prime_power_pred), cl::NullRange );
 
 
@@ -174,63 +178,72 @@ count(
   const int local_size_reduction = 32;
   const int nmb_groups_reduction = global_size_reduction / local_size_reduction;
 
-  cl::Buffer buffer_sums( *opencl.context, CL_MEM_WRITE_ONLY, sizeof(int) * nmb_groups_reduction);
+  cl::Buffer buffer_sums( *opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * nmb_groups_reduction);
 
 
-  auto kernel_reduction = make_unique<cl::Kernel>(*opencl.program_reduction, "reduction");
-  kernel_reduction->setArg(0, buffer_nmbs_unramified);
-  kernel_reduction->setArg(1, buffer_minimal_fields);
-  kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);
-  kernel_reduction->setArg(3, sizeof(int), &prime_exponent);
-  kernel_reduction->setArg(4, sizeof(int) * prime_exponent, nullptr);
-  kernel_reduction->setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
-  kernel_reduction->setArg(6, buffer_sums);
+  cl::Kernel kernel_reduction(*opencl->program_reduction, "reduction");
+  kernel_reduction.setArg(0, buffer_nmbs_unramified);
+  kernel_reduction.setArg(1, buffer_minimal_fields);
+  kernel_reduction.setArg(2, sizeof(int), &prime_power_pred);
+  kernel_reduction.setArg(3, sizeof(int), &prime_exponent);
+  kernel_reduction.setArg(4, sizeof(int) * prime_exponent, nullptr);
+  kernel_reduction.setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
+  kernel_reduction.setArg(6, buffer_sums);
 
-  opencl.queue->enqueueNDRangeKernel(
-      *kernel_reduction, cl::NullRange,
+  opencl->queue->enqueueNDRangeKernel(
+      kernel_reduction, cl::NullRange,
       cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
-  opencl.queue->finish();
+  opencl->queue->finish();
 
-  int * sums = new int[nmb_groups_reduction];
-  opencl.queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
-  for (size_t fx=1; fx<=reduction_table.prime_exponent; ++fx)
-    if ( reduction_table.prime_exponent % fx == 0 )
+
+  int * sums = new int[nmb_groups_reduction*prime_exponent];
+  opencl->queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
+  for (size_t fx=1; fx<=prime_exponent; ++fx)
+    if ( prime_exponent % fx == 0 )
       for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
         get<0>(this->nmb_points[fx]) += sums[ix];
 
+  delete sums;
 
-  kernel_reduction = make_unique<cl::Kernel>(*opencl.program_reduction, "reduction");
-  kernel_reduction->setArg(0, buffer_nmbs_ramified);
-  kernel_reduction->setArg(1, buffer_minimal_fields);
-  kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);
-  kernel_reduction->setArg(3, sizeof(int), &prime_exponent);
-  kernel_reduction->setArg(4, sizeof(int) * prime_exponent, nullptr);
-  kernel_reduction->setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
-  kernel_reduction->setArg(6, buffer_sums);
 
-  opencl.queue->enqueueNDRangeKernel(
-      *kernel_reduction, cl::NullRange,
+  kernel_reduction = cl::Kernel(*opencl->program_reduction, "reduction");
+  kernel_reduction.setArg(0, buffer_nmbs_ramified);
+  kernel_reduction.setArg(1, buffer_minimal_fields);
+  kernel_reduction.setArg(2, sizeof(int), &prime_power_pred);
+  kernel_reduction.setArg(3, sizeof(int), &prime_exponent);
+  kernel_reduction.setArg(4, sizeof(int) * prime_exponent, nullptr);
+  kernel_reduction.setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
+  kernel_reduction.setArg(6, buffer_sums);
+
+  opencl->queue->enqueueNDRangeKernel(
+      kernel_reduction, cl::NullRange,
       cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
-  opencl.queue->finish();
+  opencl->queue->finish();
 
-  opencl.queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
-  for (size_t fx=0; fx<reduction_table.prime_exponent; ++fx)
-    if ( reduction_table.prime_exponent % fx == 0 )
+
+  sums = new int[nmb_groups_reduction*prime_exponent];
+  opencl->queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
+  for (size_t fx=1; fx<=prime_exponent; ++fx)
+    if ( prime_exponent % fx == 0 )
       for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
         get<1>(this->nmb_points[fx]) += sums[ix];
 
+  delete sums;
+
 
   // point x = 0
-  if (poly_coeffs_exponents.front() == reduction_table.prime_power - 1) // constant coefficient is zero
+  if (poly_coeff_exponents.front() == reduction_table.prime_power - 1) // constant coefficient is zero
     get<1>(this->nmb_points[1])++;
-  else if (!(poly_coeffs_exponents.front() & 1)) // constant coefficient is even power of generator
-    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeffs_exponents.front()]+1]) += 2;
+  else if (!(poly_coeff_exponents.front() & 1)) // constant coefficient is even power of generator
+    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeff_exponents.front()]+1]) += 2;
+
 
   // point x = infty
   if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
     get<1>(this->nmb_points[1]) += 1;
-  else if (!(poly_coeffs_exponents.back() & 1)) // leading coefficient is odd power of generator
-    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeffs_exponents.back()]+1]) += 2;
+  else if (!(poly_coeff_exponents.back() & 1)) // leading coefficient is odd power of generator
+    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeff_exponents.back()]+1]) += 2;
+
 }
 
 map<unsigned int, tuple<int,int>>

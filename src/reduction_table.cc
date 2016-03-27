@@ -19,7 +19,7 @@ ReductionTable::
 ReductionTable(
     int prime,
     int prime_exponent,
-    OpenCLInterface & opencl
+    shared_ptr<OpenCLInterface> opencl
     ) :
   prime( prime ),
   prime_exponent( prime_exponent ),
@@ -34,19 +34,19 @@ ReductionTable(
       this->compute_minimal_field_table(prime, prime_exponent, prime_power);
 
   this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
-      *opencl.context, CL_MEM_READ_ONLY, sizeof(int) * this->exponent_reduction_table->size() );
+      *opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->exponent_reduction_table->size() );
   this->buffer_incrementation_table = make_shared<cl::Buffer>(
-      *opencl.context, CL_MEM_READ_ONLY, sizeof(int) * this->incrementation_table->size() );
+      *opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->incrementation_table->size() );
   this->buffer_minimal_field_table = make_shared<cl::Buffer>(
-      *opencl.context, CL_MEM_READ_ONLY, sizeof(int) * this->minimal_field_table->size() );
+      *opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->minimal_field_table->size() );
 
-  opencl.queue->enqueueWriteBuffer(*this->buffer_exponent_reduction_table, CL_TRUE, 0,
+  opencl->queue->enqueueWriteBuffer(*this->buffer_exponent_reduction_table, CL_TRUE, 0,
       sizeof(int)*this->exponent_reduction_table->size(),
       this->exponent_reduction_table->data() );
-  opencl.queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_TRUE, 0,
+  opencl->queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_TRUE, 0,
       sizeof(int)*this->incrementation_table->size(),
       this->incrementation_table->data() );
-  opencl.queue->enqueueWriteBuffer(*this->buffer_minimal_field_table, CL_TRUE, 0,
+  opencl->queue->enqueueWriteBuffer(*this->buffer_minimal_field_table, CL_TRUE, 0,
       sizeof(int)*this->minimal_field_table->size(),
       this->minimal_field_table->data() );
 }

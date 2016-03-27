@@ -105,7 +105,7 @@ main_worker(
   int prime_power = pow(prime, prime_exponent);
 
   auto enumeration_table = make_shared<FqElementTable>(prime, prime_exponent);
-  auto opencl = OpenCLInterface();
+  auto opencl = make_shared<OpenCLInterface>();
   ReductionTable reduction_table(prime, prime_exponent*genus, opencl);
 
 
