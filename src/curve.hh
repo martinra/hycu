@@ -21,7 +21,7 @@ class Curve
   public:
     Curve(shared_ptr<FqElementTable> table, const vector<int> poly_coeff_exponents);
 
-    int inline degree() const { return this->poly_coeff_exponents.size() + 1; };
+    int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
     int genus() const;
 
     bool has_squarefree_rhs();
@@ -31,8 +31,9 @@ class Curve
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
     void count(const ReductionTable & table);
+    bool has_counted(size_t fx) const { return (this->nmb_points.find(fx) != this->nmb_points.end()); };
 
-    map<unsigned int, tuple<int,int>> number_of_points() const;
+    const map<unsigned int, tuple<int,int>> & number_of_points() const { return this->nmb_points; };
     vector<tuple<int,int>> number_of_points(unsigned int max_prime_exponent) const;
 
     map<unsigned int, int> hasse_weil_offsets() const;

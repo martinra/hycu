@@ -158,17 +158,16 @@ count(
   cl::Buffer buffer_minimal_fields(
                *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
 
-
   cl::Kernel kernel_evaluation(*opencl->program_evaluation, "evaluate");
   kernel_evaluation.setArg(0, buffer_poly_coeff_exponents);
   kernel_evaluation.setArg(1, sizeof(int), &poly_size);
   kernel_evaluation.setArg(2, sizeof(int), &prime_power_pred);
   kernel_evaluation.setArg(3, *reduction_table.buffer_exponent_reduction_table);
   kernel_evaluation.setArg(4, *reduction_table.buffer_incrementation_table);
-  kernel_evaluation.setArg(4, *reduction_table.buffer_minimal_field_table);
-  kernel_evaluation.setArg(5, buffer_nmbs_unramified);
-  kernel_evaluation.setArg(6, buffer_nmbs_ramified);
-  kernel_evaluation.setArg(7, buffer_minimal_fields);
+  kernel_evaluation.setArg(5, *reduction_table.buffer_minimal_field_table);
+  kernel_evaluation.setArg(6, buffer_nmbs_unramified);
+  kernel_evaluation.setArg(7, buffer_nmbs_ramified);
+  kernel_evaluation.setArg(8, buffer_minimal_fields);
 
   opencl->queue->enqueueNDRangeKernel( kernel_evaluation,
       cl::NullRange, cl::NDRange(reduction_table.prime_power_pred), cl::NullRange );
@@ -178,26 +177,25 @@ count(
   const int local_size_reduction = 32;
   const int nmb_groups_reduction = global_size_reduction / local_size_reduction;
 
-  cl::Buffer buffer_sums( *opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * nmb_groups_reduction);
+  cl::Buffer buffer_sums(*opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * nmb_groups_reduction * prime_exponent);
 
+  auto kernel_reduction = make_unique<cl::Kernel>(*opencl->program_reduction, "reduce");
+  kernel_reduction->setArg(0, buffer_nmbs_unramified);
+  kernel_reduction->setArg(1, buffer_minimal_fields);
+  kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);
+  kernel_reduction->setArg(3, sizeof(int), &prime_exponent);
+  kernel_reduction->setArg(4, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
+  kernel_reduction->setArg(5, buffer_sums);
 
-  cl::Kernel kernel_reduction(*opencl->program_reduction, "reduction");
-  kernel_reduction.setArg(0, buffer_nmbs_unramified);
-  kernel_reduction.setArg(1, buffer_minimal_fields);
-  kernel_reduction.setArg(2, sizeof(int), &prime_power_pred);
-  kernel_reduction.setArg(3, sizeof(int), &prime_exponent);
-  kernel_reduction.setArg(4, sizeof(int) * prime_exponent, nullptr);
-  kernel_reduction.setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
-  kernel_reduction.setArg(6, buffer_sums);
-
-  opencl->queue->enqueueNDRangeKernel(
-      kernel_reduction, cl::NullRange,
-      cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
-  opencl->queue->finish();
+ opencl->queue->enqueueNDRangeKernel( *kernel_reduction,
+     cl::NullRange, cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
 
 
   int * sums = new int[nmb_groups_reduction*prime_exponent];
-  opencl->queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
+  opencl->queue->enqueueReadBuffer( buffer_sums,
+                                    CL_TRUE, 0, sizeof(int) * nmb_groups_reduction * prime_exponent, sums);
+  opencl->queue->finish();
+
   for (size_t fx=1; fx<=prime_exponent; ++fx)
     if ( prime_exponent % fx == 0 )
       for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
@@ -206,23 +204,23 @@ count(
   delete sums;
 
 
-  kernel_reduction = cl::Kernel(*opencl->program_reduction, "reduction");
-  kernel_reduction.setArg(0, buffer_nmbs_ramified);
-  kernel_reduction.setArg(1, buffer_minimal_fields);
-  kernel_reduction.setArg(2, sizeof(int), &prime_power_pred);
-  kernel_reduction.setArg(3, sizeof(int), &prime_exponent);
-  kernel_reduction.setArg(4, sizeof(int) * prime_exponent, nullptr);
-  kernel_reduction.setArg(5, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
-  kernel_reduction.setArg(6, buffer_sums);
+  kernel_reduction = make_unique<cl::Kernel>(*opencl->program_reduction, "reduce");
+  kernel_reduction->setArg(0, buffer_nmbs_ramified);
+  kernel_reduction->setArg(1, buffer_minimal_fields);
+  kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);
+  kernel_reduction->setArg(3, sizeof(int), &prime_exponent);
+  kernel_reduction->setArg(4, sizeof(int) * local_size_reduction * prime_exponent, nullptr);
+  kernel_reduction->setArg(5, buffer_sums);
 
-  opencl->queue->enqueueNDRangeKernel(
-      kernel_reduction, cl::NullRange,
-      cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
-  opencl->queue->finish();
+  opencl->queue->enqueueNDRangeKernel( *kernel_reduction,
+      cl::NullRange, cl::NDRange(global_size_reduction), cl::NDRange(local_size_reduction) );
 
 
   sums = new int[nmb_groups_reduction*prime_exponent];
-  opencl->queue->enqueueReadBuffer(buffer_sums, CL_TRUE, 0, sizeof(int)*nmb_groups_reduction, sums); 
+  opencl->queue->enqueueReadBuffer( buffer_sums,
+      CL_TRUE, 0, sizeof(int) * nmb_groups_reduction * prime_exponent, sums); 
+  opencl->queue->finish();
+
   for (size_t fx=1; fx<=prime_exponent; ++fx)
     if ( prime_exponent % fx == 0 )
       for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
@@ -232,40 +230,32 @@ count(
 
 
   // point x = 0
-  if (poly_coeff_exponents.front() == reduction_table.prime_power - 1) // constant coefficient is zero
-    get<1>(this->nmb_points[1])++;
-  else if (!(poly_coeff_exponents.front() & 1)) // constant coefficient is even power of generator
-    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeff_exponents.front()]+1]) += 2;
+  // if constant coefficient is zero
+  if (poly_coeff_exponents.front() == reduction_table.prime_power_pred)
+    for ( size_t fx=1; fx<=prime_exponent; ++fx)
+      ++get<1>(this->nmb_points[fx]);
+  // if constant coefficient is even power of generator
+  else if (!(poly_coeff_exponents.front() & 1)) {
+    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.front() / 2] + 1;
+    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
+      if ( prime_exponent % fx == 0 )
+        get<0>(this->nmb_points[fx]) += 2;
+  }
 
 
   // point x = infty
-  if ( this->degree() < 2*this->genus() + 2 ) // poly_coeffs ends with zero entry
-    get<1>(this->nmb_points[1]) += 1;
-  else if (!(poly_coeff_exponents.back() & 1)) // leading coefficient is odd power of generator
-    get<0>(this->nmb_points[(*reduction_table.minimal_field_table)[poly_coeff_exponents.back()]+1]) += 2;
-
-}
-
-map<unsigned int, tuple<int,int>>
-Curve::
-number_of_points()
-  const
-{
-  map<unsigned int, tuple<int,int>> nmb_points;
-
-  for ( auto & fx_it : this->nmb_points ) {
-    unsigned int fx = fx_it.first;
-    if ( fx % this->table->prime_exponent != 0 ) continue;
-    for ( auto & gx_it : this->nmb_points ) {
-      unsigned int gx = gx_it.first;
-      if ( fx % gx == 0 ) {
-        get<0>(nmb_points[fx]) += get<0>(this->nmb_points.at(gx));
-        get<1>(nmb_points[fx]) += get<1>(this->nmb_points.at(gx));
-      }
-    }
+  // if poly_coeffs ends with zero entry
+  if ( this->degree() < 2*this->genus() + 2 )
+    for ( size_t fx=1; fx<=prime_exponent; ++fx)
+      get<1>(this->nmb_points[fx]) += 1;
+  // f leading coefficient is odd power of generator
+  else if (!(poly_coeff_exponents.back() & 1)) {
+    // todo: make sure that curve enumeration does not put 0 as the leading coefficient
+    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.back() / 2] + 1;
+    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
+      if ( prime_exponent % fx == 0 )
+        get<0>(this->nmb_points[fx]) += 2;
   }
-
-  return nmb_points;
 }
 
 vector<tuple<int,int>>
@@ -276,14 +266,13 @@ number_of_points(
   const
 {
   unsigned int prime_exponent = this->table->prime_exponent;
-  auto nmb_points_map = this->number_of_points();
 
   vector<tuple<int,int>> nmb_points;
   nmb_points.reserve(max_prime_exponent/prime_exponent);
   for ( size_t fx=prime_exponent;
         fx<=max_prime_exponent;
         fx+=prime_exponent )
-    nmb_points.push_back(nmb_points_map[fx]);
+    nmb_points.push_back(this->nmb_points.at(fx));
 
   return nmb_points;
 }
@@ -299,11 +288,10 @@ hasse_weil_offsets()
     // todo: implement
   }
 
-  auto nmb_points = this->number_of_points();
   map<unsigned int, int> offsets;
-  for ( auto & pts_it : nmb_points )
+  for ( auto & pts_it : this->nmb_points )
     offsets[pts_it.first] =   pow(this->table->prime, pts_it.first) + 1
-                            - get<0>(pts_it.second) + get<1>(pts_it.second);
+                            - (get<0>(pts_it.second) + get<1>(pts_it.second));
 
   return offsets;
 }

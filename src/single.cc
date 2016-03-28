@@ -34,7 +34,7 @@ main(
   fp_to_exponent[0] = prime-1;
   for (unsigned int ex=0; ex<prime-1; ++ex) {
     fp_to_exponent[a] = ex;
-    a = (a*gen) % (prime-1);
+    a = (a*gen) % prime;
   }
 
   vector<int> poly_coeff_exponents;
@@ -51,11 +51,16 @@ main(
 
 
   auto opencl = make_shared<OpenCLInterface>();
-  ReductionTable reduction_table(prime, genus, opencl);
   auto curve = Curve(enumeration_table, poly_coeff_exponents);
-  curve.count(reduction_table);
+  // todo: copy this to block and mpi counts
+  for ( size_t fx=genus; fx>0; --fx )
+    if ( !curve.has_counted(fx) ) {
+      ReductionTable reduction_table(prime, fx, opencl);
+      curve.count(reduction_table);
+    }
 
     
+  cout << "number of points: ";
   for ( auto & pts : curve.number_of_points(genus) )
     cout << get<0>(pts) << " " << get<1>(pts) << ";  ";
   cout << endl;
@@ -63,15 +68,14 @@ main(
   if ( genus=2 ) {
     auto hasse_weil_offsets = curve.hasse_weil_offsets(); 
 
-    int a1 = hasse_weil_offsets[0];
-    int a2 = hasse_weil_offsets[1];
+    int a1 = hasse_weil_offsets[1];
+    int a2 = hasse_weil_offsets[2];
 
     int c3 = -a1;
     int c2 = (a1*a1-a2)/2;
 
     cout << "x^4 + " << c3 << "x^3 + " << c2 << "x^2 + ..." << endl;
   }
-
 
   return 0;
 }

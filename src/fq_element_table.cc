@@ -21,22 +21,24 @@ FqElementTable(
   fq_nmod_t gen;
   fq_nmod_init(gen, this->fq_ctx);
   fq_nmod_gen(gen, this->fq_ctx);
-  fq_nmod_reduce(gen, this->fq_ctx);
 
   fq_nmod_t a;
   fq_nmod_init(a, this->fq_ctx);
   fq_nmod_one(a, this->fq_ctx);
 
-  this->fq_elements.reserve(this->prime_power-1);
-  for (size_t ix=0; ix<this->prime_power-1; ++ix) {
-    fq_nmod_mul(a, a, gen, this->fq_ctx);
-
+  this->fq_elements.reserve(this->prime_power_pred);
+  for (size_t ix=0; ix<this->prime_power_pred; ++ix) {
     auto b = new fq_nmod_struct;
     fq_nmod_init(b, this->fq_ctx);
     fq_nmod_set(b, a, this->fq_ctx);
     fq_nmod_reduce(b, this->fq_ctx);
     this->fq_elements.push_back(b);
+
+    fq_nmod_mul(a, a, gen, this->fq_ctx);
   }
+
+  fq_nmod_clear(gen, this->fq_ctx);
+  fq_nmod_clear(a, this->fq_ctx);
 }
 
 FqElementTable::
