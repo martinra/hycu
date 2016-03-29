@@ -64,23 +64,33 @@ main(
     coefficient_bounds = parse_legacy_input(prime, degree, input);
   }
 
-
   fstream output(argv[4], ios_base::out);
+
 
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
   auto opencl = make_shared<OpenCLInterface>();
-  ReductionTable reduction_table(prime, genus, opencl);
   IsogenyCountStore isogeny_count_store;
-  // note: we cannot convert between exponent blocks and additive blocks;
-  // here we use exponent blocks
-  BlockIterator enumerator(coefficient_bounds);
 
-  for (; !enumerator.is_end(); enumerator.step() ) {
+  vector<ReductionTable> reduction_tables;
+  set<size_t> fx_divisors;
+  for ( size_t fx=genus; fx>0; --fx )
+    if ( fx_divisors.find(fx) != fx_divisors.end() ) {
+      reduction_tables.emplace_back(prime, fx, opencl);
+      for ( size_t gx=1; gx<=fx; ++gx )
+        if ( fx % gx == 0 )
+          fx_divisors.insert(gx);
+    }
+
+
+  for ( BlockIterator enumerator(coefficient_bounds);
+        !enumerator.is_end();
+        enumerator.step() ) {
     auto poly_coeff_exponents = enumerator.as_position();
     Curve curve(enumeration_table, poly_coeff_exponents);
     if ( !curve.has_squarefree_rhs() ) continue;
 
-    curve.count(reduction_table);
+    for ( auto & table : reduction_tables )
+      curve.count(table);
     isogeny_count_store.register_curve(curve);
   }
 
