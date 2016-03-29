@@ -2,6 +2,7 @@ build/
 code_jonas/
 test_data_jonas/
 test/
-block
+legacy
 mpi
 single
+*.*.swp
