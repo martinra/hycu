@@ -1,0 +1,27 @@
+Import("env")
+
+
+libs_test = [
+  "boost_unit_test_framework"
+  ]
+
+
+env_test = env.Clone()
+env_test.Append(
+    LIBS     = libs_test
+  )
+
+
+sources_test = [
+    "small_curves.cc"
+  ]
+
+Import("objs_curve")
+
+
+test = env_test.Program(
+    "test"
+  , ["test.cc"] + sources_test + objs_curve
+  )
+
+Export("test")

@@ -1,0 +1,98 @@
+Import("env")
+
+
+include_path = [
+    env["root_dir"] + "/src"
+  , "/usr/include"
+  , "/usr/include/flint"
+  , "/usr/include/yaml-cpp"
+  ]
+
+lib_path = [
+    "/usr/lib"
+  , "/usr/lib64/beignet"
+  ]
+
+libs = [
+    "cl"
+  , "flint"
+  , "gmp"
+  , "yaml-cpp"
+  ]
+
+
+include_path_mpi = [
+    "/usr/include/openmpi-x86_64"
+  ]
+
+lib_path_mpi = [
+    "/usr/lib64/openmpi/lib"
+  ]
+
+libs_mpi = [
+    "boost_mpi"
+  , "boost_serialization"
+  , "mpi"
+  , "mpi_cxx"
+  ]
+
+linkflags_mpi = [
+    "-Wl,-rpath,/usr/lib64/openmpi/lib"
+  , "-Wl,--enable-new-dtags"
+  ]
+
+
+sources_curve = [
+    "curve.cc"
+  , "fq_element_table.cc"
+  , "opencl_interface.cc"
+  , "reduction_table.cc"
+  , "block_iterator.cc"
+  , "curve_iterator.cc"
+  , "single_curve_fp.cc"
+  ]
+
+sources_legacy = [
+    "isogeny_count_store.cc"
+  ]
+
+sources_mpi = [
+    "isogeny_representative_store.cc"
+  , "mpi_worker_pool.cc"
+  ]
+
+
+env.Append(
+    CXXFLAGS = "-std=c++14 -O2 -pthread"
+  , CPPPATH  = include_path
+  , LIBPATH  = lib_path
+  , LIBS     = libs
+  )
+## TODO: append
+env["ENV"]["LD_LIBRARY_PATH"] = \
+   "/usr/lib64/beignet:/usr/local/lib" + env["ENV"].get("LD_LIBRARY_PATH", "")
+
+objs_curve = [ env.Object(s) for s in sources_curve ]
+Export("objs_curve")
+
+
+env.Program(
+    "single"
+  , [ "single.cc" ] + objs_curve
+  )
+
+env.Program(
+    "legacy"
+  , [ "legacy.cc" ] + objs_curve + sources_legacy
+  )
+
+env_mpi = env.Clone()
+env_mpi["CPPPATH"]   += include_path_mpi
+env_mpi["LIBPATH"]   += lib_path_mpi
+env_mpi["LIBS"]      += libs_mpi
+env_mpi["LINKFLAGS"]  = linkflags_mpi
+
+env_mpi.Program(
+    "mpi"
+  , [ "mpi.cc" ] + objs_curve + sources_mpi
+  )
