@@ -1,6 +1,7 @@
 #ifndef _H_CURVE
 #define _H_CURVE
 
+#include <map>
 #include <memory>
 #include <vector>
 #include <tuple>
