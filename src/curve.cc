@@ -406,7 +406,7 @@ rhs_nmod_polynomial()
     throw;
   }
 
-  nmod_poly_struct* poly;
+  auto poly = new nmod_poly_struct;
   nmod_poly_init2_preinv( poly, this->table->prime, this->table->primeinv_flint,
                           this->poly_coeff_exponents.size() );
 
