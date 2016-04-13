@@ -22,6 +22,10 @@ class Curve
   public:
     Curve(shared_ptr<FqElementTable> table, const vector<int> poly_coeff_exponents);
 
+    unsigned int prime() const { return this->table->prime; };
+    unsigned int prime_exponent() const { return this->table->prime_exponent; };
+    unsigned int prime_power() const { return this->table->prime_power; };
+
     int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
     int genus() const;
 
