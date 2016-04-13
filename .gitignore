@@ -1,5 +1,6 @@
 build/
 build_test/
+build_debug/
 bin/
 code_jonas/
 test_data/
