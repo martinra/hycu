@@ -1,6 +1,10 @@
 Import("env")
 
 
+include_path_test = [
+    env["root_dir"] + "/test"
+]
+
 libs_test = [
   "boost_unit_test_framework"
   ]
@@ -8,7 +12,8 @@ libs_test = [
 
 env_test = env.Clone()
 env_test.Append(
-    LIBS     = libs_test
+    CPPPATH  = include_path_test
+  , LIBS     = libs_test
   )
 
 
