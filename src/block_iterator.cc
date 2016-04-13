@@ -31,6 +31,7 @@ BlockIterator(
   length_( length )
 {
   // note: behavior of indices that are not coupled, nor have a set of block attached is undefined
+  // note: none of the blocks, sets, and dependent sets may be empty
 
   this->initialize_blocks(blocks, package_size);
 
@@ -38,11 +39,10 @@ BlockIterator(
   for ( auto & sets_it : this->sets )
     this->update_order_sets.push_back(sets_it.first);
 
-  // note: dependent sets may only depend on blocks and sets
+  // note: dependent sets may only depend on blocks (if package_size==1) and sets
   this->dependent_sets = move(dependent_sets);
   for ( auto & sets_it : this->dependent_sets )
     this->update_order_dependend_sets.push_back(sets_it.first);
-
 
   this->set_initial_position();
 }
@@ -54,33 +54,33 @@ initialize_blocks(
     unsigned int package_size
     )
 {
-  unsigned int min_remainder = package_size;
-  size_t min_remainder_ix = 0;
+  double max_efficiency = 1;
+  size_t max_efficiency_ix = 0;
 
-  for (size_t ix=0; ix<this->length_; ++ix) {
-    auto blocks_it = blocks.find(ix);
+  for ( auto & blocks_it : blocks ) {
+    int lbd, ubd;
+    tie(lbd,ubd) = blocks_it.second;
 
-    if ( blocks_it != blocks.end() ) {
-      int lbd, ubd;
-      tie(lbd,ubd) = blocks_it->second;
-      if ( lbd >= ubd ) {
-        cerr << "BlockIterator: block lower and upper bound must differ by at least 1" << endl;
-        throw;
-      }
-
-      this->blocks[ix] = make_tuple(lbd, ubd, 1);
-      this->update_order_blocks.push_back(ix);
-
-      if ( (ubd - lbd) % package_size < min_remainder ) {
-        min_remainder = (ubd - lbd) % package_size;
-        min_remainder_ix = this->update_order_blocks.size() - 1;
-      }
+    if ( lbd >= ubd ) {
+      cerr << "BlockIterator: block lower and upper bound must differ by at least 1" << endl;
+      throw;
     }
+
+    this->blocks[blocks_it.first] = make_tuple(lbd, ubd, 1);
+    this->update_order_blocks.push_back(blocks_it.first);
+
+    unsigned int nmb_iterations = (ubd - lbd - 1) / package_size + 1;
+    double efficiency = (double)(ubd - lbd) / (double)nmb_iterations;
+    if ( efficiency > max_efficiency ) {
+      max_efficiency = efficiency;
+      max_efficiency_ix = this->update_order_blocks.size() - 1;
+    }
+
   }
 
-  if ( min_remainder_ix != 0 ) {
-    size_t tmp = this->update_order_blocks[min_remainder_ix];
-    this->update_order_blocks[min_remainder_ix] = this->update_order_blocks.front();
+  if ( max_efficiency_ix != 0 ) {
+    size_t tmp = this->update_order_blocks[max_efficiency_ix];
+    this->update_order_blocks[max_efficiency_ix] = this->update_order_blocks.front();
     this->update_order_blocks.front() = tmp;
   }
   if ( !this->update_order_blocks.empty() )
