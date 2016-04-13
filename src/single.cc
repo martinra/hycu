@@ -49,17 +49,6 @@ main(
     cout << o << ";  ";
   cout << endl;
 
-  if ( curve->genus() == 2 ) {
-    auto hasse_weil_offsets = curve->hasse_weil_offsets(); 
-
-    int a1 = hasse_weil_offsets[1];
-    int a2 = hasse_weil_offsets[2];
-
-    int c3 = -a1;
-    int c2 = (a1*a1-a2)/2;
-
-    cout << "x^4 + " << c3 << "x^3 + " << c2 << "x^2 + ..." << endl;
-  }
 
   return 0;
 }
