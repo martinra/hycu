@@ -1,4 +1,3 @@
-#define BOOST_TEST_MODULE SmallCurves
 #include <boost/test/unit_test.hpp>
 
 #include <tuple>

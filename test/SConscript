@@ -12,16 +12,14 @@ env_test.Append(
   )
 
 
-sources_test = [
-    "small_curves.cc"
-  ]
+sources_test = Glob("./*.cc")
 
 Import("objs_curve")
 
 
 test = env_test.Program(
     "test"
-  , ["test.cc"] + sources_test + objs_curve
+  , sources_test + objs_curve
   )
 
 Export("test")
