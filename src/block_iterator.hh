@@ -42,7 +42,7 @@ class BlockIterator
     void set_initial_position();
     const BlockIterator & step_(int step_type, size_t step_ix);
 
-    const size_t length_;
+    size_t length_;
 
     vector<size_t> update_order_blocks;
     vector<size_t> update_order_sets;
