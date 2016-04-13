@@ -29,9 +29,15 @@ main(
   auto curve = single_curve_fp(prime, poly_coeffs);
 
     
+  cout << "genus: " << curve->genus() << ", degree: " << curve->degree();
+  cout << " / F_" << curve->prime_power() << endl;
   cout << "number of points: ";
   for ( auto & pts : curve->number_of_points(curve->genus()) )
     cout << get<0>(pts) << " " << get<1>(pts) << ";  ";
+  cout << endl;
+  cout << "hasse-weil offsets: ";
+  for ( auto & o : curve->hasse_weil_offsets(curve->genus()) )
+    cout << o << ";  ";
   cout << endl;
 
   if ( curve->genus() == 2 ) {
