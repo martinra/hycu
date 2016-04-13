@@ -31,12 +31,21 @@ main(
     
   cout << "genus: " << curve->genus() << ", degree: " << curve->degree();
   cout << " / F_" << curve->prime_power() << endl;
+
+  cout << "coefficient exponents: ";
+  auto coeff_exponents = curve->convert_poly_coeff_exponents(
+      ReductionTable(prime, 1, make_shared<OpenCLInterface>()) );
+  for ( auto const& c : coeff_exponents )
+    cout << c << " ";
+  cout << endl;
+
   cout << "number of points: ";
-  for ( auto & pts : curve->number_of_points(curve->genus()) )
+  for ( auto const& pts : curve->number_of_points(curve->genus()) )
     cout << get<0>(pts) << " " << get<1>(pts) << ";  ";
   cout << endl;
+
   cout << "hasse-weil offsets: ";
-  for ( auto & o : curve->hasse_weil_offsets(curve->genus()) )
+  for ( auto const& o : curve->hasse_weil_offsets(curve->genus()) )
     cout << o << ";  ";
   cout << endl;
 
