@@ -26,8 +26,8 @@ class Curve
     int genus() const;
 
     bool has_squarefree_rhs();
-    nmod_poly_struct* rhs_nmod_polynomial() const;
-    fq_nmod_poly_struct* rhs_polynomial() const;
+    nmod_poly_struct rhs_nmod_polynomial() const;
+    fq_nmod_poly_struct rhs_polynomial() const;
 
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 

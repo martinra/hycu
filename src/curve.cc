@@ -70,16 +70,16 @@ Curve::
 has_squarefree_rhs()
 {
   if ( this->table->is_prime_field() ) {
-    nmod_poly_struct * poly = this->rhs_nmod_polynomial();
-    bool is_squarefree = nmod_poly_is_squarefree(poly);
-    nmod_poly_clear(poly);
+    auto poly = this->rhs_nmod_polynomial();
+    bool is_squarefree = nmod_poly_is_squarefree(&poly);
+    nmod_poly_clear(&poly);
 
     return is_squarefree;
   }
   else {
-    fq_nmod_poly_struct * poly = this->rhs_polynomial();
-    bool is_squarefree = fq_nmod_poly_is_squarefree(poly, this->table->fq_ctx);
-    fq_nmod_poly_clear(poly, this->table->fq_ctx);
+    auto poly = this->rhs_polynomial();
+    bool is_squarefree = fq_nmod_poly_is_squarefree(&poly, this->table->fq_ctx);
+    fq_nmod_poly_clear(&poly, this->table->fq_ctx);
 
     return is_squarefree;
   }
@@ -363,32 +363,32 @@ ramification_type()
 
   ramifications.clear();
   if ( this->table->is_prime_field() ) {
-    nmod_poly_struct* poly = this->rhs_nmod_polynomial();
+    auto poly = this->rhs_nmod_polynomial();
     nmod_poly_factor_t poly_factor;
     nmod_poly_factor_init(poly_factor);
-    nmod_poly_factor(poly_factor, poly);
+    nmod_poly_factor(poly_factor, &poly);
 
     for (size_t ix=0; ix<poly_factor->num; ++ix)
       for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
         ramifications.push_back(nmod_poly_degree(poly_factor->p + ix));
 
     nmod_poly_factor_clear(poly_factor);
-    nmod_poly_clear(poly);
+    nmod_poly_clear(&poly);
   }
   else {
-    fq_nmod_poly_struct* poly = this->rhs_polynomial();
+    auto poly = this->rhs_polynomial();
     fq_nmod_t lead;
     fq_nmod_init(lead, this->table->fq_ctx);
     fq_nmod_poly_factor_t poly_factor;
     fq_nmod_poly_factor_init(poly_factor, this->table->fq_ctx);
-    fq_nmod_poly_factor(poly_factor, lead, poly, this->table->fq_ctx);
+    fq_nmod_poly_factor(poly_factor, lead, &poly, this->table->fq_ctx);
 
     for (size_t ix=0; ix<poly_factor->num; ++ix)
       for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
         ramifications.push_back(fq_nmod_poly_degree(poly_factor->poly + ix, this->table->fq_ctx));
 
     fq_nmod_poly_factor_clear(poly_factor, this->table->fq_ctx);
-    fq_nmod_poly_clear(poly, this->table->fq_ctx);
+    fq_nmod_poly_clear(&poly, this->table->fq_ctx);
     fq_nmod_clear(lead, this->table->fq_ctx);
   }
 
@@ -396,7 +396,7 @@ ramification_type()
   return ramifications;
 }
 
-nmod_poly_struct*
+nmod_poly_struct
 Curve::
 rhs_nmod_polynomial()
   const
@@ -406,26 +406,26 @@ rhs_nmod_polynomial()
     throw;
   }
 
-  auto poly = new nmod_poly_struct;
-  nmod_poly_init2_preinv( poly, this->table->prime, this->table->primeinv_flint,
+  nmod_poly_struct poly;
+  nmod_poly_init2_preinv( &poly, this->table->prime, this->table->primeinv_flint,
                           this->poly_coeff_exponents.size() );
 
   for (long ix=0; ix<this->poly_coeff_exponents.size(); ++ix)
-    nmod_poly_set_coeff_ui(poly, ix, this->table->at_nmod(this->poly_coeff_exponents[ix]));
+    nmod_poly_set_coeff_ui(&poly, ix, this->table->at_nmod(this->poly_coeff_exponents[ix]));
 
   return poly;
 }
 
-fq_nmod_poly_struct*
+fq_nmod_poly_struct
 Curve::
 rhs_polynomial()
   const
 {
-  fq_nmod_poly_struct* poly;
-  fq_nmod_poly_init2( poly, this->poly_coeff_exponents.size(), this->table->fq_ctx );
+  fq_nmod_poly_struct poly;
+  fq_nmod_poly_init2( &poly, this->poly_coeff_exponents.size(), this->table->fq_ctx );
 
   for (long ix=0; ix<this->poly_coeff_exponents.size(); ++ix)
-    fq_nmod_poly_set_coeff( poly, ix, this->table->at(this->poly_coeff_exponents[ix]), this->table->fq_ctx );
+    fq_nmod_poly_set_coeff( &poly, ix, this->table->at(this->poly_coeff_exponents[ix]), this->table->fq_ctx );
 
   return poly;
 }
