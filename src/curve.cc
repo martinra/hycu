@@ -321,45 +321,44 @@ Curve::
 ramification_type()
   const
 {
-  unsigned int prime_exponent = this->table->prime_exponent;
   vector<int> ramifications;
+
+  // try to compute ramification from point counts
+
   unsigned int ramification_sum = 0;
+  map<unsigned int, unsigned int> nmb_ramified_points_from_lower;
+  for ( unsigned int fx = 1; fx < this->degree(); ++fx )
+    nmb_ramified_points_from_lower[fx] = 0;
 
-  size_t fx;
-  for ( fx=1; fx<prime_exponent; ++fx) {
-    if ( prime_exponent % fx != 0 ) continue;
-
-    auto nmb_points_it = this->nmb_points.find(fx);
+  unsigned int fx;
+  for ( fx = 1; fx < this->degree(); ++fx ) {
+    auto nmb_points_it = this->nmb_points.find(fx*this->prime_exponent());
     if ( nmb_points_it != this->nmb_points.end() ) {
-      ramification_sum += get<1>(nmb_points_it->second);
-      for ( size_t jx=0; jx < get<1>(nmb_points_it->second); ++jx )
-        ramifications.push_back(1);
+      auto nmb_ramified_points_new =
+          get<1>(nmb_points_it->second) - nmb_ramified_points_from_lower[fx];
+
+      ramification_sum += nmb_ramified_points_new;
+      for ( size_t jx = 0; jx < nmb_ramified_points_new; jx += fx )
+        ramifications.push_back(fx);
+
+      for ( size_t gx = fx; gx < this->degree(); gx += fx )
+        nmb_ramified_points_from_lower[gx] += nmb_ramified_points_new;
     }
     else
       break;
   }
-  if ( fx == prime_exponent ) {
-    for ( fx = prime_exponent;
-          fx < this->degree() * prime_exponent;
-          fx += prime_exponent ) {
-      auto nmb_points_it = this->nmb_points.find(fx);
-      if ( nmb_points_it != this->nmb_points.end() ) {
-        ramification_sum += get<1>(nmb_points_it->second);
-        for ( size_t jx=0; jx < get<1>(nmb_points_it->second) / prime_exponent; ++jx )
-          ramifications.push_back(fx / prime_exponent);
-      }
-      else
-        break;
-    }
-  }
+  
 
   int ramification_difference = this->degree() - ramification_sum;
-  if ( ramification_difference < 2 * (fx / prime_exponent) ) {
+  if ( ramification_difference < 2*fx ) {
     if ( ramification_difference != 0 )
       ramifications.push_back(ramification_difference);
     return ramifications;
   }
 
+
+  // if ramification can not be computed from available point count,
+  // factor the right hand side polynomial
 
   ramifications.clear();
   if ( this->table->is_prime_field() ) {
