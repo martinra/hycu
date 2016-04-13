@@ -1,3 +1,5 @@
+#include <set>
+
 #include <curve_iterator.hh>
 
 
@@ -10,49 +12,62 @@ CurveIterator(
 {
   for ( int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
     // next to hightest coefficient is zero
-    // two consecutive coefficients are the same
+    // two consecutive coefficients depend on each other
     // and vary between a square and non-square
     
     // ix is exponent of the second non-zero coefficient
-    for (size_t ix=degree-2; ix>0; --ix) {
+    for ( int ix=degree-2; ix>=0; --ix ) {
       // jx is the exponent of the non-zero coefficient thereafter
-      for (size_t jx=ix-1; jx>=-1; --jx) {
+      for ( int jx=ix-1; jx>=-1; --jx ) {
         map<size_t, tuple<int,int>> blocks;
         map<size_t, vector<int>> sets;
         map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets;
 
-        // highest coefficient is non-zero
-        // todo: implement non-zero-bounds
+        // highest coefficient is nonzero
         blocks[degree] = table.block_non_zero();
-        // next to highest coefficient is zero
-        // todo: implement zero-set
-        sets[degree-1] = {table.zero_index()};
+        for ( size_t kx=degree-1; kx>ix; --kx )
+          sets[kx] = {table.zero_index()};
 
-        // where the iteration set of one index depends on the next one
+        // second nonzero coefficient is determined up to squaring
         sets[ix] = table.power_coset_representatives(2);
+        for ( int kx=ix-1; kx>jx; --kx )
+          sets[kx] = {table.zero_index()};
 
-
-        if (jx != -1) {
+        // the third nonzero coefficient is coupled with the second one
+        if ( jx != -1 ) {
+          // its possible values depend on the difference of exponents to the
+          // previous one
           auto cosets = table.power_coset_representatives(ix-jx);
 
           map<int, vector<int>> coset_products;
-          vector<int> coset_product;
-          coset_product.reserve(cosets.size());
+          set<int> coset_product;
 
-          for ( int a : sets[ix] ) {
+          for ( size_t sx=0; sx<sets[ix].size(); ++sx ) {
+            coset_product.clear();
             for ( int b : cosets )
-              coset_product.push_back(table.reduce_index(a+b));
-            coset_products[ix] = coset_product;
+              coset_product.insert(table.reduce_index(sets[ix][sx]+b));
+            coset_products[sx] = vector<int>(coset_product.cbegin(), coset_product.cend());
           }
-          dependent_sets[jx] = make_tuple(ix,coset_products);
+          dependent_sets[jx] = make_tuple(ix, coset_products);
         }
 
-        for (size_t kx = jx-1; kx>=0; --kx)
+        // remaining coefficients are free to vary
+        for ( int kx = jx-1; kx>=0; --kx )
           blocks[kx] = table.block_complete();
 
         this->enumerators.emplace_back(
             BlockIterator(degree+1, blocks, package_size, sets, dependent_sets) );
       }
+    }
+
+    { // the case of x^degree
+      map<size_t, vector<int>> sets;
+      sets[degree] = table.power_coset_representatives(2);
+      for (int kx=degree-1; kx>=0; --kx)
+        sets[kx] = {table.zero_index()};
+
+      this->enumerators.emplace_back(
+              BlockIterator(degree+1, {}, package_size, sets, {}) );
     }
   }
 
