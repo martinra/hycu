@@ -14,10 +14,6 @@
 using namespace std;
 
 
-vector<tuple<int,int>> parse_input(int prime, int genus, istream& stream);
-vector<tuple<int,int>> parse_legacy_input(int prime, int genus, istream& stream);
-
-
 int
 main(
     int argc,
@@ -25,12 +21,13 @@ main(
     )
 {
   if (argc != 5) {
-    cerr << "Four arguments, prime, genus, input, and output file must be given" << endl;
+    cerr << "Four arguments, prime, degree, input, and output file must be given" << endl;
     exit(1);
   }
 
   int prime = atoi(argv[1]);
   if (prime < 0) throw;
+  auto fq_table = make_shared<FqElementTable>(prime, 1);
 
   int degree = atoi(argv[2]);
   if (degree < 0) throw;
@@ -38,7 +35,7 @@ main(
 
   auto input_name = string(argv[3]);
   vector<tuple<int,int>> coefficient_bounds;
-  if (input_name.length() < 5 || input_name.substr(input_name.length()-5,5) == ".yaml") {
+  if (input_name.length() > 5 && input_name.substr(input_name.length()-5,5) == ".yaml") {
     YAML::Node input = YAML::LoadFile(input_name);
     for (size_t ix = 0; ix<=degree; ++ix) {
       int lbd, ubd;
@@ -59,83 +56,70 @@ main(
       }
       coefficient_bounds.push_back(make_tuple(lbd,ubd));
     }
-  } else {
-    fstream input(input_name, ios_base::in);
-    coefficient_bounds = parse_legacy_input(prime, degree, input);
   }
+  else {
+    coefficient_bounds.resize(degree+1);
+    cerr << "reading bounds" << endl;
+
+    fstream input(input_name, ios_base::in);
+    string line, nmb;
+
+    while ( getline(input, line) ) {
+      cerr << "reading line: " << line << endl;
+      stringstream line_stream(line);
+
+      getline(line_stream, nmb, ' ');
+      int ix = atoi(nmb.c_str());
+
+      if (ix > degree) {
+        cerr << "indices in input file too large" << endl;
+        throw;
+      }
+
+      getline(line_stream, nmb, ' ');
+      int lbd = atoi(nmb.c_str());
+
+      getline(line_stream, nmb, ' ');
+      int ubd = atoi(nmb.c_str()) + 1;
+
+      cerr << "evaluated to: " << ix << " " << lbd << " " << ubd << endl;
+      if (lbd >= ubd) {
+        cerr << "lower bound must be less than or equal to upper one " << ix <<  " " << lbd << " " << ubd << endl;
+        throw;
+      }
+
+      coefficient_bounds[ix] = make_tuple(lbd, ubd);
+    }
+
+  for ( auto & bd : coefficient_bounds )
+    if ( get<0>(bd) == 0 && get<1>(bd) == 0 )
+      bd = make_tuple(fq_table->zero_index(), fq_table->zero_index() + 1);
+  }
+
+  cerr << "read data" << endl;
+  for ( auto const& bd : coefficient_bounds )
+    cerr << get<0>(bd) << " " << get<1>(bd) << " ; ";
+  cerr << endl;
 
   fstream output(argv[4], ios_base::out);
 
 
-  auto enumeration_table = make_shared<FqElementTable>(prime, 1);
   auto opencl = make_shared<OpenCLInterface>();
   IsogenyCountStore isogeny_count_store;
 
   vector<ReductionTable> reduction_tables;
-  set<size_t> fx_divisors;
-  for ( size_t fx=genus; fx>0; --fx )
-    if ( fx_divisors.find(fx) != fx_divisors.end() ) {
-      reduction_tables.emplace_back(prime, fx, opencl);
-      for ( size_t gx=1; gx<=fx; ++gx )
-        if ( fx % gx == 0 )
-          fx_divisors.insert(gx);
-    }
+  for ( size_t fx=genus; fx>genus/2; --fx )
+    reduction_tables.emplace_back(prime, fx, opencl);
 
 
-  for ( BlockIterator enumerator(coefficient_bounds);
-        !enumerator.is_end();
-        enumerator.step() ) {
-    auto poly_coeff_exponents = enumerator.as_position();
-    Curve curve(enumeration_table, poly_coeff_exponents);
+  for ( BlockIterator iter(coefficient_bounds); !iter.is_end(); iter.step() ) {
+    Curve curve(fq_table, iter.as_position());
     if ( !curve.has_squarefree_rhs() ) continue;
-
-    for ( auto & table : reduction_tables )
-      curve.count(table);
+    for ( auto & table : reduction_tables ) curve.count(table);
     isogeny_count_store.register_curve(curve);
   }
 
   isogeny_count_store.output_legacy(output);
 
   return 0;
-}
-
-vector<tuple<int,int>>
-parse_legacy_input(
-    int prime,
-    int degree,
-    istream& stream
-    )
-{
-  vector<tuple<int,int>> coeff_bounds;
-  coeff_bounds.resize(degree+1, make_tuple(0,prime));
-
-  string line;
-  string nmb;
-
-  while ( getline(stream, line) ) {
-    stringstream line_stream(line);
-
-    getline(line_stream, nmb, ' ');
-    int ix = atoi(nmb.c_str());
-
-    if (ix > degree) {
-      cerr << "indices in input file too large" << endl;
-      throw;
-    }
-
-    getline(line_stream, nmb, ' ');
-    int lbd = atoi(nmb.c_str());
-
-    getline(line_stream, nmb, ' ');
-    int ubd = atoi(nmb.c_str()) + 1;
-
-    if (lbd >= ubd) {
-      cerr << "lower bound must be less than or equal to upper one " << ix <<  " " << lbd << " " << ubd << endl;
-      throw;
-    }
-
-    coeff_bounds[ix] = make_tuple(lbd, ubd);
-  }
-
-  return coeff_bounds;
 }
