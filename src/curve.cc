@@ -50,7 +50,7 @@ Curve(
 {
   this->poly_coeff_exponents = move(poly_coeff_exponents);
 
-  while (this->poly_coeff_exponents.back() == 0)
+  while ( this->poly_coeff_exponents.back() == this->table->zero_index() )
     this->poly_coeff_exponents.pop_back();
 }
 
