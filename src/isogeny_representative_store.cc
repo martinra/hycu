@@ -10,7 +10,7 @@ register_curve(
 {
   auto store_key =
     make_tuple( curve.ramification_type(),
-                curve.hasse_weil_offsets(curve.table->prime_exponent * curve.genus()) );
+                curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) );
   auto store_it = this->store.find(store_key);
   if ( store_it == this->store.end() )
     this->store[store_key] = curve.poly_coeff_exponents;
