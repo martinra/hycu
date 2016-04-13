@@ -66,7 +66,7 @@ power_coset_representatives(
     )
   const
 {
-  // n = n_gcd(n, this->prime_power-1);
+  n = n_gcd(n, this->prime_power_pred);
 
   vector<int> cosets;
   cosets.reserve(n);
