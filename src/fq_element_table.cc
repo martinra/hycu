@@ -26,7 +26,7 @@ FqElementTable(
   fq_nmod_init(a, this->fq_ctx);
   fq_nmod_one(a, this->fq_ctx);
 
-  this->fq_elements.reserve(this->prime_power_pred);
+  this->fq_elements.reserve(this->prime_power);
   for (size_t ix=0; ix<this->prime_power_pred; ++ix) {
     auto b = new fq_nmod_struct;
     fq_nmod_init(b, this->fq_ctx);
@@ -35,6 +35,14 @@ FqElementTable(
     this->fq_elements.push_back(b);
 
     fq_nmod_mul(a, a, gen, this->fq_ctx);
+  }
+
+  { // the case of b == 0
+    auto b = new fq_nmod_struct;
+    fq_nmod_init(b, this->fq_ctx);
+    fq_nmod_zero(b, this->fq_ctx);
+    fq_nmod_reduce(b, this->fq_ctx);
+    this->fq_elements.push_back(b);
   }
 
   fq_nmod_clear(gen, this->fq_ctx);
