@@ -104,19 +104,13 @@ main_worker(
 
   int prime_power = pow(prime, prime_exponent);
 
-  auto enumeration_table = make_shared<FqElementTable>(prime, prime_exponent);
+
+  auto fq_table = make_shared<FqElementTable>(prime, prime_exponent);
   auto opencl = make_shared<OpenCLInterface>();
 
   vector<ReductionTable> reduction_tables;
-  set<size_t> fx_divisors;
-  for ( size_t fx=genus; fx>0; --fx )
-    if ( fx_divisors.find(fx) != fx_divisors.end() ) {
-      reduction_tables.emplace_back(prime, fx, opencl);
-      for ( size_t gx=1; gx<=fx; ++gx )
-        if ( fx % gx == 0 )
-          fx_divisors.insert(gx);
-    }
-  ReductionTable reduction_table(prime, prime_exponent*genus, opencl);
+  for ( size_t fx=genus; fx>genus/2; --fx )
+    reduction_tables.emplace_back(prime, fx, opencl);
 
 
   while (true) {
@@ -137,13 +131,11 @@ main_worker(
     mpi_world.recv(0, 0, bounds);
     
     IsogenyRepresentativeStore isogeny_representative_store;
-    for ( BlockIterator enumerator(bounds);
-          !enumerator.is_end();
-          enumerator.step() ) {
-      Curve curve(enumeration_table, enumerator.as_position());
-      for ( auto & table : reduction_tables )
-        curve.count(table);
+    for ( BlockIterator iter(bounds); !iter.is_end(); iter.step() ) {
+      Curve curve(fq_table, iter.as_position());
+      for ( auto & table : reduction_tables ) curve.count(table);
       isogeny_representative_store.register_curve(curve);
+
      // todo: use this to sign off computation, and assert that process was not killed
      // mpi::send(0, 1, bounds);
     }
