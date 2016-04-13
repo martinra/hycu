@@ -112,17 +112,17 @@ as_position()
 {
   auto position = this->position;
 
-  for ( auto & set_it : this->sets ) {
-    size_t ix = set_it.first;
-    position[ix] = set_it.second[position[ix]];
-  }
-
   for ( auto & set_it : this->dependent_sets ) {
     size_t ix = set_it.first;
     size_t jx = get<0>(set_it.second);
     auto & map_set = get<1>(set_it.second);
     
     position[ix] = map_set[position[jx]][position[ix]];
+  }
+
+  for ( auto & set_it : this->sets ) {
+    size_t ix = set_it.first;
+    position[ix] = set_it.second[position[ix]];
   }
 
   return position;
@@ -183,43 +183,53 @@ as_block_enumerator()
   return BlockIterator(this->length(), blocks, sets);
 }
 
-BlockIterator &
+const BlockIterator &
 BlockIterator::
 step()
 {
   if (this->has_reached_end)
     return *this;
 
-  return this->step_(!this->blocks.empty(), 0);
+  int step_type;
+  if ( !this->dependent_sets.empty() )
+    step_type = 0;
+  else if ( !this->sets.empty() )
+    step_type = 1;
+  else
+    step_type = 2;
+
+  return this->step_(step_type, 0);
 }
 
-BlockIterator &
+const BlockIterator &
 BlockIterator::
 step_(
     int step_type,
     size_t step_ix
     )
 {
-  // stepping a block
-  if ( step_type == 0 ) {
-    size_t px = this->update_order_blocks[step_ix];
-  
-    this->position[px] += get<2>(this->blocks[px]);
-    if ( this->position[px] >= get<1>(this->blocks[px]) ) {
-      this->position[px] = get<0>(this->blocks[px]);
-  
+  // stepping a dependent set
+  if ( step_type == 0 ){
+    size_t px = this->update_order_dependend_sets[step_ix];
+
+    ++this->position[px];
+    auto & px_set = get<1>(this->dependent_sets[px]);
+    size_t coupled_px = get<0>(this->dependent_sets[px]);
+    if ( this->position[px] >= px_set[this->position[coupled_px]].size() ) {
+      this->position[px] = 0;
+
       ++step_ix;
-      if ( step_ix < this->update_order_blocks.size() )
+      if ( step_ix < this->update_order_dependend_sets.size() )
         return this->step_(0, step_ix);
       else if ( !this->update_order_sets.empty() )
         return this->step_(1, 0);
-      else if ( !this->update_order_dependend_sets.empty() )
+      else if ( !this->update_order_blocks.empty() )
         return this->step_(2, 0);
-      else {
+      else
         this->has_reached_end = true;
-      }
     }
   }
+
   // stepping a set
   else if ( step_type == 1 ){
     size_t px = this->update_order_sets[step_ix];
@@ -231,26 +241,27 @@ step_(
       ++step_ix;
       if ( step_ix < this->update_order_sets.size() )
         return this->step_(1, step_ix);
-      else if ( !this->update_order_dependend_sets.empty() )
+      else if ( !this->update_order_blocks.empty() )
         return this->step_(2, 0);
       else
         this->has_reached_end = true;
     }
   }
-  // stepping a dependent set
-  else {
-    size_t px = this->update_order_dependend_sets[step_ix];
-    
-    ++this->position[px];
-    auto & px_set = get<1>(this->dependent_sets[px]);
-    if ( this->position[px] >= px_set[this->position[get<0>(this->dependent_sets[px])]].size() ) {
-      this->position[px] = 0;
+
+  // stepping a block
+  else { // if ( step_type == 2 )
+    size_t px = this->update_order_blocks[step_ix];
+
+    this->position[px] += get<2>(this->blocks[px]);
+    if ( this->position[px] >= get<1>(this->blocks[px]) ) {
+      this->position[px] = get<0>(this->blocks[px]);
 
       ++step_ix;
-      if ( step_ix < this->update_order_dependend_sets.size() )
-        return this->step_(2, 0);
-      else
+      if ( step_ix < this->update_order_blocks.size() )
+        return this->step_(2, step_ix);
+      else {
         this->has_reached_end = true;
+      }
     }
   }
 
