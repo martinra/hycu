@@ -347,7 +347,7 @@ ramification_type()
     else
       break;
   }
-  
+
 
   int ramification_difference = this->degree() - ramification_sum;
   if ( ramification_difference < 2*fx ) {
