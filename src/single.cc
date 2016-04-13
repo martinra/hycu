@@ -29,8 +29,7 @@ main(
   auto curve = single_curve_fp(prime, poly_coeffs);
 
     
-  cout << "genus: " << curve->genus() << ", degree: " << curve->degree();
-  cout << " / F_" << curve->prime_power() << endl;
+  cout << *curve << endl;
 
   cout << "coefficient exponents: ";
   auto coeff_exponents = curve->convert_poly_coeff_exponents(

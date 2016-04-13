@@ -29,10 +29,10 @@ operator<<(
     )
 {
   stream << "Y^2 = ";
-  for (size_t ix=curve.poly_coeff_exponents.size()-1; ix>=0; --ix) {
-    // fixme: is cout.file() correct?
-    // fq_nmod_print_file(cout.file(), curve.table[curve.poly_coeff_exponents[ix]]);
-    stream << "*X^" << ix;
+  for (int ix=curve.poly_coeff_exponents.size()-1; ix>=0; --ix) {
+    auto coeff_str = fq_nmod_get_str_pretty(curve.table->at(curve.poly_coeff_exponents[ix]), curve.table->fq_ctx);
+    stream << "(" << coeff_str << ")*X^" << ix;
+    flint_free(coeff_str);
     if (ix != 0) stream << " + ";
   }
 
