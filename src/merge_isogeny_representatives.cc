@@ -62,7 +62,7 @@ main(
 
   IsogenyRepresentativeStore store;
   for ( auto const& input_file : input_files )
-    if ( input_file.extension() == ".data" )
+    if ( input_file.extension() == ".hycu_unmerged" )
       fstream(input_file.native(), ios_base::in) >> store;
 
 

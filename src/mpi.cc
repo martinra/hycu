@@ -185,7 +185,7 @@ representative_output_name(
   for ( auto bds : bounds )
     output_name << "__" << get<0>(bds) << "_" << get<1>(bds);
 
-  output_name << ".data";
+  output_name << ".hycu_unmerged";
 
   return output_name.str();
 }
