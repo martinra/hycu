@@ -24,12 +24,16 @@
 #ifndef _H_FQ_ELEMENT_TABLE
 #define _H_FQ_ELEMENT_TABLE
 
+#include <iostream>
 #include <tuple>
 #include <vector>
 #include <flint/fq_nmod.h>
 
 
-using namespace std;
+using std::tuple;
+using std::make_tuple;
+using std::vector;
+using std::ostream;
 
 
 class Curve;

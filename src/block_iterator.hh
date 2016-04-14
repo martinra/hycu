@@ -29,7 +29,9 @@
 #include <tuple>
 
 
-using namespace std;
+using std::map;
+using std::vector;
+using std::tuple;
 
 
 class BlockIterator

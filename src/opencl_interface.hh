@@ -27,7 +27,8 @@
 #include <memory>
 #include <CL/cl.hpp>
 
-using namespace std;
+
+using std::shared_ptr;
 
 
 class OpenCLInterface

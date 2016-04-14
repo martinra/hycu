@@ -24,12 +24,17 @@
 #ifndef _H_ISOGENY_COUNT_STORE
 #define _H_ISOGENY_COUNT_STORE
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <tuple>
 #include <vector>
 
-using namespace std;
+using std::map;
+using std::shared_ptr;
+using std::tuple;
+using std::vector;
+using std::ostream;
 
 
 // this stored hyperelliptic curves with squarefree right hand side.

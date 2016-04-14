@@ -28,6 +28,9 @@
 #include <block_iterator.hh>
 
 
+using namespace std;
+
+
 BlockIterator::
 BlockIterator(
     const vector<tuple<int,int>> & bounds

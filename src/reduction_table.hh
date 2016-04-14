@@ -25,11 +25,13 @@
 #define _H_REDUCTION_TABLE
 
 #include <memory>
+#include <vector>
 #include <CL/cl.hpp>
 #include <opencl_interface.hh>
 
 
-using namespace std;
+using std::shared_ptr;
+using std::vector;
 
 
 class ReductionTable

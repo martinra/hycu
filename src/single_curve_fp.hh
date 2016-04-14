@@ -30,7 +30,8 @@
 #include <curve.hh>
 
 
-using namespace std;
+using std::unique_ptr;
+using std::vector;
 
 
 unique_ptr<Curve> single_curve_fp(unsigned int prime, vector<unsigned int> poly_coeffs);

@@ -25,6 +25,9 @@
 #include <isogeny_representative_store.hh>
 
 
+using namespace std;
+
+
 void
 IsogenyRepresentativeStore::
 register_curve(

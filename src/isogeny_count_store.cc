@@ -29,6 +29,9 @@
 #include <isogeny_count_store.hh>
 
 
+using namespace std;
+
+
 void
 IsogenyCountStore::
 register_curve(

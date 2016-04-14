@@ -32,7 +32,9 @@
 #include <fq_element_table.hh>
 
 
-using namespace std;
+using std::shared_ptr;
+using std::vector;
+using std::tuple;
 
 
 class CurveIterator

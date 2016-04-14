@@ -27,6 +27,11 @@
 
 #include <mpi_worker_pool.hh>
 
+
+namespace mpi = boost::mpi;
+using namespace std;
+
+
 void
 MPIWorkerPool::
 emit(

@@ -25,6 +25,9 @@
 #include <fq_element_table.hh>
 
 
+using namespace std;
+
+
 FqElementTable::
 FqElementTable(
     unsigned int prime,

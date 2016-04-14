@@ -29,6 +29,9 @@
 #include <single_curve_fp.hh>
 
 
+using namespace std;
+
+
 unique_ptr<Curve>
 single_curve_fp(
     unsigned int prime,

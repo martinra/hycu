@@ -37,7 +37,10 @@
 #include <opencl_interface.hh>
 
 
-using namespace std;
+using std::map;
+using std::shared_ptr;
+using std::vector;
+using std::tuple;
 
 
 class Curve

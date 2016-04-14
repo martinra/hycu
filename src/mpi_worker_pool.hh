@@ -31,14 +31,16 @@
 #include <set>
 #include <tuple>
 
-namespace mpi = boost::mpi;
-using namespace std;
+using std::deque;
+using std::vector;
+using std::set;
+using std::tuple;
 
 
 class MPIWorkerPool
 {
   public:
-    MPIWorkerPool(mpi::communicator & mpi_world) :
+    MPIWorkerPool(boost::mpi::communicator & mpi_world) :
       mpi_world( mpi_world ) {};
 
     void emit(vector<tuple<int,int>> &&);
@@ -47,7 +49,7 @@ class MPIWorkerPool
     void close_pool();
 
   private:
-    const mpi::communicator & mpi_world;
+    const boost::mpi::communicator & mpi_world;
 
     set<int> working_processes;
     deque<int> idle_processes;

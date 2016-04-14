@@ -26,6 +26,9 @@
 #include <curve_iterator.hh>
 
 
+using namespace std;
+
+
 CurveIterator::
 CurveIterator(
     const FqElementTable & table,

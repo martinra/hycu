@@ -24,6 +24,7 @@
 #ifndef _H_ISOGENY_REPRESENTATIVE_STORE
 #define _H_ISOGENY_REPRESENTATIVE_STORE
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <tuple>
@@ -32,7 +33,11 @@
 #include <curve.hh>
 
 
-using namespace std;
+using std::map;
+using std::shared_ptr;
+using std::tuple;
+using std::vector;
+using std::istream;
 
 
 class IsogenyRepresentativeStore
