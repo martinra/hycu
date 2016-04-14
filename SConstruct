@@ -8,6 +8,7 @@ env.SConscript("src/SConscript", variant_dir = "build")
 installable = [
     "single"
   , "legacy"
+  , "merge_isogeny_representatives"
   , "mpi"
   ]
 for inst in installable:

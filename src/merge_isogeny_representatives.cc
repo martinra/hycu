@@ -21,30 +21,50 @@
 ===============================================================================*/
 
 
-#ifndef _H_ISOGENY_REPRESENTATIVE_STORE
-#define _H_ISOGENY_REPRESENTATIVE_STORE
-
-#include <map>
-#include <memory>
-#include <tuple>
+#include <boost/filesystem.hpp>
+#include <fstream>
+#include <iostream>
 #include <vector>
 
-#include <curve.hh>
+#include <isogeny_representative_store.hh>
 
 
 using namespace std;
+namespace filesys = boost::filesystem;
 
 
-class IsogenyRepresentativeStore
+int
+main(
+    int argc,
+    char** argv
+    )
 {
-  public:
-    void register_curve(const Curve & curve);
+  if (argc < 3) {
+    cerr << "Arguments: input_folder, output_file" << endl;
+    exit(1);
+  }
 
-    friend ostream & operator<<(ostream & stream, const IsogenyRepresentativeStore & store);
-    friend istream & operator>>(istream & stream, IsogenyRepresentativeStore & store);
 
-  private:
-    map<tuple<vector<int>,vector<int>>, vector<int>> store;
-};
+  filesys::path input(argv[1]);
+  if ( !filesys::exists(input) ) {
+    cerr << "input folder does not exist" << endl;
+    exit(1);
+  }
+  if ( !filesys::is_directory(input) ) {
+    cerr << "input folder is not a directory" << endl;
+    exit(1);
+  }
 
-#endif
+  vector<filesys::path> input_files;
+  copy( filesys::directory_iterator(input), filesys::directory_iterator(),
+        back_inserter(input_files) );
+
+
+  IsogenyRepresentativeStore store;
+  for ( auto const& input_file : input_files )
+    if ( input_file.extension() == ".data" )
+      fstream(input_file.native(), ios_base::in) >> store;
+
+
+  fstream(argv[2], ios_base::out) << store;
+}

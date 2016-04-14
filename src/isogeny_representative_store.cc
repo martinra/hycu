@@ -76,3 +76,49 @@ operator<<(
 
   return stream;
 }
+
+istream &
+operator>>(
+    istream & stream,
+    IsogenyRepresentativeStore & store
+    )
+{
+  int read_int;
+  vector<int> ramifications, hasse_weil_offsets, poly_coeff_exponents;
+
+  while ( !stream.eof() && (char)stream.peek() != ';' ) {
+    stream.ignore(1,',') >> read_int;
+    ramifications.push_back(read_int);
+  }
+
+  if ( stream.eof() ) {
+    cerr << "isogeny_representative_store.operator>>: unexpected end of file (ramification)" << endl;
+    throw;
+  }
+  stream.ignore(1,';');
+
+  while ( !stream.eof() && (char)stream.peek() != ':' ) {
+    stream.ignore(1,',') >> read_int;
+    hasse_weil_offsets.push_back(read_int);
+  }
+
+  if ( stream.eof() ) {
+    cerr << "isogeny_representative_store.operator>>: unexpected end of file (hasse_weil_offsets)" << endl;
+    throw;
+  }
+  stream.ignore(1,':');
+
+  while ( !stream.eof() && (char)stream.peek() != '\n' ) {
+    stream.ignore(1,',') >> read_int;
+    poly_coeff_exponents.push_back(read_int);
+  }
+
+
+  auto store_key = make_tuple(ramifications, hasse_weil_offsets);
+  auto store_it = store.store.find(store_key);
+  if ( store_it == store.store.end() )
+    store.store[store_key] = poly_coeff_exponents;
+
+
+  return stream;
+}

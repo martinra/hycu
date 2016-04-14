@@ -21,6 +21,68 @@ libs = [
   ]
 
 
+env.Append(
+    CXXFLAGS = "-std=c++14 -O2 -pthread"
+  , CPPPATH  = include_path
+  , LIBPATH  = lib_path
+  , LIBS     = libs
+  )
+## todo: dynamic configuration of opencl
+env["ENV"]["LD_LIBRARY_PATH"] = \
+   "/usr/lib64/beignet:/usr/local/lib" + env["ENV"].get("LD_LIBRARY_PATH", "")
+
+
+sources_curve = [
+    "block_iterator.cc"
+  , "curve.cc"
+  , "curve_iterator.cc"
+  , "fq_element_table.cc"
+  , "isogeny_representative_store.cc"
+  , "opencl_interface.cc"
+  , "reduction_table.cc"
+  , "single_curve_fp.cc"
+  ]
+
+objs_curve = [ env.Object(s) for s in sources_curve ]
+Export("objs_curve")
+
+
+env.Program(
+    "single"
+  , [ "single.cc" ] + objs_curve
+  )
+
+env.Program(
+    "legacy"
+  , [ "legacy.cc", "isogeny_count_store.cc" ] + objs_curve
+  )
+
+
+##############################
+## merge_isogeny_representative
+##############################
+
+libs_merge_isogeny_representatives = [
+    "boost_filesystem"
+  , "boost_system"
+  ]
+
+env_merge_isogeny_representatives = env.Clone()
+env_merge_isogeny_representatives.Append(
+    LIBS = libs_merge_isogeny_representatives
+  )
+
+env_merge_isogeny_representatives.Program(
+    "merge_isogeny_representatives"
+  , [ "merge_isogeny_representatives.cc" ]
+    + objs_curve
+  )
+
+
+##############################
+## mpi
+##############################
+
 include_path_mpi = [
     "/usr/include/openmpi-x86_64"
   ]
@@ -41,58 +103,17 @@ linkflags_mpi = [
   , "-Wl,--enable-new-dtags"
   ]
 
-
-sources_curve = [
-    "curve.cc"
-  , "fq_element_table.cc"
-  , "opencl_interface.cc"
-  , "reduction_table.cc"
-  , "block_iterator.cc"
-  , "curve_iterator.cc"
-  , "single_curve_fp.cc"
-  ]
-
-sources_legacy = [
-    "isogeny_count_store.cc"
-  ]
-
-sources_mpi = [
-    "isogeny_representative_store.cc"
-  , "mpi_worker_pool.cc"
-  ]
-
-
-env.Append(
-    CXXFLAGS = "-std=c++14 -O2 -pthread"
-  , CPPPATH  = include_path
-  , LIBPATH  = lib_path
-  , LIBS     = libs
-  )
-## TODO: append
-env["ENV"]["LD_LIBRARY_PATH"] = \
-   "/usr/lib64/beignet:/usr/local/lib" + env["ENV"].get("LD_LIBRARY_PATH", "")
-
-objs_curve = [ env.Object(s) for s in sources_curve ]
-Export("objs_curve")
-
-
-env.Program(
-    "single"
-  , [ "single.cc" ] + objs_curve
-  )
-
-env.Program(
-    "legacy"
-  , [ "legacy.cc" ] + objs_curve + sources_legacy
-  )
-
 env_mpi = env.Clone()
-env_mpi["CPPPATH"]   += include_path_mpi
-env_mpi["LIBPATH"]   += lib_path_mpi
-env_mpi["LIBS"]      += libs_mpi
-env_mpi["LINKFLAGS"]  = linkflags_mpi
+env_mpi.Append(
+    CPPPATH    = include_path_mpi
+  , LIBPATH    = lib_path_mpi
+  , LIBS       = libs_mpi
+  , LINKFLAGS  = linkflags_mpi
+  )
+
 
 env_mpi.Program(
     "mpi"
-  , [ "mpi.cc" ] + objs_curve + sources_mpi
+  , [ "mpi.cc" , "mpi_worker_pool.cc" ]
+    + objs_curve
   )
