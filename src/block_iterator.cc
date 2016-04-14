@@ -77,8 +77,7 @@ initialize_blocks(
     unsigned int package_size
     )
 {
-  double max_efficiency = 1;
-  size_t max_efficiency_ix = 0;
+  vector<tuple<size_t,int>> block_sizes;
 
   for ( auto & blocks_it : blocks ) {
     int lbd, ubd;
@@ -89,25 +88,22 @@ initialize_blocks(
       throw;
     }
 
-    this->blocks[blocks_it.first] = make_tuple(lbd, ubd, 1);
-    this->update_order_blocks.push_back(blocks_it.first);
-
-    unsigned int nmb_iterations = (ubd - lbd - 1) / package_size + 1;
-    double efficiency = (double)(ubd - lbd) / (double)nmb_iterations;
-    if ( efficiency > max_efficiency ) {
-      max_efficiency = efficiency;
-      max_efficiency_ix = this->update_order_blocks.size() - 1;
-    }
-
+    block_sizes.push_back(make_tuple(ubd-lbd,blocks_it.first));
   }
+  sort( block_sizes.rbegin(), block_sizes.rend() );
+  
 
-  if ( max_efficiency_ix != 0 ) {
-    size_t tmp = this->update_order_blocks[max_efficiency_ix];
-    this->update_order_blocks[max_efficiency_ix] = this->update_order_blocks.front();
-    this->update_order_blocks.front() = tmp;
+  for ( auto & block_size_it : block_sizes ) {
+    unsigned int block_size = get<0>(block_size_it);
+    size_t ix = get<1>(block_size_it);
+
+    unsigned int step_size = package_size >= block_size ? block_size : package_size;
+    package_size /= step_size;
+
+    this->update_order_blocks.push_back(ix);
+    int lbd, ubd; tie(lbd,ubd) = blocks.at(ix);
+    this->blocks[ix] = make_tuple(lbd, ubd, step_size);
   }
-  if ( !this->update_order_blocks.empty() )
-    get<2>( this->blocks[this->update_order_blocks.front()] ) = package_size;
 }
 
 void
