@@ -1,8 +1,12 @@
+import os
+
+
+Import("root_dir")
 Import("env")
 
 
 include_path_test = [
-    env["root_dir"] + "/test"
+    root_dir + "/test"
 ]
 
 libs_test = [
@@ -16,6 +20,9 @@ env_test.Append(
   , LIBS     = libs_test
   )
 
+env_test["ENV"]["LD_LIBRARY_PATH"] = \
+  ':'.join(env["LIBPATH"]) + ':' + os.environ.get("LD_LIBRARY_PATH", "")
+
 
 sources_test = Glob("./*.cc")
 
@@ -28,3 +35,4 @@ test = env_test.Program(
   )
 
 Export("test")
+Export("env_test")

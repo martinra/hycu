@@ -1,16 +1,16 @@
-Import("env")
-
+Import("root_dir")
 
 include_path = [
-    env["root_dir"] + "/src"
-  , "/usr/include"
-  , "/usr/include/flint"
-  , "/usr/include/yaml-cpp"
+    root_dir + "/src"
   ]
 
 lib_path = [
-    "/usr/lib"
-  , "/usr/lib64/beignet"
+    "/usr/local/lib"
+  ]
+
+lib_path_opencl = [
+    "/usr/lib64/beignet"
+  , "/usr/lib/x86_64-linux-gnu"
   ]
 
 libs = [
@@ -20,16 +20,14 @@ libs = [
   , "yaml-cpp"
   ]
 
-
-env.Append(
+env = Environment(
     CXXFLAGS = "-std=c++14 -O2 -pthread"
   , CPPPATH  = include_path
-  , LIBPATH  = lib_path
+  , LIBPATH  = lib_path + lib_path_opencl
   , LIBS     = libs
   )
-## todo: dynamic configuration of opencl
-env["ENV"]["LD_LIBRARY_PATH"] = \
-   "/usr/lib64/beignet:/usr/local/lib" + env["ENV"].get("LD_LIBRARY_PATH", "")
+
+Export("env")
 
 
 sources_curve = [

@@ -1,9 +1,9 @@
-env = Environment()
-env["root_dir"] = Dir(".").abspath
-Export("env")
+root_dir =  Dir(".").abspath
+Export("root_dir")
 
+SConscript("src/SConscript", variant_dir = "build")
+Import("env")
 
-env.SConscript("src/SConscript", variant_dir = "build")
 
 installable = [
     "single"
@@ -18,8 +18,9 @@ for inst in installable:
 
 env.SConscript("test/SConscript", variant_dir = "build_test")
 Import("test")
+Import("env_test")
 
-test = env.Alias( "test", test, test[0].get_abspath() )
+test = env_test.Alias( "test", test, test[0].get_abspath() )
 AlwaysBuild(test)
 
 
