@@ -30,6 +30,9 @@
 #include <iterator_messaging.hh>
 
 
+using namespace std;
+
+
 BOOST_AUTO_TEST_CASE( blocks )
 {
   map<size_t, tuple<int,int>> blocks
@@ -210,7 +213,7 @@ BOOST_AUTO_TEST_CASE( blocks_package_block_enumerator )
     positions.emplace_back(iter_sub.as_position());
   sort(positions.begin(), positions.end());
 
-  positions_valid = { {6,6,8}, {7,6,8}, {8,6,8} };
+  positions_valid = { {6,5,9}, {7,5,9}, {8,5,9} };
   if ( positions != positions_valid )
     message_positions("blocks package block fourth enumerator: ", positions);
 }

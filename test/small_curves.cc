@@ -28,6 +28,9 @@
 #include <single_curve_fp.hh>
 
 
+using namespace std;
+
+
 
 BOOST_AUTO_TEST_CASE( fq_5_curve_1_2_3_1_1_0_4 )
 {
