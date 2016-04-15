@@ -42,7 +42,7 @@ class CurveIterator
   public:
     CurveIterator( const FqElementTable & table, int genus, unsigned int package_size );
 
-    CurveIterator & step();
+    CurveIterator const& step();
     bool is_end() const;
 
     vector<int> inline as_position() { return this->enumerator_it->as_position(); };

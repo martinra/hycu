@@ -224,7 +224,7 @@ count(
       for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
         get<0>(this->nmb_points[fx]) += sums[ix];
 
-  delete sums;
+  delete[] sums;
 
 
   kernel_reduction = make_unique<cl::Kernel>(*opencl->program_reduction, "reduce");
@@ -249,7 +249,7 @@ count(
       for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
         get<1>(this->nmb_points[fx]) += sums[ix];
 
-  delete sums;
+  delete[] sums;
 
 
   // point x = 0

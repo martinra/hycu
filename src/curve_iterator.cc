@@ -100,7 +100,7 @@ CurveIterator(
   this->enumerator_it = this->enumerators.begin();
 }
 
-CurveIterator &
+CurveIterator const&
 CurveIterator::
 step()
 {
@@ -109,6 +109,8 @@ step()
   this->enumerator_it->step();
   if ( this->enumerator_it->is_end() )
     ++this->enumerator_it;
+
+  return *this;
 }
 
 bool
