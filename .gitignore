@@ -7,3 +7,4 @@ test_data/
 test_data_jonas/
 *.*.swp
 .sconsign.dblite
+config.log
