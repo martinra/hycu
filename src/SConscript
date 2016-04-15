@@ -1,4 +1,7 @@
+import os
+
 Import("root_dir")
+
 
 include_path = [
     root_dir + "/src"
@@ -81,32 +84,20 @@ env_merge_isogeny_representatives.Program(
 ## mpi
 ##############################
 
-include_path_mpi = [
-    "/usr/include/openmpi-x86_64"
-  ]
-
-lib_path_mpi = [
-    "/usr/lib64/openmpi/lib"
-  ]
 
 libs_mpi = [
     "boost_mpi"
   , "boost_serialization"
-  , "mpi"
-  , "mpi_cxx"
-  ]
-
-linkflags_mpi = [
-    "-Wl,-rpath,/usr/lib64/openmpi/lib"
-  , "-Wl,--enable-new-dtags"
   ]
 
 env_mpi = env.Clone()
 env_mpi.Append(
-    CPPPATH    = include_path_mpi
-  , LIBPATH    = lib_path_mpi
-  , LIBS       = libs_mpi
-  , LINKFLAGS  = linkflags_mpi
+  ENV = {"PATH": os.environ.get("PATH","")}
+  )
+env_mpi.ParseConfig("mpic++ --showme:compile")
+env_mpi.ParseConfig("mpic++ --showme:link")
+env_mpi.Append(
+    LIBS       = libs_mpi
   )
 
 
