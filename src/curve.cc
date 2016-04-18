@@ -202,7 +202,7 @@ count(
 
   cl::Buffer buffer_sums(*opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * nmb_groups_reduction * prime_exponent);
 
-  auto kernel_reduction = make_unique<cl::Kernel>(*opencl->program_reduction, "reduce");
+  auto kernel_reduction = make_shared<cl::Kernel>(*opencl->program_reduction, "reduce");
   kernel_reduction->setArg(0, buffer_nmbs_unramified);
   kernel_reduction->setArg(1, buffer_minimal_fields);
   kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);
@@ -227,7 +227,7 @@ count(
   delete[] sums;
 
 
-  kernel_reduction = make_unique<cl::Kernel>(*opencl->program_reduction, "reduce");
+  kernel_reduction = make_shared<cl::Kernel>(*opencl->program_reduction, "reduce");
   kernel_reduction->setArg(0, buffer_nmbs_ramified);
   kernel_reduction->setArg(1, buffer_minimal_fields);
   kernel_reduction->setArg(2, sizeof(int), &prime_power_pred);

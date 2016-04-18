@@ -24,7 +24,7 @@ libs = [
   ]
 
 env = Environment(
-    CXXFLAGS = "-std=c++14 -O2 -pthread"
+  , CXXFLAGS = "-std=c++11 -O2 -pthread"
   , CPPPATH  = include_path
   , LIBPATH  = lib_path + lib_path_opencl
   , LIBS     = libs

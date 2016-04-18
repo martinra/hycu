@@ -32,7 +32,7 @@
 using namespace std;
 
 
-unique_ptr<Curve>
+shared_ptr<Curve>
 single_curve_fp(
     unsigned int prime,
     vector<unsigned int> poly_coeffs
@@ -55,7 +55,7 @@ single_curve_fp(
 
 
   auto opencl = make_shared<OpenCLInterface>();
-  auto curve = make_unique<Curve>(enumeration_table, poly_coeff_exponents);
+  auto curve = make_shared<Curve>(enumeration_table, poly_coeff_exponents);
 
   for ( size_t fx=curve->genus(); fx>curve->genus()/2; --fx ) {
     ReductionTable reduction_table(prime, fx, opencl);

@@ -30,10 +30,10 @@
 #include <curve.hh>
 
 
-using std::unique_ptr;
+using std::shared_ptr;
 using std::vector;
 
 
-unique_ptr<Curve> single_curve_fp(unsigned int prime, vector<unsigned int> poly_coeffs);
+shared_ptr<Curve> single_curve_fp(unsigned int prime, vector<unsigned int> poly_coeffs);
 
 #endif
