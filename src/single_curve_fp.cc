@@ -35,7 +35,8 @@ using namespace std;
 shared_ptr<Curve>
 single_curve_fp(
     unsigned int prime,
-    vector<unsigned int> poly_coeffs
+    vector<unsigned int> poly_coeffs,
+    bool use_opencl
     )
 {
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
@@ -54,7 +55,8 @@ single_curve_fp(
     poly_coeff_exponents.push_back(fp_conversion_map[c]);
 
 
-  auto opencl = make_shared<OpenCLInterface>();
+  auto opencl = use_opencl ?
+                  make_shared<OpenCLInterface>() : shared_ptr<OpenCLInterface>();
   auto curve = make_shared<Curve>(enumeration_table, poly_coeff_exponents);
 
   for ( size_t fx=curve->genus(); fx>curve->genus()/2; --fx ) {

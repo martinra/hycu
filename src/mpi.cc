@@ -129,6 +129,7 @@ main_worker(
 
 
   auto fq_table = make_shared<FqElementTable>(prime, prime_exponent);
+  // todo: let mpi master decide on whether to use GPU or not
   auto opencl = make_shared<OpenCLInterface>();
 
   vector<ReductionTable> reduction_tables;

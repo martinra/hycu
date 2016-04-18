@@ -34,6 +34,6 @@ using std::shared_ptr;
 using std::vector;
 
 
-shared_ptr<Curve> single_curve_fp(unsigned int prime, vector<unsigned int> poly_coeffs);
+shared_ptr<Curve> single_curve_fp(unsigned int prime, vector<unsigned int> poly_coeffs, bool use_opencl);
 
 #endif

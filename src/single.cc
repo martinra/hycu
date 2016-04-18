@@ -49,7 +49,7 @@ main(
   for ( int ix=2; ix < argc; ++ix )
     poly_coeffs.push_back(atoi(argv[ix]));
 
-  auto curve = single_curve_fp(prime, poly_coeffs);
+  auto curve = single_curve_fp(prime, poly_coeffs, true);
 
     
   cout << *curve << endl;

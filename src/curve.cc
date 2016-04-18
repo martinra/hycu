@@ -152,17 +152,65 @@ count(
     cerr << "Curve.count: primes of curve and table must coincide" << endl;
     throw;
   }
+  int prime_exponent = reduction_table.prime_exponent;
 
   if ( this->nmb_points.find( reduction_table.prime_exponent ) != this->nmb_points.end() )
     return;
+  for (size_t fx=1; fx<=prime_exponent; ++fx)
+    if ( prime_exponent % fx == 0 )
+        this->nmb_points[fx] = make_tuple(0,0);
 
 
+  // this also checks that the prime exponent is divisible by the one of the curve
+  const vector<int> poly_coeff_exponents = this->convert_poly_coeff_exponents(reduction_table);
+
+  // ponts x != 0, infty
+  if ( reduction_table.is_opencl_enabled() )
+    this->count_opencl(reduction_table, poly_coeff_exponents);
+  else
+    this->count_cpu(reduction_table, poly_coeff_exponents);
+
+
+  // point x = 0
+  // if constant coefficient is zero
+  if (poly_coeff_exponents.front() == reduction_table.prime_power_pred)
+    for ( size_t fx=1; fx<=prime_exponent; ++fx)
+      ++get<1>(this->nmb_points[fx]);
+  // if constant coefficient is even power of generator
+  else if (!(poly_coeff_exponents.front() & 1)) {
+    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.front() / 2] + 1;
+    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
+      if ( prime_exponent % fx == 0 )
+        get<0>(this->nmb_points[fx]) += 2;
+  }
+
+
+  // point x = infty
+  // if poly_coeffs ends with zero entry
+  if ( this->degree() < 2*this->genus() + 2 )
+    for ( size_t fx=1; fx<=prime_exponent; ++fx)
+      get<1>(this->nmb_points[fx]) += 1;
+  // f leading coefficient is odd power of generator
+  else if (!(poly_coeff_exponents.back() & 1)) {
+    // todo: make sure that curve enumeration does not put 0 as the leading coefficient
+    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.back() / 2] + 1;
+    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
+      if ( prime_exponent % fx == 0 )
+        get<0>(this->nmb_points[fx]) += 2;
+  }
+}
+
+void
+Curve::
+count_opencl(
+    const ReductionTable & reduction_table,
+    const vector<int> & poly_coeff_exponents
+    )
+{
   int prime_exponent = reduction_table.prime_exponent;
   int prime_power_pred = reduction_table.prime_power_pred;
 
-  // this also checks that the prime exponent is divisible by the one of the curve
-  int poly_size = (int)this->poly_coeff_exponents.size();
-  vector<int> poly_coeff_exponents = this->convert_poly_coeff_exponents(reduction_table);
+  int poly_size = (int)poly_coeff_exponents.size();
 
 
   auto opencl = reduction_table.opencl;
@@ -250,34 +298,71 @@ count(
         get<1>(this->nmb_points[fx]) += sums[ix];
 
   delete[] sums;
+}
+
+void
+Curve::
+count_cpu(
+    const ReductionTable & reduction_table,
+    const vector<int> & poly_coeff_exponents
+    )
+{
+  int prime_exponent = reduction_table.prime_exponent;
+  int prime_power_pred = reduction_table.prime_power_pred;
+
+  const auto & exponent_reduction_table = *reduction_table.exponent_reduction_table;
+  const auto & incrementation_table = *reduction_table.incrementation_table;
+  const auto & minimal_field_table = *reduction_table.minimal_field_table;
+
+  int poly_size = (int)poly_coeff_exponents.size();
 
 
-  // point x = 0
-  // if constant coefficient is zero
-  if (poly_coeff_exponents.front() == reduction_table.prime_power_pred)
-    for ( size_t fx=1; fx<=prime_exponent; ++fx)
-      ++get<1>(this->nmb_points[fx]);
-  // if constant coefficient is even power of generator
-  else if (!(poly_coeff_exponents.front() & 1)) {
-    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.front() / 2] + 1;
-    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
-      if ( prime_exponent % fx == 0 )
-        get<0>(this->nmb_points[fx]) += 2;
-  }
+  for ( int x = 1; x < prime_power_pred; ++x ) {
+    int f = poly_coeff_exponents[0];
+    for ( int dx=1, xpw=x; dx < poly_size; ++dx, xpw+=x ) {
+      xpw = exponent_reduction_table[xpw];
+      if ( poly_coeff_exponents[dx] != prime_power_pred ) { // i.e. coefficient is not zero
+        if ( f == prime_power_pred ) { // i.e. f = 0
+          f = poly_coeff_exponents[dx] + xpw;
+          f = exponent_reduction_table[f];
+        } else {
+          int tmp = exponent_reduction_table[poly_coeff_exponents[dx] + xpw];
+
+          int tmp2;
+          if (tmp <= f) {
+            // todo: this can be removed by doubling the size of incrementation_table
+            // and checking at prime_power_pred + 1 + tmp - f
+            tmp2 = f;
+            f = tmp;
+            tmp = tmp2;
+          }
+          tmp2 = incrementation_table[tmp-f];
+          if ( tmp2 != prime_power_pred ) {
+            f = f + tmp2;
+            f = exponent_reduction_table[f];
+          } else
+            f = prime_power_pred;
+        }
+      }
+    }
 
 
-  // point x = infty
-  // if poly_coeffs ends with zero entry
-  if ( this->degree() < 2*this->genus() + 2 )
-    for ( size_t fx=1; fx<=prime_exponent; ++fx)
-      get<1>(this->nmb_points[fx]) += 1;
-  // f leading coefficient is odd power of generator
-  else if (!(poly_coeff_exponents.back() & 1)) {
-    // todo: make sure that curve enumeration does not put 0 as the leading coefficient
-    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.back() / 2] + 1;
-    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
-      if ( prime_exponent % fx == 0 )
-        get<0>(this->nmb_points[fx]) += 2;
+    int minimal_field_x = 1 + minimal_field_table[x];
+    if ( f == prime_power_pred ) {
+      // minimal_field_f = 0;
+
+      for ( size_t fx=minimal_field_x; fx<=prime_exponent; fx+=minimal_field_x )
+        if ( prime_exponent % fx == 0 )
+          ++get<1>(this->nmb_points[fx]);
+    }
+    else if ( !(f & 1) ) {
+      int minimal_field_f = 1 + minimal_field_table[f/2];
+      minimal_field_x = minimal_field_x > minimal_field_f ?  minimal_field_x : minimal_field_f;
+
+      for ( size_t fx=minimal_field_x; fx<=prime_exponent; fx+=minimal_field_x )
+        if ( prime_exponent % fx == 0 )
+          get<0>(this->nmb_points[fx]) += 2;
+    }
   }
 }
 

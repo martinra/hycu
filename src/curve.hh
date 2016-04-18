@@ -84,6 +84,10 @@ class Curve
     vector<int> poly_coeff_exponents;
 
     map<unsigned int, tuple<int,int>> nmb_points;
+
+  private:
+    void count_opencl(const ReductionTable & table, const vector<int> & poly_coeff_exponents);
+    void count_cpu(const ReductionTable & table, const vector<int> & poly_coeff_exponents);
 };
 
 #endif

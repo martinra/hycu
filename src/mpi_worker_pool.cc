@@ -38,8 +38,9 @@ emit(
     vector<tuple<int,int>> && coeff_bounds
     )
 {
-  if (this->idle_processes.size() == 0)
+  if ( this->idle_processes.empty() ) {
     this->wait_until_one_more_idle();
+  }
 
   int rank = this->idle_processes.front();
   this->idle_processes.pop_front();
@@ -52,7 +53,7 @@ void
 MPIWorkerPool::
 wait_for_all_working()
 {
-  while (this->working_processes.size() != 0)
+  while ( !this->working_processes.empty() )
     this->wait_until_one_more_idle();
 }
 
@@ -62,13 +63,13 @@ wait_until_one_more_idle()
 {
   mpi::status mpi_status = this->mpi_world.probe();
 
-  if (mpi_status.tag() != 0)
+  if ( mpi_status.tag() != 0 )
     throw;
 
   bool idle_status;
   this->mpi_world.recv(mpi_status.source(), 0, idle_status);
 
-  if (idle_status) {
+  if ( idle_status ) {
     this->working_processes.erase(mpi_status.source());
     this->idle_processes.push_back(mpi_status.source());
   } else
@@ -80,6 +81,6 @@ MPIWorkerPool::
 close_pool()
 {
   wait_for_all_working();
-  for (int rank : this->idle_processes)
+  for ( int rank : this->idle_processes )
     this->mpi_world.send(rank, 1, true);
 }

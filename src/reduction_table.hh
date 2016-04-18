@@ -37,18 +37,18 @@ using std::vector;
 class ReductionTable
 {
   public:
-    // the field size is prime_pow, which is a power of prime
+    // the field size is prime_power, which is a power of prime
     // field size is referred to as q, field prime is referred to as p
     // we write q = p^r
     // a fixed generator for F_q is referred to by a
     // in the current implemnentation it is given by the Conway polynomial
-    // ReductionTable(int prime, int prime_exponent);
+    ReductionTable(int prime, int prime_exponent)
+      : ReductionTable(prime, prime_exponent, shared_ptr<OpenCLInterface>()) {};
     ReductionTable(int prime, int prime_exponent, shared_ptr<OpenCLInterface> opencl);
 
-    // init_opencl_buffers(OpenCLInterface & opencl);
+    void init_opencl_buffers();
+    inline bool is_opencl_enabled() const { return (bool)opencl; };
     
-    // int inline zero_index() const { return this->prime_power - 1; };
-    // vector<int> power_cosets(int n);
 
     friend class Curve;
 
