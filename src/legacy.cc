@@ -26,7 +26,7 @@
 #include <string>
 #include <sstream>
 #include <tuple>
-#include <yaml.h>
+#include <yaml-cpp/yaml.h>
 
 #include <opencl_interface.hh>
 #include <reduction_table.hh>
