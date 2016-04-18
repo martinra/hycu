@@ -317,7 +317,7 @@ count_cpu(
   int poly_size = (int)poly_coeff_exponents.size();
 
 
-  for ( int x = 1; x < prime_power_pred; ++x ) {
+  for ( int x = 1; x <= prime_power_pred; ++x ) {
     int f = poly_coeff_exponents[0];
     for ( int dx=1, xpw=x; dx < poly_size; ++dx, xpw+=x ) {
       xpw = exponent_reduction_table[xpw];
