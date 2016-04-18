@@ -96,6 +96,13 @@ main_master(
   mpi::broadcast(mpi_world, genus, 0);
   mpi::broadcast(mpi_world, result_folder, 0);
 
+
+  // OpenCL directives
+  mpi_world.send(1, 0, true);
+  for ( size_t rank=2; rank<mpi_world.size(); ++rank )
+    mpi_world.send(rank, 0,false);
+
+
   FqElementTable enumeration_table(prime, prime_exponent);
 
   for ( auto curve_enumerator = CurveIterator(enumeration_table, genus, package_size);
@@ -128,9 +135,13 @@ main_worker(
   int prime_power = pow(prime, prime_exponent);
 
 
+  // OpenCL directives
+  bool use_opencl;
+  mpi_world.recv(0, 0, use_opencl);
+
+
   auto fq_table = make_shared<FqElementTable>(prime, prime_exponent);
-  // todo: let mpi master decide on whether to use GPU or not
-  auto opencl = make_shared<OpenCLInterface>();
+  auto opencl = use_opencl ? make_shared<OpenCLInterface>() : shared_ptr<OpenCLInterface>();
 
   vector<ReductionTable> reduction_tables;
   for ( size_t fx=genus; fx>genus/2; --fx )
