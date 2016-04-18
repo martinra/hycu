@@ -8,3 +8,5 @@ test_data_jonas/
 *.*.swp
 .sconsign.dblite
 config.log
+.sconf_temp
+scons_variables.cache

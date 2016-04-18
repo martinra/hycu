@@ -1,38 +1,13 @@
-import os
-
-
-Import("root_dir")
-Import("env")
-
-
-include_path_test = [
-    root_dir + "/test"
-]
-
-libs_test = [
-  "boost_unit_test_framework"
-  ]
-
-
-env_test = env.Clone()
-env_test.Append(
-    CPPPATH  = include_path_test
-  , LIBS     = libs_test
-  )
-
-env_test["ENV"]["LD_LIBRARY_PATH"] = \
-  ':'.join(env["LIBPATH"]) + ':' + os.environ.get("LD_LIBRARY_PATH", "")
+Import("env_test")
 
 
 sources_test = Glob("./*.cc")
-
 Import("objs_curve")
 
-
-test = env_test.Program(
+prg_test = env_test.Program(
     "test"
   , sources_test + objs_curve
   )
 
-Export("test")
-Export("env_test")
+run_test = env_test.Alias("test", prg_test, prg_test[0].get_abspath())
+AlwaysBuild(run_test)
