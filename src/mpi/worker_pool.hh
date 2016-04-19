@@ -25,7 +25,6 @@
 #define _H_MPI_WORKER_POOL
 
 #include <boost/mpi.hpp>
-#include <boost/serialization/serialization.hpp>
 #include <deque>
 #include <vector>
 #include <set>
@@ -54,36 +53,6 @@ class MPIWorkerPool
     set<int> working_processes;
     deque<int> idle_processes;
 };
-
-
-namespace boost {
-namespace serialization {
-
-  template <unsigned int N>
-  struct Serializer
-  {
-    template<class Archive, typename... Args>
-    static void serialize(Archive & ar, std::tuple<Args...> & a, const unsigned int version)
-    {
-      ar & get<N-1>(a);
-      Serializer<N-1>::serialize(ar, a, version);
-    }
-  };
-  
-  template<>
-  struct Serializer<0>
-  {
-    template<class Archive, typename... Args>
-    static void serialize(Archive & ar, std::tuple<Args...> & a, const unsigned int version) {}
-  };
-
-  template <class Archive, typename... Args>
-  void serialize(Archive & ar, std::tuple<Args...> & a, const unsigned int version)
-  {
-    Serializer<sizeof...(Args)>::serialize(ar, a, version);
-  }
-
-}}
 
 #endif
 

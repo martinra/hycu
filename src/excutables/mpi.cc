@@ -35,6 +35,7 @@
 #include <curve_iterator.hh>
 #include <isogeny_representative_store.hh>
 #include <mpi/worker_pool.hh>
+#include <mpi/serialization_tuple.hh>
 
 
 namespace mpi = boost::mpi;

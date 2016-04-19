@@ -21,39 +21,11 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_WORKER_POOL
-#define _H_MPI_WORKER_POOL
+#ifndef _H_MPI_SERIALIZATION_TUPLE
+#define _H_MPI_SERIALIZATION_TUPLE
 
-#include <boost/mpi.hpp>
 #include <boost/serialization/serialization.hpp>
-#include <deque>
-#include <vector>
-#include <set>
 #include <tuple>
-
-using std::deque;
-using std::vector;
-using std::set;
-using std::tuple;
-
-
-class MPIWorkerPool
-{
-  public:
-    MPIWorkerPool(boost::mpi::communicator & mpi_world) :
-      mpi_world( mpi_world ) {};
-
-    void emit(vector<tuple<int,int>> &&);
-    void wait_for_all_working();
-    void wait_until_one_more_idle();
-    void close_pool();
-
-  private:
-    const boost::mpi::communicator & mpi_world;
-
-    set<int> working_processes;
-    deque<int> idle_processes;
-};
 
 
 namespace boost {
@@ -86,4 +58,3 @@ namespace serialization {
 }}
 
 #endif
-
