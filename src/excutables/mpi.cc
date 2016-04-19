@@ -34,6 +34,7 @@
 #include <block_iterator.hh>
 #include <curve_iterator.hh>
 #include <isogeny_representative_store.hh>
+#include <mpi/config_node.hh>
 #include <mpi/worker_pool.hh>
 #include <mpi/serialization_tuple.hh>
 
@@ -74,28 +75,16 @@ main_master(
     exit(1);
   }
 
-  auto config = YAML::LoadFile(argv[1]);
+  auto config_yaml = YAML::LoadFile(argv[1]);
 
-  if (   !config["prime"] || !config["primeExponent"]
-      || !config["genus"] || !config["resultFolder"] ) {
-    cerr << "configuration file must give prime, prime exponent, maximal prime exponent, "
-         << "genus, and result folder" << endl;
+  auto config = config_yaml.as<MPIConfigNode>();
+  if ( !config.verify() ) {
+    cerr << "Incorrect configuration file:" << endl << config;
     exit(1);
   }
 
-  int prime = config["prime"].as<int>();
-  int prime_exponent = config["primeExponent"].as<int>();
-  int genus = config["genus"].as<int>();
-  int package_size = config["packageSize"].as<int>();
-  string result_folder = config["resultFolder"].as<string>();
-  // todo: test that config variables are valid
-  int degree = 2*genus + 2;
-
   auto mpi_worker_pool = MPIWorkerPool(mpi_world);
-  mpi::broadcast(mpi_world, prime, 0);
-  mpi::broadcast(mpi_world, prime_exponent, 0);
-  mpi::broadcast(mpi_world, genus, 0);
-  mpi::broadcast(mpi_world, result_folder, 0);
+  mpi::broadcast(mpi_world, config, 0);
 
 
   // todo: receive opencl capabilities and hosts
@@ -108,9 +97,9 @@ main_master(
     mpi_world.send(rank, 0,false);
 
 
-  FqElementTable enumeration_table(prime, prime_exponent);
+  FqElementTable enumeration_table(config.prime, config.prime_exponent);
 
-  for ( auto curve_enumerator = CurveIterator(enumeration_table, genus, package_size);
+  for ( auto curve_enumerator = CurveIterator(enumeration_table, config.genus, config.package_size);
         !curve_enumerator.is_end();
         curve_enumerator.step() )
     // todo: check whether results are there
@@ -127,17 +116,11 @@ main_worker(
     mpi::communicator & mpi_world
     )
 {
-  int prime;
-  int prime_exponent;
-  int genus;
-  string result_folder;
+  MPIConfigNode config;
 
-  mpi::broadcast(mpi_world, prime, 0);
-  mpi::broadcast(mpi_world, prime_exponent, 0);
-  mpi::broadcast(mpi_world, genus, 0);
-  mpi::broadcast(mpi_world, result_folder, 0);
+  mpi::broadcast(mpi_world, config, 0);
 
-  int prime_power = pow(prime, prime_exponent);
+  int prime_power = pow(config.prime, config.prime_exponent);
 
 
   // OpenCL directives
@@ -145,12 +128,12 @@ main_worker(
   mpi_world.recv(0, 0, use_opencl);
 
 
-  auto fq_table = make_shared<FqElementTable>(prime, prime_exponent);
+  auto fq_table = make_shared<FqElementTable>(config.prime, config.prime_exponent);
   auto opencl = use_opencl ? make_shared<OpenCLInterface>() : shared_ptr<OpenCLInterface>();
 
   vector<ReductionTable> reduction_tables;
-  for ( size_t fx=genus; fx>genus/2; --fx )
-    reduction_tables.emplace_back(prime, fx, opencl);
+  for ( size_t fx=config.genus; fx>config.genus/2; --fx )
+    reduction_tables.emplace_back(config.prime, fx, opencl);
 
 
   while (true) {
@@ -180,7 +163,7 @@ main_worker(
      // mpi::send(0, 1, bounds);
     }
 
-    fstream( representative_output_name(result_folder, prime_power, bounds),
+    fstream( representative_output_name(config.result_path.native(), prime_power, bounds),
              ios_base::out )
       << isogeny_representative_store;
   }
@@ -188,14 +171,14 @@ main_worker(
 
 string
 representative_output_name(
-    string result_folder,
+    string result_path,
     unsigned int prime_power,
     const vector<tuple<int,int>> & bounds
     )
 {
   stringstream output_name(ios_base::out);
 
-  output_name << result_folder << "/isogeny_representatives";
+  output_name << result_path << "/isogeny_representatives";
 
   output_name << "__prime_power_" << prime_power;
   output_name << "__coeff_exponent_bounds";

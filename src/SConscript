@@ -43,7 +43,10 @@ Alias("merger", prg_merger)
 
 prg_mpi = env_mpi.Program(
     "executable/mpi"
-  , [ "excutables/mpi.cc", "mpi/worker_pool.cc" ]
+  , [ "excutables/mpi.cc"
+    , "mpi/worker_pool.cc"
+    , "mpi/config_node.cc"
+    ]
     + objs_curve
   )
 env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)

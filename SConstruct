@@ -84,7 +84,7 @@ if not GetOption("clean"):
 
   ## check libaries
   libs_and_paths = [ (lib, env["libboost_path"])
-                     for lib in ["boost_mpi" , "boost_serialization"] ]
+                     for lib in ["boost_filesystem", "boost_mpi", "boost_serialization", "boost_system"] ]
   for (lib,path) in libs_and_paths :
     conf.env.AppendUnique( LIBPATH = [path] )
     if not conf.CheckLib(lib, language="C++"):
