@@ -34,7 +34,7 @@
 #include <block_iterator.hh>
 #include <curve_iterator.hh>
 #include <isogeny_representative_store.hh>
-#include <mpi_worker_pool.hh>
+#include <mpi/worker_pool.hh>
 
 
 namespace mpi = boost::mpi;
@@ -97,6 +97,10 @@ main_master(
   mpi::broadcast(mpi_world, result_folder, 0);
 
 
+  // todo: receive opencl capabilities and hosts
+  //       group by hosts
+  //       decide for each host group which process runs which accelarators
+  //       transmit this information
   // OpenCL directives
   mpi_world.send(1, 0, true);
   for ( size_t rank=2; rank<mpi_world.size(); ++rank )

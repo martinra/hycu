@@ -17,7 +17,7 @@ Export("objs_curve")
 
 
 prg_single = env.Program(
-    "single"
+    "executable/single"
   , [ "excutables/single.cc" ] + objs_curve
   )
 env.InstallAs(env["prefix"] + "/bin/single", prg_single)
@@ -25,7 +25,7 @@ Alias("single", prg_single)
 
 
 prg_legacy = env.Program(
-    "legacy"
+    "executable/legacy"
   , [ "excutables/legacy.cc", "isogeny_count_store.cc" ] + objs_curve
   )
 env.InstallAs(env["prefix"] + "/bin/legacy", prg_legacy)
@@ -33,7 +33,7 @@ Alias("legacy", prg_legacy)
 
 
 prg_merger = env_merger.Program(
-    "merger"
+    "executable/merger"
   , [ "excutables/merge_isogeny_representatives.cc" ]
     + objs_curve
   )
@@ -42,8 +42,8 @@ Alias("merger", prg_merger)
 
 
 prg_mpi = env_mpi.Program(
-    "mpi"
-  , [ "excutables/mpi.cc" , "mpi_worker_pool.cc" ]
+    "executable/mpi"
+  , [ "excutables/mpi.cc", "mpi/worker_pool.cc" ]
     + objs_curve
   )
 env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
