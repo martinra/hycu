@@ -34,14 +34,17 @@ using std::shared_ptr;
 class OpenCLInterface
 {
   public:
-    OpenCLInterface();
+    OpenCLInterface() : OpenCLInterface ( OpenCLInterface::devices().front() );
+    OpenCLInterface(cl::Device device);
+
+    static vector<cl::Device> devices();
 
     friend class Curve;
     friend class ReductionTable;
 
   protected:
 
-    shared_ptr<cl::Platform> platform;
+    // shared_ptr<cl::Platform> platform;
     shared_ptr<cl::Device> device;
     shared_ptr<cl::Context> context;
     shared_ptr<cl::CommandQueue> queue;

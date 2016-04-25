@@ -21,57 +21,17 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_WORKER_POOL
-#define _H_MPI_WORKER_POOL
+#ifndef _H_MPI_MASTER
+#define _H_MPI_MASTER
 
 #include <boost/mpi.hpp>
-#include <deque>
-#include <map>
-#include <memory>
-#include <vector>
-#include <set>
-#include <tuple>
-
-#include <mpi/thread_pool.hh>
+#incldue <memory>
 
 
 namespace mpi = boost::mpi;
-using std::deque;
-using std::map;
-using std::vector;
-using std::set;
 using std::shared_ptr;
-using std::tuple;
 
 
-typedef u_process_id   unsigned int;
-
-
-class MPIWorkerPool
-{
-  public:
-    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world) : mpi_world ( mpi_world );
-    ~MPIWorkerPool;
-
-    void broadcast_config(const MPIConfigNode & node);
-
-    void assign(vuu_block);
-    void fill_idle_queues();
-    void flush_finished_blocks();
-    void finish_block();
-    void wait_for_assigned_blocks();
-
-  private:
-    constexpr unsigned int master_process_id = 0;
-
-    shared_ptr<mpi::communicator> mpi_world;
-
-    ThreadPool master_thread_pool;
-
-    deque<u_process_id> cpu_idle_queue;
-    deque<u_process_id> opencl_idle_queue;
-
-    map<u_process_id, set<vuu_block>> assigned_blocks;
-};
+int main_master(int argc, char** argv, shared_ptr<mpi::communicator> mpi_world);
 
 #endif

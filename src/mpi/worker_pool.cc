@@ -22,6 +22,7 @@
 
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/optional.hpp>
 #include <vector>
 #include <tuple>
 
@@ -30,58 +31,128 @@
 
 
 namespace mpi = boost::mpi;
+using boost::optional;
 using namespace std;
 
 
+MPIWorkerPool::
+~MPIWorkerPool()
+{
+  this->wait_for_assigned_blocks();
+}
+
 void
 MPIWorkerPool::
-emit(
-    vector<tuple<int,int>> && coeff_bounds
+broadcast_config(
+    const MPIConfigNode & config
     )
 {
-  if ( this->idle_processes.empty() ) {
-    this->wait_until_one_more_idle();
+  this->master_thread_pool.update_config(config);
+  for ( size_t ix=1; ix<this->mpi_world->size(); ++ix )
+    this->mpi_world->send(ix, MPIWorkerPool::update_config_tag, config);
+}
+
+void
+MPIWorkerPool::
+assign(
+    vuu_block block
+    )
+{
+  if ( this->opencl_idle.empty() )
+    this->fill_idle_queues();
+
+  u_process_id process_id;
+  if ( !this->opencl_idle_queue.empty() ) {
+    process_id = this->opencl_idle_queue.pop_front();
+    if ( process_id == MPIWorkerPool::master_process_id )
+      this->master_thread_pool.assign(block);
+    else
+      this->mpi_world.send(process_id, MPIWorker::assign_opencl_block_tag, block);
+  }
+  else  {
+    process_id = this->cpu_idle_queue.pop_front();
+    if ( process_id == MPIWorkerPool::master_process_id )
+      this->master_thread_pool.assign(block);
+    else
+      this->mpi_world.send(process_id, MPIWorker::assign_cpu_block_tag, block);
   }
 
-  int rank = this->idle_processes.front();
-  this->idle_processes.pop_front();
-  this->working_processes.insert(rank);
-
-  this->mpi_world.send(rank, 0, vector<tuple<int,int>>(coeff_bounds));
+  this->assigned_blocks[process_id].insert(block);
 }
 
 void
 MPIWorkerPool::
-wait_for_all_working()
+fill_idle_queues()
 {
-  while ( !this->working_processes.empty() )
-    this->wait_until_one_more_idle();
+  tuple<unsigned int, unsigned int> nmb_cpu_opencl;
+
+  while ( true ) {
+    nmb_cpu_opencl = this->master_thread_pool.flush_ready_threads();
+    for ( size_t jx=0; jx<get<0>(nmb_cpu_opencl); ++jx)
+      this->cpu_idle_queue.push_back(MPIWorkerPool::master_process_id)
+    for ( size_t jx=0; jx<get<1>(nmb_cpu_opencl); ++jx)
+      this->opencl_idle_queue.push_back(MPIWorkerPool::master_process_id)
+
+    for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
+      this->mpi_world->send(ix, MPIWorkerPool::flush_ready_threads_tag, true);
+      this->mpi_world->recv(ix, MPIWorkerPool::flush_ready_threads_tag, &nmb_cpu_opencl);
+
+      for ( size_t jx=0; jx<get<0>(nmb_cpu_opencl); ++jx)
+        this->cpu_idle_queue.push_back(ix)
+      for ( size_t jx=0; jx<get<1>(nmb_cpu_opencl); ++jx)
+        this->opencl_idle_queue.push_back(ix)
+    }
+
+    if ( this->cpu_idle_queue.empty() && this->opencl_idle_queue.empty() )
+      this_thread::sleep_for(std::chrono::milliseconds(50));
+    else
+      break;
+  }
 }
 
 void
 MPIWorkerPool::
-wait_until_one_more_idle()
+flush_finished_blocks()
 {
-  mpi::status mpi_status = this->mpi_world.probe();
+  auto blocks = this->thread_pool->flush_finished_blocks();
+  for ( const auto & block : blocks )
+    this->finished_block(MPIWorkerPool::master_process_id, block);
 
-  if ( mpi_status.tag() != 0 )
+  for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
+    this->mpi_world.send(ix, MPIWorkerPool::finsihed_blocks_tag, true);
+    this->mpi_world.recv(ix, MPIWorkerPool::finsihed_blocks_tag, &blocks);
+    for ( const auto & block : blocks )
+      this->finished_block(ix, block);
+  }
+}
+
+void
+MPIWorkerPool::
+finished_block(
+    u_process_id process_id,
+    const vuu_block & block
+    )
+{
+  auto block_it = this->assigned_blocks[process_id].find(block);
+  if ( block_it == this->assigned_blocks[process_id].end() ) {
+    cerr << "MPIWorkerPool::finish_block: block was not assigned" << endl;
     throw;
-
-  bool idle_status;
-  this->mpi_world.recv(mpi_status.source(), 0, idle_status);
-
-  if ( idle_status ) {
-    this->working_processes.erase(mpi_status.source());
-    this->idle_processes.push_back(mpi_status.source());
-  } else
-    this->wait_until_one_more_idle();
+  }
+  this->assigned_blocks[process_id].erase(block_it);
 }
 
 void
 MPIWorkerPool::
-close_pool()
+wait_for_assigned_blocks()
 {
-  wait_for_all_working();
-  for ( int rank : this->idle_processes )
-    this->mpi_world.send(rank, 1, true);
+  while ( true ) {
+    this->flush_finished_blocks()
+
+    for ( const auto & assigned_block : assigned_blocks )
+      if ( !assigned_blocks.second().empty() ) {
+        this_thread::sleep_for(std::chrono::milliseconds(500));
+        continue;
+      }
+    break;
+  }
 }

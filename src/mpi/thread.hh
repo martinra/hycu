@@ -21,41 +21,44 @@
 ===============================================================================*/
 
 
-#include <boost/mpi.hpp>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <tuple>
-#include <yaml-cpp/yaml.h>
-
-#include <opencl_interface.hh>
-#include <reduction_table.hh>
-#include <curve.hh>
-#include <block_iterator.hh>
-#include <curve_iterator.hh>
-#include <isogeny_representative_store.hh>
-#include <mpi/config_node.hh>
-#include <mpi/master.hh>
-#include <mpi/serialization_tuple.hh>
-#include <mpi/worker.hh>
-#include <mpi/worker_pool.hh>
+#ifndef _H_MPI_THREAD
+#define _H_MPI_THREAD
 
 
-namespace mpi = boost::mpi;
-using namespace std;
+using std::mutex;
 
 
-int
-main(
-    int argc,
-    char** argv
-    )
+class MPIThread
 {
-  mpi::environment mpi_environment(argc, argv);
-  auto make_shared<mpi::communicator> mpi_world;
+  MPIThread(shared_ptr<ThreadPool> thread_pool);
+  MPIThread(shared_ptr<ThreadPool> thread_pool, const cl::Device & device);
 
-  if (mpi_world.rank() == 0)
-    return main_master(argc, argv, mpi_world);
-  else
-    return main_worker(mpi_world);
-}
+  bool inline has_opencl() const { return (bool)this->opencl; };
+
+  void main();
+
+  void update_config(const MPIConfigNode & config);
+  void assign( vuu_block block,
+               shared_ptr<FqElementTable> fq_table,
+               vector<shared_ptr<ReductionTable>> reduction_tables );
+
+  private:
+    shared_ptr<ThreadPool> thread_pool;
+
+    thread thread;
+    mutex main_mutex;
+    mutex data_mutex;
+
+    MPIConfigNode config;
+
+    shared_ptr<OpenCLInterface> opencl;
+    shared_ptr<FqElementTable> fq_table;
+    vector<shared_ptr<ReductionTable>> reduction_tables;
+
+    deque< tuple<vuu_block, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> > blocks;
+
+
+    void check_blocks();
+};
+
+#endif

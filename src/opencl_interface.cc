@@ -146,20 +146,11 @@ kernel_reduction_code =
   ;
 
 OpenCLInterface::
-OpenCLInterface()
+OpenCLInterface(
+    cl::Device device
+    )
 {
-  vector<cl::Platform> all_platforms;
-  cl::Platform::get(&all_platforms);
-  if (all_platforms.size() == 0)
-    throw "No platforms found.";
-  this->platform = make_shared<cl::Platform>(all_platforms[0]);
-
-  vector<cl::Device> all_devices;
-  this->platform->getDevices(CL_DEVICE_TYPE_GPU, &all_devices);
-  if (all_devices.size() == 0)
-    throw "No devices found.";
-  this->device = make_shared<cl::Device>(all_devices[0]);
-
+  this->device = make_shared<cl::Device>(device);
   this->context = make_shared<cl::Context>(*this->device);
   this->queue = make_shared<cl::CommandQueue>(*this->context, *this->device);
 
@@ -182,3 +173,34 @@ OpenCLInterface()
   }
 }
 
+static
+vector<cl::Device>
+OpenCLInterface::
+devices()
+{
+  vector<cl::Platform> platforms_all_vendors
+  cl::Platform::get(&platforms_all_vendors);
+
+  vector<cl::Platform> platforms;
+  vector<string> vendors;
+  string vendor;
+  for ( const auto & platform : platforms_all_vendors ) {
+    platform.getInfo(CL_PLATFORM_VENDOR, &vendor);
+
+    if ( vendors.find(vendor) == vendors.end() ) {
+      vendors.push_back(vendor);
+      platforms.push_back(platform);
+    }
+  }
+
+  vector<cl::Device> devices, platform_devices;
+  for ( const auto & platform : platforms ) {
+    platform.getDevices(CL_DEVICE_TYPE_GPU, &platform_devices);
+    devices.insert(devices.end(), platform_devices.begin(), platform_devices.end())
+
+    platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &platform_devices);
+    devices.insert(devices.end(), platform_devices.begin(), platform_devices.end())
+  }
+
+  return devices;
+}

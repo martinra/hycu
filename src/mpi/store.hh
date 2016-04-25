@@ -21,57 +21,50 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_WORKER_POOL
-#define _H_MPI_WORKER_POOL
+#ifndef _H_MPI_STORE
+#define _H_MPI_STORE
 
-#include <boost/mpi.hpp>
-#include <deque>
+#include <iostream>
 #include <map>
-#include <memory>
 #include <vector>
-#include <set>
-#include <tuple>
 
-#include <mpi/thread_pool.hh>
+#include <curve.hh>
 
 
-namespace mpi = boost::mpi;
-using std::deque;
+using std::istream;
 using std::map;
 using std::vector;
-using std::set;
-using std::shared_ptr;
-using std::tuple;
 
 
-typedef u_process_id   unsigned int;
+typedef struct {
+  vector<int> ramification_type;
+  vector<int> hasse_weil_offsets;
+} curve_data;
+
+typedef struct {
+  unsigned int count;
+  vector<int> representative_poly_coeff_exponents;
+} store_data;
 
 
-class MPIWorkerPool
+class MPIStore
 {
   public:
-    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world) : mpi_world ( mpi_world );
-    ~MPIWorkerPool;
+    MPIStore(const MPIConfigNode & config, const vuu_block & block) :
+      config ( config ), block ( block );
+  
+    void register_curve(const Curve & curve);
+  
+    friend ostream & operator<<(ostream & stream, const MPIStore & store);
+    friend istream & operator>>(istream & stream, MPIStore & store);
 
-    void broadcast_config(const MPIConfigNode & node);
+  protected:
+    MPIConfigNode config;
+    vuu_block block;
 
-    void assign(vuu_block);
-    void fill_idle_queues();
-    void flush_finished_blocks();
-    void finish_block();
-    void wait_for_assigned_blocks();
+    map<curve_data, store_data> store;
 
-  private:
-    constexpr unsigned int master_process_id = 0;
-
-    shared_ptr<mpi::communicator> mpi_world;
-
-    ThreadPool master_thread_pool;
-
-    deque<u_process_id> cpu_idle_queue;
-    deque<u_process_id> opencl_idle_queue;
-
-    map<u_process_id, set<vuu_block>> assigned_blocks;
+    string output_file_name();
 };
 
 #endif

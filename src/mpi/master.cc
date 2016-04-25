@@ -21,24 +21,7 @@
 ===============================================================================*/
 
 
-#include <boost/mpi.hpp>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <tuple>
-#include <yaml-cpp/yaml.h>
-
-#include <opencl_interface.hh>
-#include <reduction_table.hh>
-#include <curve.hh>
-#include <block_iterator.hh>
-#include <curve_iterator.hh>
-#include <isogeny_representative_store.hh>
-#include <mpi/config_node.hh>
 #include <mpi/master.hh>
-#include <mpi/serialization_tuple.hh>
-#include <mpi/worker.hh>
-#include <mpi/worker_pool.hh>
 
 
 namespace mpi = boost::mpi;
@@ -46,16 +29,44 @@ using namespace std;
 
 
 int
-main(
+main_master(
     int argc,
-    char** argv
+    char** argv,
+    shared_ptr<mpi::communicator> mpi_world
     )
 {
-  mpi::environment mpi_environment(argc, argv);
-  auto make_shared<mpi::communicator> mpi_world;
+  if (argc != 2) {
+    cerr << "One argument, the configuration file, is needed" << endl;
+    exit(1);
+  }
 
-  if (mpi_world.rank() == 0)
-    return main_master(argc, argv, mpi_world);
+  auto config_yaml = YAML::LoadFile(argv[1]);
+
+  vector<MPIConfigNode> config;
+  if ( config_yaml.isSequence() )
+    for ( const auto & node : config_yaml )
+      config.emplace_back(node.as<MPIConfigNode>());
   else
-    return main_worker(mpi_world);
+    config.emplace_back(config_yaml.as<MPIConfigNode>());
+
+  for ( const auto & node : config )
+    if ( !config.verify() ) {
+      cerr << "Incorrect configuration node:" << endl << config;
+      exit(1);
+    }
+
+
+  MPIWorkerPool mpi_worker_pool(mpi_world);
+
+  for ( const auto & node : config ) {
+    mpi_worker_pool.broadcast_config(node);
+
+    FqElementTable enumeration_table(node.prime, node.prime_exponent);
+    CurveIterator iter(enumeration_table, config.genus, config.package_size);
+    for (; !iter.is_end(); iter.step() )
+      mpi_worker_pool.assign(curve_enumerator.as_block());
+  }
+
+
+  return 0;
 }

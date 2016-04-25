@@ -44,8 +44,13 @@ Alias("merger", prg_merger)
 prg_mpi = env_mpi.Program(
     "executable/mpi"
   , [ "excutables/mpi.cc"
-    , "mpi/worker_pool.cc"
     , "mpi/config_node.cc"
+    , "mpi/master.cc"
+    , "mpi/store.cc"
+    , "mpi/thread.cc"
+    , "mpi/thread_pool.cc"
+    , "mpi/worker.cc"
+    , "mpi/worker_pool.cc"
     ]
     + objs_curve
   )

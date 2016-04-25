@@ -21,18 +21,11 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_WORKER_POOL
-#define _H_MPI_WORKER_POOL
+#ifndef _H_MPI_THREAD_POOL
+#define _H_MPI_THREAD_POOL
 
 #include <boost/mpi.hpp>
-#include <deque>
-#include <map>
-#include <memory>
-#include <vector>
-#include <set>
-#include <tuple>
-
-#include <mpi/thread_pool.hh>
+#include <thread>
 
 
 namespace mpi = boost::mpi;
@@ -44,34 +37,33 @@ using std::shared_ptr;
 using std::tuple;
 
 
-typedef u_process_id   unsigned int;
+typedef vuu_block   vector<tuple<unsigned int,unsigned int>>;
 
 
-class MPIWorkerPool
+class MPIThreadPool
 {
   public:
-    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world) : mpi_world ( mpi_world );
-    ~MPIWorkerPool;
+    MPIThreadPool();
+    ~MPIThreadPool;
 
-    void broadcast_config(const MPIConfigNode & node);
+    void update_config(shared_ptr<MPIConfigNode> config);
 
-    void assign(vuu_block);
-    void fill_idle_queues();
-    void flush_finished_blocks();
-    void finish_block();
-    void wait_for_assigned_blocks();
+    void assign(const vuu_block & block, bool opencl);
+    void finished_block(const vuu_block & block);
+
+    vector<vuu_block> flush_finished_blocks();
+    tuple<unsigned int, unsigned int> flush_ready_threads();
 
   private:
-    constexpr unsigned int master_process_id = 0;
+    mutex data_mutex;
 
-    shared_ptr<mpi::communicator> mpi_world;
+    vector<shared_ptr<MPIThread>> threads;
+    deque<shared_ptr<MPIThread>> idle_threads;
+    vector<shared_ptr<MPIThread>> ready_threads;
+    map<vuu_block, shared_ptr<MPIThread>> busy_threads;
 
-    ThreadPool master_thread_pool;
-
-    deque<u_process_id> cpu_idle_queue;
-    deque<u_process_id> opencl_idle_queue;
-
-    map<u_process_id, set<vuu_block>> assigned_blocks;
+    vector<vuu_block> finished_blocks;
 };
 
 #endif
+
