@@ -52,9 +52,9 @@ main(
     )
 {
   mpi::environment mpi_environment(argc, argv);
-  auto make_shared<mpi::communicator> mpi_world;
+  auto mpi_world = make_shared<mpi::communicator>();
 
-  if (mpi_world.rank() == 0)
+  if (mpi_world->rank() == 0)
     return main_master(argc, argv, mpi_world);
   else
     return main_worker(mpi_world);

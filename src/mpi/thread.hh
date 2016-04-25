@@ -24,28 +24,47 @@
 #ifndef _H_MPI_THREAD
 #define _H_MPI_THREAD
 
+#include <deque>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <tuple>
 
+#include "block_iterator.hh"
+#include "fq_element_table.hh"
+#include "mpi/config_node.hh"
+#include "opencl_interface.hh"
+#include "reduction_table.hh"
+
+
+using std::deque;
 using std::mutex;
+using std::shared_ptr;
+using std::thread;
+using std::tuple;
 
 
-class MPIThread
+class MPIThreadPool;
+
+
+class MPIThread :
+  public std::enable_shared_from_this<MPIThread>
 {
-  MPIThread(shared_ptr<ThreadPool> thread_pool);
-  MPIThread(shared_ptr<ThreadPool> thread_pool, const cl::Device & device);
-
-  bool inline has_opencl() const { return (bool)this->opencl; };
-
-  void main();
-
-  void update_config(const MPIConfigNode & config);
-  void assign( vuu_block block,
-               shared_ptr<FqElementTable> fq_table,
-               vector<shared_ptr<ReductionTable>> reduction_tables );
+  public:
+    MPIThread( shared_ptr<MPIThreadPool> thread_pool,
+               shared_ptr<OpenCLInterface> opencl = {} );
+  
+    bool inline is_opencl_thread() const { return (bool)this->opencl; };
+  
+    static void main(shared_ptr<MPIThread> thread);
+  
+    void update_config(const MPIConfigNode & config);
+    void assign(vuu_block block);
 
   private:
-    shared_ptr<ThreadPool> thread_pool;
+    shared_ptr<MPIThreadPool> thread_pool;
 
-    thread thread;
+    thread main_thread;
     mutex main_mutex;
     mutex data_mutex;
 
@@ -55,7 +74,7 @@ class MPIThread
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
 
-    deque< tuple<vuu_block, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> > blocks;
+    deque<tuple< vuu_block, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >> blocks;
 
 
     void check_blocks();

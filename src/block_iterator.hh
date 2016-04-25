@@ -34,6 +34,9 @@ using std::vector;
 using std::tuple;
 
 
+typedef vector<tuple<int,int>> vuu_block;
+
+
 class BlockIterator
 {
   public:

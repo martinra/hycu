@@ -43,7 +43,24 @@ ReductionTable::
 ReductionTable(
     int prime,
     int prime_exponent,
-    shared_ptr<OpenCLInterface> opencl
+    shared_ptr<OpenCLInterface> && opencl
+    ) :
+  prime( prime ),
+  prime_exponent( prime_exponent ),
+  prime_power( pow(prime,prime_exponent) ),
+  prime_power_pred( prime_power - 1 ),
+  opencl( move(opencl) )
+{
+  this->compute_tables();
+  if ( opencl )
+    this->init_opencl_buffers();
+}
+
+ReductionTable::
+ReductionTable(
+    int prime,
+    int prime_exponent,
+    const shared_ptr<OpenCLInterface> & opencl
     ) :
   prime( prime ),
   prime_exponent( prime_exponent ),
@@ -51,14 +68,20 @@ ReductionTable(
   prime_power_pred( prime_power - 1 ),
   opencl( opencl )
 {
+  this->compute_tables();
+  if ( opencl )
+    this->init_opencl_buffers();
+}
+
+void
+ReductionTable::
+compute_tables()
+{
   this->exponent_reduction_table = this->compute_exponent_reduction_table(prime_power);
   this->incrementation_table =
       this->compute_incrementation_table(prime, prime_exponent, prime_power);
   this->minimal_field_table =
       this->compute_minimal_field_table(prime, prime_exponent, prime_power);
-
-  if ( opencl )
-    this->init_opencl_buffers();
 }
 
 void

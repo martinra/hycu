@@ -54,6 +54,7 @@ class Curve
 
     int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
     int genus() const;
+    vector<int> inline rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
 
     bool has_squarefree_rhs();
     nmod_poly_struct rhs_nmod_polynomial() const;

@@ -44,29 +44,35 @@ using std::shared_ptr;
 using std::tuple;
 
 
-typedef u_process_id   unsigned int;
+typedef unsigned int u_process_id;
 
 
 class MPIWorkerPool
 {
   public:
-    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world) : mpi_world ( mpi_world );
-    ~MPIWorkerPool;
+    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world) : mpi_world ( mpi_world ) {};
+    ~MPIWorkerPool();
 
     void broadcast_config(const MPIConfigNode & node);
 
     void assign(vuu_block);
     void fill_idle_queues();
     void flush_finished_blocks();
-    void finish_block();
+    void finished_block(u_process_id process_id, const vuu_block & block);
     void wait_for_assigned_blocks();
 
-  private:
-    constexpr unsigned int master_process_id = 0;
+    static constexpr unsigned int update_config_tag       = 0;
+    static constexpr unsigned int flush_ready_threads_tag = 1;
+    static constexpr unsigned int assign_opencl_block_tag = 2;
+    static constexpr unsigned int assign_cpu_block_tag    = 3;
+    static constexpr unsigned int finished_blocks_tag     = 4;
 
+    static constexpr unsigned int master_process_id = 0;
+
+  private:
     shared_ptr<mpi::communicator> mpi_world;
 
-    ThreadPool master_thread_pool;
+    MPIThreadPool master_thread_pool;
 
     deque<u_process_id> cpu_idle_queue;
     deque<u_process_id> opencl_idle_queue;

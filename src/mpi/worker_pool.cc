@@ -35,6 +35,37 @@ using boost::optional;
 using namespace std;
 
 
+constexpr
+unsigned int
+MPIWorkerPool::
+update_config_tag;
+
+constexpr
+unsigned int
+MPIWorkerPool::
+flush_ready_threads_tag;
+
+constexpr
+unsigned int
+MPIWorkerPool::
+assign_opencl_block_tag;
+
+constexpr
+unsigned int
+MPIWorkerPool::
+assign_cpu_block_tag;
+
+constexpr
+unsigned int
+MPIWorkerPool::
+finished_blocks_tag;
+
+constexpr
+unsigned int
+MPIWorkerPool::
+master_process_id;
+
+
 MPIWorkerPool::
 ~MPIWorkerPool()
 {
@@ -58,23 +89,27 @@ assign(
     vuu_block block
     )
 {
-  if ( this->opencl_idle.empty() )
+  if ( this->opencl_idle_queue.empty() )
     this->fill_idle_queues();
 
   u_process_id process_id;
   if ( !this->opencl_idle_queue.empty() ) {
-    process_id = this->opencl_idle_queue.pop_front();
+    process_id = this->opencl_idle_queue.front();
+    this->opencl_idle_queue.pop_front();
+
     if ( process_id == MPIWorkerPool::master_process_id )
-      this->master_thread_pool.assign(block);
+      this->master_thread_pool.assign(block, true);
     else
-      this->mpi_world.send(process_id, MPIWorker::assign_opencl_block_tag, block);
+      this->mpi_world->send(process_id, MPIWorkerPool::assign_opencl_block_tag, block);
   }
   else  {
-    process_id = this->cpu_idle_queue.pop_front();
+    process_id = this->cpu_idle_queue.front();
+    this->cpu_idle_queue.pop_front();
+
     if ( process_id == MPIWorkerPool::master_process_id )
-      this->master_thread_pool.assign(block);
+      this->master_thread_pool.assign(block, false);
     else
-      this->mpi_world.send(process_id, MPIWorker::assign_cpu_block_tag, block);
+      this->mpi_world->send(process_id, MPIWorkerPool::assign_cpu_block_tag, block);
   }
 
   this->assigned_blocks[process_id].insert(block);
@@ -89,18 +124,18 @@ fill_idle_queues()
   while ( true ) {
     nmb_cpu_opencl = this->master_thread_pool.flush_ready_threads();
     for ( size_t jx=0; jx<get<0>(nmb_cpu_opencl); ++jx)
-      this->cpu_idle_queue.push_back(MPIWorkerPool::master_process_id)
+      this->cpu_idle_queue.push_back(MPIWorkerPool::master_process_id);
     for ( size_t jx=0; jx<get<1>(nmb_cpu_opencl); ++jx)
-      this->opencl_idle_queue.push_back(MPIWorkerPool::master_process_id)
+      this->opencl_idle_queue.push_back(MPIWorkerPool::master_process_id);
 
     for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
       this->mpi_world->send(ix, MPIWorkerPool::flush_ready_threads_tag, true);
-      this->mpi_world->recv(ix, MPIWorkerPool::flush_ready_threads_tag, &nmb_cpu_opencl);
+      this->mpi_world->recv(ix, MPIWorkerPool::flush_ready_threads_tag, nmb_cpu_opencl);
 
       for ( size_t jx=0; jx<get<0>(nmb_cpu_opencl); ++jx)
-        this->cpu_idle_queue.push_back(ix)
+        this->cpu_idle_queue.push_back(ix);
       for ( size_t jx=0; jx<get<1>(nmb_cpu_opencl); ++jx)
-        this->opencl_idle_queue.push_back(ix)
+        this->opencl_idle_queue.push_back(ix);
     }
 
     if ( this->cpu_idle_queue.empty() && this->opencl_idle_queue.empty() )
@@ -114,13 +149,13 @@ void
 MPIWorkerPool::
 flush_finished_blocks()
 {
-  auto blocks = this->thread_pool->flush_finished_blocks();
+  auto blocks = this->master_thread_pool.flush_finished_blocks();
   for ( const auto & block : blocks )
     this->finished_block(MPIWorkerPool::master_process_id, block);
 
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
-    this->mpi_world.send(ix, MPIWorkerPool::finsihed_blocks_tag, true);
-    this->mpi_world.recv(ix, MPIWorkerPool::finsihed_blocks_tag, &blocks);
+    this->mpi_world->send(ix, MPIWorkerPool::finished_blocks_tag, true);
+    this->mpi_world->recv(ix, MPIWorkerPool::finished_blocks_tag, blocks);
     for ( const auto & block : blocks )
       this->finished_block(ix, block);
   }
@@ -146,10 +181,10 @@ MPIWorkerPool::
 wait_for_assigned_blocks()
 {
   while ( true ) {
-    this->flush_finished_blocks()
+    this->flush_finished_blocks();
 
-    for ( const auto & assigned_block : assigned_blocks )
-      if ( !assigned_blocks.second().empty() ) {
+    for ( auto assigned_block : assigned_blocks )
+      if ( !assigned_block.second.empty() ) {
         this_thread::sleep_for(std::chrono::milliseconds(500));
         continue;
       }

@@ -20,6 +20,8 @@
 
 ===============================================================================*/
 
+#include <fstream>
+
 #include <mpi/store.hh>
 
 
@@ -40,11 +42,11 @@ output_file_name()
 
   output_name << ".hycu_unmerged";
 
-  return (this->config.result_path / path(output_name.str())).native_string();
+  return (this->config.result_path / path(output_name.str())).native();
 }
 
 void
-IsogenyRepresentativeStore::
+MPIStore::
 register_curve(
     const Curve & curve
     )
@@ -53,11 +55,18 @@ register_curve(
     { curve.ramification_type(),
       curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) };
 
-  auto store_it = this->store.find(store_key);
+  auto store_it = this->store.find(curve_data);
   if ( store_it == this->store.end() )
-    this->store[store_key] = { curve.poly_coeff_exponents, 1 };
+    store_it->second = {1, curve.rhs_coeff_exponents()};
   else
-    ++this->store[store_key].count;
+    ++store_it->second.count;
+}
+
+void
+MPIStore::
+write_to_file()
+{
+  fstream(this->output_file_name(), ios_base::out) << *this;
 }
 
 ostream &
@@ -70,10 +79,10 @@ operator<<(
     const auto & curve_data = store_it.first;
     const auto & store_data = store_it.second;
 
-    if ( !curve_data.ramifications.empty() ) {
-      stream << curve_data.ramifications.front();
-      for (size_t ix=1; ix<curve_data.ramifications.size(); ++ix)
-        stream << "," << curve_data.ramifications[ix];
+    if ( !curve_data.ramification_type.empty() ) {
+      stream << curve_data.ramification_type.front();
+      for (size_t ix=1; ix<curve_data.ramification_type.size(); ++ix)
+        stream << "," << curve_data.ramification_type[ix];
     }
     stream << ";";
 

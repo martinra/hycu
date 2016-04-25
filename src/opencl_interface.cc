@@ -20,7 +20,7 @@
 
 ===============================================================================*/
 
-
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -173,12 +173,11 @@ OpenCLInterface(
   }
 }
 
-static
 vector<cl::Device>
 OpenCLInterface::
 devices()
 {
-  vector<cl::Platform> platforms_all_vendors
+  vector<cl::Platform> platforms_all_vendors;
   cl::Platform::get(&platforms_all_vendors);
 
   vector<cl::Platform> platforms;
@@ -187,7 +186,7 @@ devices()
   for ( const auto & platform : platforms_all_vendors ) {
     platform.getInfo(CL_PLATFORM_VENDOR, &vendor);
 
-    if ( vendors.find(vendor) == vendors.end() ) {
+    if ( find(vendors.begin(), vendors.end(), vendor) == vendors.end() ) {
       vendors.push_back(vendor);
       platforms.push_back(platform);
     }
@@ -196,10 +195,10 @@ devices()
   vector<cl::Device> devices, platform_devices;
   for ( const auto & platform : platforms ) {
     platform.getDevices(CL_DEVICE_TYPE_GPU, &platform_devices);
-    devices.insert(devices.end(), platform_devices.begin(), platform_devices.end())
+    devices.insert(devices.end(), platform_devices.begin(), platform_devices.end());
 
     platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &platform_devices);
-    devices.insert(devices.end(), platform_devices.begin(), platform_devices.end())
+    devices.insert(devices.end(), platform_devices.begin(), platform_devices.end());
   }
 
   return devices;

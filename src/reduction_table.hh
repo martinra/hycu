@@ -44,8 +44,10 @@ class ReductionTable
     // in the current implemnentation it is given by the Conway polynomial
     ReductionTable(int prime, int prime_exponent)
       : ReductionTable(prime, prime_exponent, shared_ptr<OpenCLInterface>()) {};
-    ReductionTable(int prime, int prime_exponent, shared_ptr<OpenCLInterface> opencl);
+    ReductionTable(int prime, int prime_exponent, shared_ptr<OpenCLInterface> && opencl);
+    ReductionTable(int prime, int prime_exponent, const shared_ptr<OpenCLInterface> & opencl);
 
+    void compute_tables();
     void init_opencl_buffers();
     inline bool is_opencl_enabled() const { return (bool)opencl; };
     

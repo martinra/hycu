@@ -21,9 +21,13 @@
 ===============================================================================*/
 
 
-#include <mpi/worker.hh>
+#include "mpi/serialization_tuple.hh"
+#include "mpi/thread_pool.hh"
+#include "mpi/worker.hh"
+#include "mpi/worker_pool.hh"
 
 
+namespace mpi = boost::mpi;
 using namespace std;
 
 
@@ -32,46 +36,46 @@ main_worker(
     shared_ptr<mpi::communicator> mpi_world
     )
 {
-  ThreadPool thread_pool;
+  MPIThreadPool thread_pool;
 
   while ( true ) {
-    mpi::status mpi_status = this->mpi_world.probe();
+    mpi::status mpi_status = mpi_world->probe();
 
     if ( mpi_status.tag() == MPIWorkerPool::update_config_tag ) {
       MPIConfigNode config;
       mpi_world->recv( MPIWorkerPool::master_process_id,
-                       MPIWorkerPool::update_config_tag, &config )
+                       MPIWorkerPool::update_config_tag, config );
       thread_pool.update_config(config);
     }
 
     else if ( mpi_status.tag() == MPIWorkerPool::assign_opencl_block_tag ) {
       vuu_block block;
       mpi_world->recv( MPIWorkerPool::master_process_id,
-                       MPIWorkerPool::assign_opencl_block_tag, &block )
+                       MPIWorkerPool::assign_opencl_block_tag, block );
       thread_pool.assign(block, true);
     }
 
     else if ( mpi_status.tag() == MPIWorkerPool::assign_cpu_block_tag ) {
       vuu_block block;
       mpi_world->recv( MPIWorkerPool::master_process_id,
-                       MPIWorker::assign_cpu_block_tag, &block );
+                       MPIWorkerPool::assign_cpu_block_tag, block );
       thread_pool.assign(block, false);
     }
 
     else if ( mpi_status.tag() == MPIWorkerPool::flush_ready_threads_tag ) { 
       bool dummy;
       mpi_world->recv( MPIWorkerPool::master_process_id,
-                       MPIWorkerPool::flush_ready_threads_tag, &dummy );
+                       MPIWorkerPool::flush_ready_threads_tag, dummy );
 
       mpi_world->send( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::flush_ready_threads_tag,
                        thread_pool.flush_ready_threads() );
     }
 
-    else if ( mpi_status.tag() == MPIWorkerPool::finsihed_blocks_tag ) {
+    else if ( mpi_status.tag() == MPIWorkerPool::finished_blocks_tag ) {
       bool dummy;
       mpi_world->recv( MPIWorkerPool::master_process_id,
-                       MPIWorkerPool::finished_blocks_tag, &dummy );
+                       MPIWorkerPool::finished_blocks_tag, dummy );
 
       mpi_world->send( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::finished_blocks_tag,

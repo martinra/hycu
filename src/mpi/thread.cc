@@ -20,49 +20,45 @@
 
 ===============================================================================*/
 
+#include <mpi/store.hh>
 #include <mpi/thread.hh>
+#include <mpi/thread_pool.hh>
+
+
+using namespace std;
 
 
 MPIThread::
 MPIThread(
-    shared_ptr<ThreadPool> thread_pool
+    shared_ptr<MPIThreadPool> thread_pool,
+    shared_ptr<OpenCLInterface> opencl
     ) :
-  thread_pool ( thread_pool )
+  thread_pool ( thread_pool ),
+  opencl ( opencl )
 {
-
   this->main_mutex.lock();
-  this->thread = thread(MPIThread::main());
-}
-
-MPIThread::
-MPIThread(
-    shared_ptr<ThreadPool> thread_pool,
-    const cl::Device & device
-    ) :
-  thread_pool ( thread_pool )
-{
-  this->opencl = make_shared<OpenCLInterface>(device);
-
-  this->main_mutex.lock();
-  this->thread = thread(this->main);
+  this->main_thread = thread(MPIThread::main, shared_from_this());
 }
 
 void
 MPIThread::
-main()
+main(
+    shared_ptr<MPIThread> thread
+    )
 {
   while (true) {
-    this->main_mutex.lock();
+    thread->main_mutex.lock();
 
     vuu_block block;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
 
-    this->data_mutex.lock();
-    tie(block, fq_table, reduction_tables) = this->blocks->pop_front();
-    this->data_mutex.unlock();
+    thread->data_mutex.lock();
+    tie(block, fq_table, reduction_tables) = thread->blocks.front();
+    thread->blocks.pop_front();
+    thread->data_mutex.unlock();
 
-    MPIStore store(this->config, block);
+    MPIStore store(thread->config, block);
     for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
       Curve curve(fq_table, iter.as_position());
       for ( auto table : reduction_tables ) curve.count(*table);
@@ -70,13 +66,14 @@ main()
     }
 
     store.write_to_file();
-    thread_pool->finished_block(block);
+    thread->thread_pool->finished_block(block);
 
-    this->check_blocks();
+    thread->check_blocks();
   }
 }
 
 void
+MPIThread::
 update_config(
     const MPIConfigNode & config
     )
@@ -86,17 +83,17 @@ update_config(
   this->fq_table = make_shared<FqElementTable>(config.prime, config.prime_exponent);
   this->reduction_tables.clear();
   for ( size_t fx=config.genus; fx>config.genus/2; --fx )
-    this->reduction_tables.emplace_back(config.prime, fx, this->opencl);
+    this->reduction_tables.push_back(make_shared<ReductionTable>(config.prime, fx, this->opencl));
 }
 
 void
 MPIThread::
 assign(
-    vuu_block block,
+    vuu_block block
     )
 {
   this->data_mutex.lock();
-  this->block.emplace_back(make_tupe(block, this->fq_table, this->reduction_tables));
+  this->blocks.emplace_back(block, this->fq_table, this->reduction_tables);
   this->main_mutex.unlock();
   this->data_mutex.unlock();
 }

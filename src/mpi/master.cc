@@ -21,7 +21,13 @@
 ===============================================================================*/
 
 
-#include <mpi/master.hh>
+#include <yaml-cpp/yaml.h>
+
+#include "curve_iterator.hh"
+#include "fq_element_table.hh"
+#include "mpi/config_node.hh"
+#include "mpi/master.hh"
+#include "mpi/worker_pool.hh"
 
 
 namespace mpi = boost::mpi;
@@ -43,15 +49,15 @@ main_master(
   auto config_yaml = YAML::LoadFile(argv[1]);
 
   vector<MPIConfigNode> config;
-  if ( config_yaml.isSequence() )
+  if ( config_yaml.IsSequence() )
     for ( const auto & node : config_yaml )
       config.emplace_back(node.as<MPIConfigNode>());
   else
     config.emplace_back(config_yaml.as<MPIConfigNode>());
 
   for ( const auto & node : config )
-    if ( !config.verify() ) {
-      cerr << "Incorrect configuration node:" << endl << config;
+    if ( !node.verify() ) {
+      cerr << "Incorrect configuration node:" << endl << node;
       exit(1);
     }
 
@@ -62,9 +68,9 @@ main_master(
     mpi_worker_pool.broadcast_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
-    CurveIterator iter(enumeration_table, config.genus, config.package_size);
+    CurveIterator iter(enumeration_table, node.genus, node.package_size);
     for (; !iter.is_end(); iter.step() )
-      mpi_worker_pool.assign(curve_enumerator.as_block());
+      mpi_worker_pool.assign(iter.as_block());
   }
 
 

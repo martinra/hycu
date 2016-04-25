@@ -29,12 +29,13 @@
 
 
 using std::shared_ptr;
+using std::vector;
 
 
 class OpenCLInterface
 {
   public:
-    OpenCLInterface() : OpenCLInterface ( OpenCLInterface::devices().front() );
+    OpenCLInterface() : OpenCLInterface ( OpenCLInterface::devices().front() ) {};
     OpenCLInterface(cl::Device device);
 
     static vector<cl::Device> devices();

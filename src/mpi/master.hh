@@ -25,7 +25,7 @@
 #define _H_MPI_MASTER
 
 #include <boost/mpi.hpp>
-#incldue <memory>
+#include <memory>
 
 
 namespace mpi = boost::mpi;

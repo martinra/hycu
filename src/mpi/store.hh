@@ -26,14 +26,19 @@
 
 #include <iostream>
 #include <map>
+#include <string>
 #include <vector>
 
-#include <curve.hh>
+#include "block_iterator.hh"
+#include "curve.hh"
+#include "mpi/config_node.hh"
+#include "mpi/store.hh"
 
 
 using std::istream;
 using std::map;
 using std::vector;
+using std::string;
 
 
 typedef struct {
@@ -47,13 +52,38 @@ typedef struct {
 } store_data;
 
 
+namespace std
+{
+  template<> struct
+  less<curve_data>
+  {
+    bool
+    operator()(
+        const curve_data & lhs,
+        const curve_data & rhs
+        ) const
+    {
+      if ( lhs.ramification_type < rhs.ramification_type )
+        return true;
+      else if ( lhs.ramification_type == rhs.ramification_type )
+        if ( lhs.hasse_weil_offsets < rhs.hasse_weil_offsets )
+          return true;
+
+      return false;
+    };
+  };
+}
+
+
 class MPIStore
 {
   public:
     MPIStore(const MPIConfigNode & config, const vuu_block & block) :
-      config ( config ), block ( block );
+      config ( config ), block ( block ) {};
   
     void register_curve(const Curve & curve);
+
+    void write_to_file();
   
     friend ostream & operator<<(ostream & stream, const MPIStore & store);
     friend istream & operator>>(istream & stream, MPIStore & store);

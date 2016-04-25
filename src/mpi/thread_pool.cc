@@ -25,7 +25,8 @@
 #include <vector>
 #include <tuple>
 
-#include <mpi/thread_pool.hh>
+#include "mpi/thread_pool.hh"
+#include "opencl_interface.hh"
 
 
 using namespace std;
@@ -35,24 +36,15 @@ MPIThreadPool::
 MPIThreadPool()
 {
   for ( const auto & device : OpenCLInterface::devices() )
-    this->threads.emplace_back(make_shared<MPIThread>(device));
-  this->_nmb_opencl_threads = this->threads.size();
-    
+    this->threads.push_back(make_shared<MPIThread>( shared_from_this(),
+                                                    make_shared<OpenCLInterface>(device) )); 
 
   auto nmb_threads = thread::hardware_concurrency();
-  for ( size_t ix=this->_nmb_opencl_threads; ix<nmb_threads; ++ix )
-    this->threads.emplace_back(make_shared<MPIThread>());
-  this->_nmb_cpu_threads = this->threads.size() - this->_nmb_opencl_threads;
+  for ( size_t ix=this->threads.size(); ix<nmb_threads; ++ix )
+    this->threads.push_back(make_shared<MPIThread>(shared_from_this()));
 
   for ( const auto thread : this->threads )
     this->ready_threads.push_back(thread);
-}
-
-MPIThreadPool::
-~MPIThreadPool()
-{
-  for ( auto thread : this->threads )
-    thread->join();
 }
 
 void
@@ -62,7 +54,7 @@ update_config(
     )
 {
   for ( auto & thread : this->threads )
-    thread->updata_config(config);
+    thread->update_config(config);
 }
 
 void
@@ -73,17 +65,22 @@ assign(
     )
 {
   shared_ptr<MPIThread> thread;
-  if ( opencl )
-    thread = this->idle_threads.pop_front();
-  else
-    thread = this->idle_threads.pop_back();
-  if ( opencl != thread.is_opencl_thread() ) {
+  if ( opencl ) {
+    thread = this->idle_threads.front();
+    this->idle_threads.pop_front();
+  }
+  else {
+    thread = this->idle_threads.back();
+    this->idle_threads.pop_back();
+  }
+
+  if ( opencl != thread->is_opencl_thread() ) {
     cerr << "MPIThreadPool::assign: did not meet opencl requirement" << endl;
     throw;
   }
 
   this->busy_threads[block] = thread;
-  thread.assign(block);
+  thread->assign(block);
 }
 
 void
@@ -97,7 +94,7 @@ finished_block(
     cerr << "MPIThreadPool::finished_block: block not found" << endl;
     throw; 
   }
-  const auto thread = *block_it;
+  const auto thread = block_it->second;
   this->busy_threads.erase(block_it);
 
   this->ready_threads.push_back(thread);
@@ -115,14 +112,14 @@ flush_ready_threads()
   unsigned int nmb_opencl_threads = 0;
 
   for ( auto thread : this->ready_threads ) {
-    if ( thread->has_opencl() ) {
+    if ( thread->is_opencl_thread() ) {
       ++nmb_opencl_threads;
-      this->idle_threads->push_front(thread);
+      this->idle_threads.push_front(thread);
     }
 
     else {
       ++nmb_cpu_threads;
-      this->idle_threads->push_back(thread);
+      this->idle_threads.push_back(thread);
     }
   }
 
