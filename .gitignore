@@ -10,3 +10,5 @@ test_data_jonas/
 config.log
 .sconf_temp
 scons_variables.cache
+.syntastic_clang_check_config
+.vimrc.local
