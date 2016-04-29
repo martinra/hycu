@@ -45,7 +45,7 @@ prg_single = env.Program(
   , [ "executables/single.cc" ]
     + objs_curve
   )
-inst_single = env.InstallAs(env["prefix"] + "/bin/single", prg_single)
+inst_single = env.InstallAs(env["prefix"] + "/bin/hycu-single", prg_single)
 Alias("single", inst_single)
 
 
@@ -57,7 +57,7 @@ prg_threaded = env.Program(
     + objs_store
     + objs_threaded
   )
-inst_threaded = env.InstallAs(env["prefix"] + "/bin/thread", prg_threaded)
+inst_threaded = env.InstallAs(env["prefix"] + "/bin/hycu-thread", prg_threaded)
 Alias("threaded", inst_threaded)
 
 
@@ -73,7 +73,7 @@ prg_mpi = env_mpi.Program(
     + objs_store
     + objs_threaded
   )
-inst_mpi = env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
+inst_mpi = env_mpi.InstallAs(env["prefix"] + "/bin/hycu-mpi", prg_mpi)
 Alias("mpi", inst_mpi)
 
 
@@ -83,5 +83,5 @@ prg_merger = env.Program(
     + objs_curve
     + objs_store
   )
-inst_merger = env.InstallAs(env["prefix"] + "/bin/merger", prg_merger)
+inst_merger = env.InstallAs(env["prefix"] + "/bin/hycu-merger", prg_merger)
 Alias("merger", inst_merger)
