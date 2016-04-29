@@ -61,22 +61,6 @@ if not GetOption("clean"):
     )
 
 
-env_merger = env.Clone()
-if not GetOption("clean"):
-  conf = env_merger.Configure()
-
-  ## check libaries
-  libs_and_paths = [ (lib, env["libboost_path"])
-                     for lib in ["boost_filesystem", "boost_system"] ]
-  for (lib,path) in libs_and_paths :
-    conf.env.AppendUnique( LIBPATH = [path] )
-    if not conf.CheckLib(lib, language="C++"):
-      print( "Library {} not found".format(lib) )
-    conf.env.Append( LIBS = [lib] )
-
-  env_merger = conf.Finish()
-
-
 env_mpi = env.Clone()
 if not GetOption("clean"):
   conf = env_mpi.Configure()
@@ -87,7 +71,7 @@ if not GetOption("clean"):
 
   ## check libaries
   libs_and_paths = [ (lib, env["libboost_path"])
-                     for lib in ["boost_filesystem", "boost_mpi", "boost_serialization", "boost_system"] ]
+                     for lib in ["boost_mpi", "boost_serialization"] ]
   for (lib,path) in libs_and_paths :
     conf.env.AppendUnique( LIBPATH = [path] )
     if not conf.CheckLib(lib, language="C++"):
@@ -121,7 +105,7 @@ if not GetOption("clean"):
 
 
 
-env.SConscript("src/SConscript", variant_dir = "build", exports = ["env", "env_merger", "env_mpi"] )
+env.SConscript("src/SConscript", variant_dir = "build", exports = ["env", "env_mpi"] )
 env.SConscript("test/SConscript", variant_dir = "build_test", exports = "env_test")
 
 

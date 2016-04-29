@@ -1,6 +1,6 @@
 ## todo: name executables: hycu-mpi etc.
 
-Import(["env", "env_merger", "env_mpi"])
+Import(["env", "env_mpi"])
 
 
 sources_curve = [
@@ -77,12 +77,11 @@ inst_mpi = env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
 Alias("mpi", inst_mpi)
 
 
-## todo: mergers for each store
-prg_merger = env_merger.Program(
+prg_merger = env.Program(
     "executables/merger"
   , [ "executables/merger.cc" ]
     + objs_curve
     + objs_store
   )
-inst_merger = env_merger.InstallAs(env["prefix"] + "/bin/merger", prg_merger)
+inst_merger = env.InstallAs(env["prefix"] + "/bin/merger", prg_merger)
 Alias("merger", inst_merger)
