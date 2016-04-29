@@ -27,7 +27,7 @@
 #include <tuple>
 
 #include <mpi/worker_pool.hh>
-#include <mpi/serialization_tuple.hh>
+#include <utils/serialization_tuple.hh>
 
 
 namespace mpi = boost::mpi;

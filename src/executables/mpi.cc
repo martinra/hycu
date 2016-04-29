@@ -35,7 +35,6 @@
 #include <curve_iterator.hh>
 #include <config/config_node.hh>
 #include <mpi/master.hh>
-#include <mpi/serialization_tuple.hh>
 #include <mpi/worker.hh>
 #include <mpi/worker_pool.hh>
 

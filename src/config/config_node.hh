@@ -25,7 +25,6 @@
 #define _H_MPI_CONFIG_NODE
 
 #include <boost/filesystem.hpp>
-#include <boost/serialization/serialization.hpp>
 #include <ostream>
 #include <string>
 #include <yaml-cpp/yaml.h>
