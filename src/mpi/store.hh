@@ -31,7 +31,7 @@
 
 #include "block_iterator.hh"
 #include "curve.hh"
-#include "mpi/config_node.hh"
+#include "config/config_node.hh"
 #include "mpi/store.hh"
 
 

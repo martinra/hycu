@@ -33,7 +33,7 @@
 
 #include "block_iterator.hh"
 #include "fq_element_table.hh"
-#include "mpi/config_node.hh"
+#include "config/config_node.hh"
 #include "opencl_interface.hh"
 #include "reduction_table.hh"
 

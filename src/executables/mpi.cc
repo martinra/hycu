@@ -34,7 +34,7 @@
 #include <block_iterator.hh>
 #include <curve_iterator.hh>
 #include <isogeny_representative_store.hh>
-#include <mpi/config_node.hh>
+#include <config/config_node.hh>
 #include <mpi/master.hh>
 #include <mpi/serialization_tuple.hh>
 #include <mpi/worker.hh>

@@ -25,7 +25,7 @@
 
 #include "curve_iterator.hh"
 #include "fq_element_table.hh"
-#include "mpi/config_node.hh"
+#include "config/config_node.hh"
 #include "mpi/master.hh"
 #include "mpi/worker_pool.hh"
 

@@ -1,3 +1,5 @@
+## todo: name executables: hycu-mpi etc.
+
 Import(["env", "env_merger", "env_mpi"])
 
 
@@ -12,12 +14,17 @@ sources_curve = [
   , "single_curve_fp.cc"
 ## todo: move to store path
   , "mpi/store.cc"
-## todo: move to executable path 
-  , "mpi/config_node.cc"
   ]
 
 objs_curve = [ env.Object(s) for s in sources_curve ]
 Export("objs_curve")
+
+
+sources_config = [
+    "config/config_node.cc"
+  ]
+objs_config = [ env.Object(s) for s in sources_config ]
+Export("objs_config")
 
 
 sources_threaded = [
@@ -41,6 +48,7 @@ prg_threaded = env.Program(
     "executables/threaded"
   , [ "executables/threaded.cc" ]
     + objs_curve
+    + objs_config
     + objs_threaded
   )
 inst_threaded = env.InstallAs(env["prefix"] + "/bin/thread", prg_threaded)
@@ -64,6 +72,7 @@ prg_mpi = env_mpi.Program(
     , "mpi/worker_pool.cc"
     ]
     + objs_curve
+    + objs_config
     + objs_threaded
   )
 inst_mpi = env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
