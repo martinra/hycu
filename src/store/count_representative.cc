@@ -22,7 +22,7 @@
 
 #include <fstream>
 
-#include "mpi/store.hh"
+#include "store/count_representative.hh"
 
 
 using namespace std;
@@ -48,7 +48,7 @@ namespace std
 }
 
 string
-MPIStore::
+StoreCountRepresentative::
 output_file_name(
     const MPIConfigNode & config,
     const vuu_block & block
@@ -72,7 +72,7 @@ output_file_name(
 }
 
 void
-MPIStore::
+StoreCountRepresentative::
 register_curve(
     const Curve & curve
     )
@@ -91,7 +91,7 @@ register_curve(
 }
 
 void
-MPIStore::
+StoreCountRepresentative::
 write_block_to_file(
     const MPIConfigNode & config,
     const vuu_block & block
@@ -107,7 +107,7 @@ write_block_to_file(
 ostream &
 operator<<(
     ostream & stream,
-    const MPIStore & store
+    const StoreCountRepresentative & store
     )
 {
   for ( auto & store_it : store.store ) {
@@ -146,7 +146,7 @@ operator<<(
 istream &
 operator>>(
     istream & stream,
-    MPIStore & store
+    StoreCountRepresentative & store
     )
 {
   curve_data curve_data;

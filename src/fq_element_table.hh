@@ -63,8 +63,6 @@ class FqElementTable
 
     friend Curve;
     friend class CurveIterator;
-    friend class IsogenyCountStore;
-    friend class IsogenyRepresentativeStore;
     friend ostream& operator<<(ostream & stream, const Curve & curve);
 
   protected:

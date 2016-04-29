@@ -32,7 +32,7 @@
 #include <reduction_table.hh>
 #include <curve.hh>
 #include <block_iterator.hh>
-#include <isogeny_count_store.hh>
+#include <store/legacy.hh>
 
 
 using namespace std;
@@ -129,7 +129,7 @@ main(
 
 
   auto opencl = make_shared<OpenCLInterface>();
-  IsogenyCountStore isogeny_count_store;
+  StoreLegacy isogeny_count_store;
 
   vector<ReductionTable> reduction_tables;
   for ( size_t fx=genus; fx>genus/2; --fx )

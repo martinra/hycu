@@ -8,12 +8,9 @@ sources_curve = [
   , "curve.cc"
   , "curve_iterator.cc"
   , "fq_element_table.cc"
-  , "isogeny_representative_store.cc"
   , "opencl_interface.cc"
   , "reduction_table.cc"
   , "single_curve_fp.cc"
-## todo: move to store path
-  , "mpi/store.cc"
   ]
 
 objs_curve = [ env.Object(s) for s in sources_curve ]
@@ -25,6 +22,15 @@ sources_config = [
   ]
 objs_config = [ env.Object(s) for s in sources_config ]
 Export("objs_config")
+
+
+sources_store = [
+    "store/legacy.cc"
+  , "store/count_representative.cc"
+  , "store/representative.cc"
+  ]
+objs_store = [ env.Object(s) for s in sources_store ]
+Export("objs_store")
 
 
 sources_threaded = [
@@ -49,6 +55,7 @@ prg_threaded = env.Program(
   , [ "executables/threaded.cc" ]
     + objs_curve
     + objs_config
+    + objs_store
     + objs_threaded
   )
 inst_threaded = env.InstallAs(env["prefix"] + "/bin/thread", prg_threaded)
@@ -57,8 +64,9 @@ Alias("threaded", inst_threaded)
 
 prg_legacy = env.Program(
     "executables/legacy"
-  , [ "executables/legacy.cc", "isogeny_count_store.cc" ]
+  , [ "executables/legacy.cc" ]
     + objs_curve
+    + objs_store
   )
 inst_legacy = env.InstallAs(env["prefix"] + "/bin/legacy", prg_legacy)
 Alias("legacy", inst_legacy)
@@ -73,6 +81,7 @@ prg_mpi = env_mpi.Program(
     ]
     + objs_curve
     + objs_config
+    + objs_store
     + objs_threaded
   )
 inst_mpi = env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
@@ -82,18 +91,9 @@ Alias("mpi", inst_mpi)
 ## todo: mergers for each store
 prg_merger = env_merger.Program(
     "executables/merger"
-  , [ "executables/merge_isogeny_representatives.cc" ]
+  , [ "executables/merger.cc" ]
     + objs_curve
+    + objs_store
   )
 inst_merger = env_merger.InstallAs(env["prefix"] + "/bin/merger", prg_merger)
 Alias("merger", inst_merger)
-
-
-prg_merger_mpi = env_mpi.Program(
-    "executables/merger_mpi"
-  , [ "executables/merger_mpi.cc"
-    ]
-    + objs_curve
-  )
-inst_merger_mpi = env_merger.InstallAs(env["prefix"] + "/bin/merger_mpi", prg_merger_mpi)
-Alias("merger_mpi", inst_merger_mpi)

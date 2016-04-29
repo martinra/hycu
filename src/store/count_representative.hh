@@ -21,36 +21,61 @@
 ===============================================================================*/
 
 
-#ifndef _H_ISOGENY_COUNT_STORE
-#define _H_ISOGENY_COUNT_STORE
+#ifndef _H_MPI_STORE_COUNT_REPRESENTATIVE
+#define _H_MPI_STORE_COUNT_REPRESENTATIVE
 
 #include <iostream>
 #include <map>
-#include <memory>
-#include <tuple>
+#include <string>
 #include <vector>
 
+#include "block_iterator.hh"
+#include "curve.hh"
+#include "config/config_node.hh"
+#include "store/count_representative.hh"
+
+
+using std::istream;
 using std::map;
-using std::shared_ptr;
-using std::tuple;
 using std::vector;
-using std::ostream;
+using std::string;
 
 
-// this stored hyperelliptic curves with squarefree right hand side.
-class IsogenyCountStore
+typedef struct {
+  vector<int> ramification_type;
+  vector<int> hasse_weil_offsets;
+} curve_data;
+
+typedef struct {
+  unsigned int count;
+  vector<int> representative_poly_coeff_exponents;
+} store_data;
+
+
+namespace std
+{
+  template<> struct
+  less<curve_data>
+  {
+    bool operator()(const curve_data & lhs, const curve_data & rhs) const;
+  };
+}
+
+
+class StoreCountRepresentative
 {
   public:
     void register_curve(const Curve & curve);
 
-    ostream & output_legacy(ostream & stream);
+    void write_block_to_file(const MPIConfigNode & config, const vuu_block & block);
+  
+    friend ostream & operator<<(ostream & stream, const StoreCountRepresentative & store);
+    friend istream & operator>>(istream & stream, StoreCountRepresentative & store);
 
-  private:
-    map<tuple<vector<int>,vector<int>>, int> store;
+  protected:
+    map<curve_data, store_data> store;
 
-    shared_ptr<map<vector<int>,int>> legacy_ramfication_vectors;
-
-    int to_legacy_ramification(const vector<int> & ramifications);
+    string output_file_name(const MPIConfigNode & config, const vuu_block & block);
 };
 
 #endif

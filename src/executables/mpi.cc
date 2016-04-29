@@ -33,7 +33,6 @@
 #include <curve.hh>
 #include <block_iterator.hh>
 #include <curve_iterator.hh>
-#include <isogeny_representative_store.hh>
 #include <config/config_node.hh>
 #include <mpi/master.hh>
 #include <mpi/serialization_tuple.hh>

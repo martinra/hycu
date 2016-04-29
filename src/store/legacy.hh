@@ -21,61 +21,36 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_STORE
-#define _H_MPI_STORE
+#ifndef _H_STORE_LEGACY
+#define _H_STORE_LEGACY
 
 #include <iostream>
 #include <map>
-#include <string>
+#include <memory>
+#include <tuple>
 #include <vector>
 
-#include "block_iterator.hh"
-#include "curve.hh"
-#include "config/config_node.hh"
-#include "mpi/store.hh"
-
-
-using std::istream;
 using std::map;
+using std::shared_ptr;
+using std::tuple;
 using std::vector;
-using std::string;
+using std::ostream;
 
 
-typedef struct {
-  vector<int> ramification_type;
-  vector<int> hasse_weil_offsets;
-} curve_data;
-
-typedef struct {
-  unsigned int count;
-  vector<int> representative_poly_coeff_exponents;
-} store_data;
-
-
-namespace std
-{
-  template<> struct
-  less<curve_data>
-  {
-    bool operator()(const curve_data & lhs, const curve_data & rhs) const;
-  };
-}
-
-
-class MPIStore
+// this stored hyperelliptic curves with squarefree right hand side.
+class StoreLegacy
 {
   public:
     void register_curve(const Curve & curve);
 
-    void write_block_to_file(const MPIConfigNode & config, const vuu_block & block);
-  
-    friend ostream & operator<<(ostream & stream, const MPIStore & store);
-    friend istream & operator>>(istream & stream, MPIStore & store);
+    ostream & output_legacy(ostream & stream);
 
-  protected:
-    map<curve_data, store_data> store;
+  private:
+    map<tuple<vector<int>,vector<int>>, int> store;
 
-    string output_file_name(const MPIConfigNode & config, const vuu_block & block);
+    shared_ptr<map<vector<int>,int>> legacy_ramfication_vectors;
+
+    int to_legacy_ramification(const vector<int> & ramifications);
 };
 
 #endif

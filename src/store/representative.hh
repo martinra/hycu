@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 
-#ifndef _H_ISOGENY_REPRESENTATIVE_STORE
-#define _H_ISOGENY_REPRESENTATIVE_STORE
+#ifndef _H_STORE_REPRESENTATIVE
+#define _H_STORE_REPRESENTATIVE
 
 #include <iostream>
 #include <map>
@@ -40,13 +40,13 @@ using std::vector;
 using std::istream;
 
 
-class IsogenyRepresentativeStore
+class StoreRepresentative
 {
   public:
     void register_curve(const Curve & curve);
 
-    friend ostream & operator<<(ostream & stream, const IsogenyRepresentativeStore & store);
-    friend istream & operator>>(istream & stream, IsogenyRepresentativeStore & store);
+    friend ostream & operator<<(ostream & stream, const StoreRepresentative & store);
+    friend istream & operator>>(istream & stream, StoreRepresentative & store);
 
   private:
     map<tuple<vector<int>,vector<int>>, vector<int>> store;

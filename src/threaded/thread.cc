@@ -20,7 +20,7 @@
 
 ===============================================================================*/
 
-#include <mpi/store.hh>
+#include <store/count_representative.hh>
 #include <threaded/thread.hh>
 #include <threaded/thread_pool.hh>
 
@@ -78,7 +78,7 @@ main_thread(
     data_lock.unlock();
 
 
-    MPIStore store;
+    StoreCountRepresentative store;
     for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
       Curve curve(fq_table, iter.as_position());
       for ( auto table : reduction_tables ) curve.count(table);

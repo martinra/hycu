@@ -26,21 +26,23 @@
 #include <flint/fq_nmod_poly.h>
 
 #include <curve.hh>
-#include <isogeny_count_store.hh>
+#include <store/legacy.hh>
 
 
 using namespace std;
 
 
+// todo: factor out the legacy store
+
 void
-IsogenyCountStore::
+StoreLegacy::
 register_curve(
     const Curve & curve
     )
 {
   auto store_key =
     make_tuple( curve.ramification_type(),
-                curve.hasse_weil_offsets(curve.table->prime_exponent * curve.genus()) );
+                curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) );
   auto store_it = this->store.find(store_key);
   if (store_it == this->store.end())
     this->store[store_key] = 1;
@@ -49,7 +51,7 @@ register_curve(
 }
 
 int
-IsogenyCountStore::
+StoreLegacy::
 to_legacy_ramification(
     const vector<int> & ramifications
     )
@@ -86,7 +88,7 @@ to_legacy_ramification(
 }
 
 ostream &
-IsogenyCountStore::
+StoreLegacy::
 output_legacy(
     ostream & stream
     )

@@ -22,14 +22,14 @@
 
 
 #include <iostream>
-#include <isogeny_representative_store.hh>
+#include <store/representative.hh>
 
 
 using namespace std;
 
 
 void
-IsogenyRepresentativeStore::
+StoreRepresentative::
 register_curve(
     const Curve & curve
     )
@@ -39,13 +39,13 @@ register_curve(
                 curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) );
   auto store_it = this->store.find(store_key);
   if ( store_it == this->store.end() )
-    this->store[store_key] = curve.poly_coeff_exponents;
+    this->store[store_key] = curve.rhs_coeff_exponents();
 }
 
 ostream &
 operator<<(
     ostream & stream,
-    const IsogenyRepresentativeStore & store
+    const StoreRepresentative & store
     )
 {
   for ( auto & store_it : store.store ) {
@@ -83,7 +83,7 @@ operator<<(
 istream &
 operator>>(
     istream & stream,
-    IsogenyRepresentativeStore & store
+    StoreRepresentative & store
     )
 {
   int read_int;

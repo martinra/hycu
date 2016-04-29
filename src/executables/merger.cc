@@ -26,11 +26,17 @@
 #include <iostream>
 #include <vector>
 
-#include <isogeny_representative_store.hh>
+#include "store/count_representative.hh"
+#include "store/representative.hh"
 
 
 using namespace std;
 namespace filesys = boost::filesystem;
+
+
+template<class Store>
+void
+merge(vector<filesys::path> input_files, filesys::path output_file);
 
 
 int
@@ -39,13 +45,20 @@ main(
     char** argv
     )
 {
-  if (argc < 3) {
-    cerr << "Arguments: input_folder, output_file" << endl;
+  if (argc < 4) {
+    cerr << "Arguments: store_type, input_folder, output_file" << endl;
+    exit(1);
+  }
+
+  auto store_type = string(argv[1]);
+  if (    store_type != "cr"
+       || store_type != "r" ) {
+    cerr << "store type must be cr or r" << endl;
     exit(1);
   }
 
 
-  filesys::path input(argv[1]);
+  filesys::path input(argv[2]);
   if ( !filesys::exists(input) ) {
     cerr << "input folder does not exist" << endl;
     exit(1);
@@ -60,11 +73,25 @@ main(
         back_inserter(input_files) );
 
 
-  IsogenyRepresentativeStore store;
+  if ( store_type == "cr" )
+    merge<StoreCountRepresentative>(input_files, filesys::path(argv[3]));
+  else if ( store_type == "r" )
+    merge<StoreRepresentative>(input_files, filesys::path(argv[3]));
+
+  return 0;
+}
+
+template<class Store>
+void
+merge(
+    vector<filesys::path> input_files,
+    filesys::path output_file
+    )
+{
+  Store store;
   for ( auto const& input_file : input_files )
     if ( input_file.extension() == ".hycu_unmerged" )
       fstream(input_file.native(), ios_base::in) >> store;
 
-
-  fstream(argv[2], ios_base::out) << store;
+  fstream(output_file.native(), ios_base::out) << store;
 }
