@@ -37,6 +37,8 @@ using std::vector;
 using std::ostream;
 
 
+// todo: derive from Store
+
 // this stored hyperelliptic curves with squarefree right hand side.
 class StoreLegacy
 {

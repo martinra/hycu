@@ -26,8 +26,8 @@
 #include <vector>
 #include <tuple>
 
-#include <mpi/worker_pool.hh>
-#include <utils/serialization_tuple.hh>
+#include "mpi/worker_pool.hh"
+#include "utils/serialization_tuple.hh"
 
 
 namespace mpi = boost::mpi;
@@ -77,8 +77,6 @@ MPIWorkerPool(
     ) :
   mpi_world ( mpi_world )
 {
-  cerr << "mpi_world references in work pool ctor: " << mpi_world.use_count() << endl;
-
   this->master_thread_pool = make_shared<MPIThreadPool>();
   this->master_thread_pool->spark_threads();
 }
@@ -86,17 +84,11 @@ MPIWorkerPool(
 MPIWorkerPool::
 ~MPIWorkerPool()
 {
-  cerr << "work pool dtor" << endl;
   this->wait_for_assigned_blocks();
-  cerr << "waited for assigned blocks" << endl;
 
   for ( u_process_id ix = 1; ix < this->mpi_world->size(); ++ix )
       mpi_world->send(ix, MPIWorkerPool::shutdown_tag, true);
-  cerr << "sent all shutdown messages" << endl;
   this->master_thread_pool->shutdown_threads();
-
-  cerr << "mpi_world references in work pool dtor: " << mpi_world.use_count() << endl;
-  cerr << "work pool destructor run in " << this_thread::get_id() << endl;
 }
 
 void
@@ -139,10 +131,6 @@ assign(
       this->mpi_world->send(process_id, MPIWorkerPool::assign_cpu_block_tag, block);
   }
 
-//  cerr << "assigning to process " << process_id << ": ";
-//  for ( auto bds : block )
-//    cerr << get<0>(bds) << "," << get<1>(bds) << "; ";
-//  cerr << endl;
   this->assigned_blocks[process_id].insert(block);
 }
 
@@ -183,17 +171,11 @@ MPIWorkerPool::
 flush_finished_blocks()
 {
   auto blocks = this->master_thread_pool->flush_finished_blocks();
-  for ( const auto & block : blocks ) {
-//    cerr << "finished block: ";
-//    for ( auto bds : block )
-//      cerr << get<0>(bds) << "," << get<1>(bds) << "; ";
-//    cerr << endl;
-
+  for ( const auto & block : blocks )
     this->finished_block(MPIWorkerPool::master_process_id, block);
-  }
 
-  blocks.clear();
   for ( u_process_id ix=1; ix<this->mpi_world->size(); ++ix ) {
+    blocks.clear();
     this->mpi_world->send(ix, MPIWorkerPool::finished_blocks_tag, true);
     this->mpi_world->recv(ix, MPIWorkerPool::finished_blocks_tag, blocks);
     for ( const auto & block : blocks )
@@ -216,12 +198,7 @@ finished_block(
     cerr << endl;
     throw;
   }
-//  else {
-//    cerr << "MPIWorkerPool::finish_block: block was assigned to process " << process_id << ": ";
-//    for ( auto bds : block )
-//      cerr << get<0>(bds) << "," << get<1>(bds) << "; ";
-//    cerr << endl;
-//  }
+
   this->assigned_blocks[process_id].erase(block_it);
 }
 

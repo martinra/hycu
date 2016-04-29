@@ -27,7 +27,7 @@
 #include <memory>
 #include <vector>
 
-#include <curve.hh>
+#include "curve.hh"
 
 
 using std::shared_ptr;

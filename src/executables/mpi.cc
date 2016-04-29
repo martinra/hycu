@@ -28,15 +28,15 @@
 #include <tuple>
 #include <yaml-cpp/yaml.h>
 
-#include <opencl_interface.hh>
-#include <reduction_table.hh>
-#include <curve.hh>
-#include <block_iterator.hh>
-#include <curve_iterator.hh>
-#include <config/config_node.hh>
-#include <mpi/master.hh>
-#include <mpi/worker.hh>
-#include <mpi/worker_pool.hh>
+#include "block_iterator.hh"
+#include "config/config_node.hh"
+#include "curve.hh"
+#include "curve_iterator.hh"
+#include "mpi/master.hh"
+#include "mpi/worker.hh"
+#include "mpi/worker_pool.hh"
+#include "opencl_interface.hh"
+#include "reduction_table.hh"
 
 
 namespace mpi = boost::mpi;
@@ -52,11 +52,8 @@ main(
   mpi::environment mpi_environment(argc, argv, mpi::threading::funneled);
   auto mpi_world = make_shared<mpi::communicator>();
 
-  if (mpi_world->rank() == 0) {
-    int res = main_master(argc, argv, mpi_world);
-    cerr << "mpi_world references after master return: " << mpi_world.use_count() << endl;
-    return res;
-  }
+  if ( mpi_world->rank() == 0 )
+    return main_master(argc, argv, mpi_world);
   else
     return main_worker(mpi_world);
 }

@@ -30,7 +30,8 @@
 #include <tuple>
 #include <vector>
 
-#include <curve.hh>
+#include "curve.hh"
+#include "store/store.hh"
 
 
 using std::map;
@@ -40,7 +41,13 @@ using std::vector;
 using std::istream;
 
 
-class StoreRepresentative
+typedef struct {
+  vector<int> representative_poly_coeff_exponents;
+} store_representative_data;
+
+
+class StoreRepresentative :
+  public Store
 {
   public:
     void register_curve(const Curve & curve);
@@ -49,7 +56,7 @@ class StoreRepresentative
     friend istream & operator>>(istream & stream, StoreRepresentative & store);
 
   private:
-    map<tuple<vector<int>,vector<int>>, vector<int>> store;
+    map<curve_data, store_representative_data> store;
 };
 
 #endif

@@ -21,37 +21,43 @@
 ===============================================================================*/
 
 
-#ifndef _H_CURVE_ITERATOR
-#define _H_CURVE_ITERATOR
+#ifndef _H_STORE_CURVE_DATA
+#define _H_STORE_CURVE_DATA
 
-#include <memory>
+#include <string>
 #include <vector>
-#include <tuple>
 
 #include "block_iterator.hh"
-#include "fq_element_table.hh"
+#include "config/config_node.hh"
 
 
-using std::shared_ptr;
+using std::string;
 using std::vector;
-using std::tuple;
 
 
-class CurveIterator
+typedef struct {
+  vector<int> ramification_type;
+  vector<int> hasse_weil_offsets;
+} curve_data;
+
+
+namespace std
+{
+  template<> struct
+  less<curve_data>
+  {
+    bool operator()(const curve_data & lhs, const curve_data & rhs) const;
+  };
+}
+
+
+class Store
 {
   public:
-    CurveIterator( const FqElementTable & table, int genus, unsigned int package_size );
+    string output_file_name(const MPIConfigNode & config, const vuu_block & block);
 
-    CurveIterator const& step();
-    bool is_end() const;
-
-    vector<int> inline as_position() { return this->enumerator_it->as_position(); };
-    vector<tuple<int,int>> inline as_block() { return this->enumerator_it->as_block(); };
-    BlockIterator inline as_block_enumerator() { return this->enumerator_it->as_block(); };
-
-  private:
-    vector<BlockIterator> enumerators;
-    vector<BlockIterator>::iterator enumerator_it;
+  protected:
+    Store() = default;
 };
 
 #endif

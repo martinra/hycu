@@ -32,9 +32,9 @@
 #include <flint/fq_nmod_poly.h>
 #include <flint/nmod_poly.h>
 
-#include <fq_element_table.hh>
-#include <reduction_table.hh>
-#include <opencl_interface.hh>
+#include "fq_element_table.hh"
+#include "opencl_interface.hh"
+#include "reduction_table.hh"
 
 
 using std::map;

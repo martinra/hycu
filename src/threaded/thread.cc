@@ -20,9 +20,11 @@
 
 ===============================================================================*/
 
-#include <store/count_representative.hh>
-#include <threaded/thread.hh>
-#include <threaded/thread_pool.hh>
+#include <fstream>
+
+#include "store/count_representative.hh"
+#include "threaded/thread.hh"
+#include "threaded/thread_pool.hh"
 
 
 using namespace std;
@@ -33,7 +35,8 @@ MPIThread::
 spark()
 {
   this->shutting_down = false;
-  this->main_std_thread = thread(MPIThread::main_thread, shared_from_this());
+  this->main_std_thread = thread( MPIThread::main_thread<StoreCountRepresentative>,
+                                  shared_from_this() );
 }
 
 void
@@ -45,6 +48,7 @@ shutdown()
   this->main_std_thread.join();
 }
 
+template<class Store>
 void
 MPIThread::
 main_thread(
@@ -56,10 +60,8 @@ main_thread(
 
   while ( true ) {
     while ( true ) {
-      if ( thread->shutting_down ) {
-        cerr << "exiting " << this_thread::get_id() << " main_thread with pointer count: " << thread.use_count() << endl;
+      if ( thread->shutting_down )
         return;
-      }
 
       if ( thread->blocks.empty() )
         thread->main_cond_var.wait(main_lock);
@@ -78,7 +80,7 @@ main_thread(
     data_lock.unlock();
 
 
-    StoreCountRepresentative store;
+    Store store;
     for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
       Curve curve(fq_table, iter.as_position());
       for ( auto table : reduction_tables ) curve.count(table);
@@ -87,13 +89,14 @@ main_thread(
 
 
     data_lock.lock();
-    store.write_block_to_file(thread->config, block);
+    fstream(store.output_file_name(thread->config, block), ios_base::out) << store;
 
     auto thread_pool_shared = thread->thread_pool.lock();
     if ( thread_pool_shared )
       thread_pool_shared->finished_block(block);
     else {
-      cerr << "MPIThread::main_thread: expired thread_pool" << endl;
+      cerr << "MPIThread::main_thread: expired thread_pool in thread "
+           << this_thread::get_id() << endl;
       throw;
     }
     thread_pool_shared.reset();

@@ -20,6 +20,7 @@
 
 ===============================================================================*/
 
+
 #include <fstream>
 
 #include "store/count_representative.hh"
@@ -27,49 +28,6 @@
 
 using namespace std;
 
-
-namespace std
-{
-  bool
-  less<curve_data>::
-  operator()(
-      const curve_data & lhs,
-      const curve_data & rhs
-      ) const
-  {
-    if ( lhs.ramification_type < rhs.ramification_type )
-      return true;
-    else if ( lhs.ramification_type == rhs.ramification_type )
-      if ( lhs.hasse_weil_offsets < rhs.hasse_weil_offsets )
-        return true;
-
-    return false;
-  };
-}
-
-string
-StoreCountRepresentative::
-output_file_name(
-    const MPIConfigNode & config,
-    const vuu_block & block
-    )
-{
-  stringstream output_name(ios_base::out);
-  // debug:
-  // cerr << "stringstream output_name(ios_base::out)" << endl;
-  output_name << "isogeny_representatives";
-
-  output_name << "__prime_power_" << pow(config.prime, config.prime_exponent);
-  output_name << "__coeff_exponent_bounds";
-  for ( auto bds : block )
-    output_name << "__" << get<0>(bds) << "_" << get<1>(bds);
-
-  output_name << ".hycu_unmerged";
-  // debug:
-  // cerr << "output_name << .hycu_unmerged" << endl;
-
-  return (config.result_path / path(output_name.str())).native();
-}
 
 void
 StoreCountRepresentative::
@@ -88,20 +46,6 @@ register_curve(
   else
     // fixme: take stabilizers into account
     ++store_it->second.count;
-}
-
-void
-StoreCountRepresentative::
-write_block_to_file(
-    const MPIConfigNode & config,
-    const vuu_block & block
-    )
-{
-  // debug:
-  // cerr << "write_block_to_file" << endl;
-  fstream(this->output_file_name(config, block), ios_base::out) << *this;
-  // debug:
-  // cerr << "fstream(this->output_file_name(config, block), ios_base::out) << *this" << endl;
 }
 
 ostream &
@@ -150,7 +94,7 @@ operator>>(
     )
 {
   curve_data curve_data;
-  store_data store_data;
+  store_count_representative_data store_data;
   int read_int;
 
 
@@ -161,7 +105,8 @@ operator>>(
   }
 
   if ( stream.eof() ) {
-    cerr << "isogeny_representative_store.operator>>: unexpected end of file (ramification_type)" << endl;
+    cerr << "isogeny_representative_store.operator>>: "
+         << "unexpected end of file (ramification_type)" << endl;
     throw;
   }
   stream.ignore(1,';');
@@ -173,14 +118,16 @@ operator>>(
   }
 
   if ( stream.eof() ) {
-    cerr << "isogeny_representative_store.operator>>: unexpected end of file (hasse_weil_offsets)" << endl;
+    cerr << "isogeny_representative_store.operator>>: "
+         << "unexpected end of file (hasse_weil_offsets)" << endl;
     throw;
   }
   stream.ignore(1,':');
 
   // read count
   if ( stream.eof() || (char)stream.peek() == ';' ) {
-    cerr << "isogeny_representative_store.operator>>: unexpected end of file (count)" << endl;
+    cerr << "isogeny_representative_store.operator>>: "
+         << "unexpected end of file (count)" << endl;
     throw;
   }
 

@@ -20,45 +20,50 @@
 
 ===============================================================================*/
 
-
-#ifndef _H_STORE_COUNT_REPRESENTATIVE
-#define _H_STORE_COUNT_REPRESENTATIVE
-
-#include <iostream>
-#include <map>
+#include <sstream>
 #include <string>
-#include <vector>
 
-#include "block_iterator.hh"
-#include "config/config_node.hh"
-#include "curve.hh"
-#include "store/count_representative.hh"
 #include "store/store.hh"
 
 
-using std::istream;
-using std::map;
-using std::vector;
-using std::string;
+using namespace std;
 
 
-typedef struct {
-  unsigned int count;
-  vector<int> representative_poly_coeff_exponents;
-} store_count_representative_data;
-
-
-class StoreCountRepresentative :
-  public Store
+namespace std
 {
-  public:
-    void register_curve(const Curve & curve);
+  bool
+  less<curve_data>::
+  operator()(
+      const curve_data & lhs,
+      const curve_data & rhs
+      ) const
+  {
+    if ( lhs.ramification_type < rhs.ramification_type )
+      return true;
+    else if ( lhs.ramification_type == rhs.ramification_type )
+      if ( lhs.hasse_weil_offsets < rhs.hasse_weil_offsets )
+        return true;
 
-    friend ostream & operator<<(ostream & stream, const StoreCountRepresentative & store);
-    friend istream & operator>>(istream & stream, StoreCountRepresentative & store);
+    return false;
+  };
+}
 
-  private:
-    map<curve_data, store_count_representative_data> store;
-};
+string
+Store::
+output_file_name(
+    const MPIConfigNode & config,
+    const vuu_block & block
+    )
+{
+  stringstream output_name(ios_base::out);
+  output_name << "store";
 
-#endif
+  output_name << "__prime_power_" << pow(config.prime, config.prime_exponent);
+  output_name << "__coeff_exponent_bounds";
+  for ( auto bds : block )
+    output_name << "__" << get<0>(bds) << "_" << get<1>(bds);
+
+  output_name << ".hycu_unmerged";
+
+  return (config.result_path / path(output_name.str())).native();
+}

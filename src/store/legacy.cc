@@ -25,14 +25,12 @@
 #include <map>
 #include <flint/fq_nmod_poly.h>
 
-#include <curve.hh>
-#include <store/legacy.hh>
+#include "curve.hh"
+#include "store/legacy.hh"
 
 
 using namespace std;
 
-
-// todo: factor out the legacy store
 
 void
 StoreLegacy::
@@ -45,8 +43,10 @@ register_curve(
                 curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) );
   auto store_it = this->store.find(store_key);
   if (store_it == this->store.end())
+    // fixme: take stabilizers into account
     this->store[store_key] = 1;
   else
+    // fixme: take stabilizers into account
     store_it->second += 1;
 }
 

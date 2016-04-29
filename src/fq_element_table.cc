@@ -22,7 +22,8 @@
 
 
 #include <cmath>
-#include <fq_element_table.hh>
+
+#include "fq_element_table.hh"
 
 
 using namespace std;

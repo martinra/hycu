@@ -31,7 +31,6 @@
 #include "threaded/thread_pool.hh"
 
 
-
 using namespace std;
 
 
@@ -98,10 +97,11 @@ main(
           auto finished_blocks = thread_pool->flush_finished_blocks();
           for ( const auto & block : finished_blocks ) {
             if ( assigned_blocks.find(block) == assigned_blocks.end() ) {
-              cerr << "finished block: ";
+              cerr << "finished block was not assigned: ";
               for ( auto pt : block )
                 cerr << get<0>(pt) << "," << get<1>(pt) << "; ";
               cerr << endl;
+              exit(1);
             }
             assigned_blocks.erase(block_ptr);
           }

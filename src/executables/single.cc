@@ -24,8 +24,8 @@
 #include <fstream>
 #include <iostream>
 
-#include <curve.hh>
-#include <single_curve_fp.hh>
+#include "curve.hh"
+#include "single_curve_fp.hh"
 
 
 using namespace std;

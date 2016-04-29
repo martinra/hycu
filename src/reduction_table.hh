@@ -27,7 +27,8 @@
 #include <memory>
 #include <vector>
 #include <CL/cl.hpp>
-#include <opencl_interface.hh>
+
+#include "opencl_interface.hh"
 
 
 using std::shared_ptr;

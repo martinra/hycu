@@ -23,7 +23,7 @@
 
 #include <set>
 
-#include <curve_iterator.hh>
+#include "curve_iterator.hh"
 
 
 using namespace std;
@@ -81,9 +81,8 @@ CurveIterator(
         for ( int kx = jx-1; kx>=0; --kx )
           blocks[kx] = table.block_complete();
 
-        // fixme: do not invoke copy constructor
         this->enumerators.emplace_back(
-            BlockIterator(degree+1, blocks, package_size, sets, dependent_sets) );
+            degree+1, blocks, package_size, sets, dependent_sets );
       }
     }
 

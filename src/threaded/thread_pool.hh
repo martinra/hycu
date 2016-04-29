@@ -26,8 +26,8 @@
 
 #include <thread>
 
-#include <block_iterator.hh>
-#include <threaded/thread.hh>
+#include "block_iterator.hh"
+#include "threaded/thread.hh"
 
 
 using std::deque;
@@ -43,8 +43,6 @@ class MPIThreadPool :
   public std::enable_shared_from_this<MPIThreadPool>
 {
   public:
-    ~MPIThreadPool();
-
     void spark_threads();
     void shutdown_threads();
 

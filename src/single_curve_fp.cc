@@ -23,10 +23,9 @@
 
 #include <map>
 
-#include <opencl_interface.hh>
-#include <reduction_table.hh>
-
-#include <single_curve_fp.hh>
+#include "opencl_interface.hh"
+#include "reduction_table.hh"
+#include "single_curve_fp.hh"
 
 
 using namespace std;

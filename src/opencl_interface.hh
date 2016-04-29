@@ -45,7 +45,6 @@ class OpenCLInterface
 
   protected:
 
-    // shared_ptr<cl::Platform> platform;
     shared_ptr<cl::Device> device;
     shared_ptr<cl::Context> context;
     shared_ptr<cl::CommandQueue> queue;

@@ -23,9 +23,9 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "config/config_node.hh"
 #include "curve_iterator.hh"
 #include "fq_element_table.hh"
-#include "config/config_node.hh"
 #include "mpi/master.hh"
 #include "mpi/worker_pool.hh"
 
@@ -41,8 +41,6 @@ main_master(
     shared_ptr<mpi::communicator> mpi_world
     )
 {
-  cerr << "master thread: " << this_thread::get_id() << endl;
-
   if (argc != 2) {
     cerr << "One argument, the configuration file, is needed" << endl;
     exit(1);
@@ -65,27 +63,16 @@ main_master(
     }
 
 
-  cerr << "mpi_world references before work pool creation: " << mpi_world.use_count() << endl;
-  auto mpi_worker_pool = new MPIWorkerPool(mpi_world);
-  cerr << "mpi_world references after work pool creation: " << mpi_world.use_count() << endl;
+  MPIWorkerPool mpi_worker_pool(mpi_world);
 
   for ( const auto & node : config ) {
-    mpi_worker_pool->broadcast_config(node);
+    mpi_worker_pool.broadcast_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
     CurveIterator iter(enumeration_table, node.genus, node.package_size);
     for (; !iter.is_end(); iter.step() )
-      mpi_worker_pool->assign(iter.as_block());
-    cerr << "finished one node" << endl;
+      mpi_worker_pool.assign(iter.as_block());
   }
-
-  cerr << "about to exit" << endl;
-
-  delete mpi_worker_pool;
-
-  cerr << "freed worker pool in main thread" << endl;
-
-  cerr << "references to mpi_world :" << mpi_world.use_count() << endl;
 
   return 0;
 }

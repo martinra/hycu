@@ -22,7 +22,8 @@
 
 
 #include <iostream>
-#include <store/representative.hh>
+
+#include "store/representative.hh"
 
 
 using namespace std;
@@ -34,12 +35,13 @@ register_curve(
     const Curve & curve
     )
 {
-  auto store_key =
-    make_tuple( curve.ramification_type(),
-                curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) );
-  auto store_it = this->store.find(store_key);
+  curve_data curve_data =
+    { curve.ramification_type(),
+      curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) };
+
+  auto store_it = this->store.find(curve_data);
   if ( store_it == this->store.end() )
-    this->store[store_key] = curve.rhs_coeff_exponents();
+    this->store[curve_data] = { curve.rhs_coeff_exponents() };
 }
 
 ostream &
@@ -49,29 +51,27 @@ operator<<(
     )
 {
   for ( auto & store_it : store.store ) {
-    auto & ramifications = get<0>(store_it.first);
-    auto & hasse_weil_offsets = get<1>(store_it.first);
-    auto & poly_coeff_exponents = store_it.second;
+    const auto & curve_data = store_it.first;
+    const auto & store_data = store_it.second;
 
-
-    if ( !ramifications.empty() ) {
-      stream << ramifications.front();
-      for (size_t ix=1; ix<ramifications.size(); ++ix)
-        stream << "," << ramifications[ix];
+    if ( !curve_data.ramification_type.empty() ) {
+      stream << curve_data.ramification_type.front();
+      for (size_t ix=1; ix<curve_data.ramification_type.size(); ++ix)
+        stream << "," << curve_data.ramification_type[ix];
     }
     stream << ";";
 
-    if ( !hasse_weil_offsets.empty() ) {
-      stream << hasse_weil_offsets.front();
-      for (size_t ix=1; ix<hasse_weil_offsets.size(); ++ix)
-        stream << "," << hasse_weil_offsets[ix];
+    if ( !curve_data.hasse_weil_offsets.empty() ) {
+      stream << curve_data.hasse_weil_offsets.front();
+      for (size_t ix=1; ix<curve_data.hasse_weil_offsets.size(); ++ix)
+        stream << "," << curve_data.hasse_weil_offsets[ix];
     }
     stream << ":";
 
-    if ( !poly_coeff_exponents.empty() ) {
-      stream << poly_coeff_exponents.front();
-      for (size_t ix=1; ix<poly_coeff_exponents.size(); ++ix)
-        stream << "," << poly_coeff_exponents[ix];
+    if ( !store_data.representative_poly_coeff_exponents.empty() ) {
+      stream << store_data.representative_poly_coeff_exponents.front();
+      for (size_t ix=1; ix<store_data.representative_poly_coeff_exponents.size(); ++ix)
+        stream << "," << store_data.representative_poly_coeff_exponents[ix];
     }
 
     stream << endl;
@@ -86,41 +86,44 @@ operator>>(
     StoreRepresentative & store
     )
 {
+  curve_data curve_data;
+  store_representative_data store_data;
   int read_int;
-  vector<int> ramifications, hasse_weil_offsets, poly_coeff_exponents;
+
 
   while ( !stream.eof() && (char)stream.peek() != ';' ) {
     stream.ignore(1,',') >> read_int;
-    ramifications.push_back(read_int);
+    curve_data.ramification_type.push_back(read_int);
   }
 
   if ( stream.eof() ) {
-    cerr << "isogeny_representative_store.operator>>: unexpected end of file (ramification)" << endl;
+    cerr << "isogeny_representative_store.operator>>: "
+         << "unexpected end of file (ramification_type)" << endl;
     throw;
   }
   stream.ignore(1,';');
 
   while ( !stream.eof() && (char)stream.peek() != ':' ) {
     stream.ignore(1,',') >> read_int;
-    hasse_weil_offsets.push_back(read_int);
+    curve_data.hasse_weil_offsets.push_back(read_int);
   }
 
   if ( stream.eof() ) {
-    cerr << "isogeny_representative_store.operator>>: unexpected end of file (hasse_weil_offsets)" << endl;
+    cerr << "isogeny_representative_store.operator>>: "
+         << "unexpected end of file (hasse_weil_offsets)" << endl;
     throw;
   }
   stream.ignore(1,':');
 
   while ( !stream.eof() && (char)stream.peek() != '\n' ) {
     stream.ignore(1,',') >> read_int;
-    poly_coeff_exponents.push_back(read_int);
+    store_data.representative_poly_coeff_exponents.push_back(read_int);
   }
 
 
-  auto store_key = make_tuple(ramifications, hasse_weil_offsets);
-  auto store_it = store.store.find(store_key);
+  auto store_it = store.store.find(curve_data);
   if ( store_it == store.store.end() )
-    store.store[store_key] = poly_coeff_exponents;
+    store.store[curve_data] = store_data;
 
 
   return stream;

@@ -28,11 +28,11 @@
 #include <tuple>
 #include <yaml-cpp/yaml.h>
 
-#include <opencl_interface.hh>
-#include <reduction_table.hh>
-#include <curve.hh>
-#include <block_iterator.hh>
-#include <store/legacy.hh>
+#include "opencl_interface.hh"
+#include "reduction_table.hh"
+#include "curve.hh"
+#include "block_iterator.hh"
+#include "store/legacy.hh"
 
 
 using namespace std;
@@ -129,7 +129,7 @@ main(
 
 
   auto opencl = make_shared<OpenCLInterface>();
-  StoreLegacy isogeny_count_store;
+  StoreLegacy store;
 
   vector<ReductionTable> reduction_tables;
   for ( size_t fx=genus; fx>genus/2; --fx )
@@ -140,10 +140,10 @@ main(
     Curve curve(fq_table, iter.as_position());
     if ( !curve.has_squarefree_rhs() ) continue;
     for ( auto & table : reduction_tables ) curve.count(table);
-    isogeny_count_store.register_curve(curve);
+    store.register_curve(curve);
   }
 
-  isogeny_count_store.output_legacy(output);
+  store.output_legacy(output);
 
   return 0;
 }

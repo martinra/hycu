@@ -63,7 +63,9 @@ class MPIThread :
 
     bool inline is_opencl_thread() const { return (bool)this->opencl; };
   
-    static void main_thread(shared_ptr<MPIThread> thread);
+
+    template<class Store>
+      static void main_thread(shared_ptr<MPIThread> thread);
   
     void update_config(const MPIConfigNode & config);
     void assign(vuu_block block);

@@ -23,7 +23,7 @@
 
 #include <ostream>
 
-#include <config/config_node.hh>
+#include "config/config_node.hh"
 
 
 using namespace std;
