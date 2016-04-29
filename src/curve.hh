@@ -32,6 +32,7 @@
 #include <flint/fq_nmod_poly.h>
 #include <flint/nmod_poly.h>
 
+#include "curve_iterator.hh"
 #include "fq_element_table.hh"
 #include "opencl_interface.hh"
 #include "reduction_table.hh"
@@ -55,6 +56,7 @@ class Curve
     int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
     int genus() const;
     vector<int> inline rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
+    vector<unsigned int> rhs_support() const;
 
     bool has_squarefree_rhs();
     nmod_poly_struct rhs_nmod_polynomial() const;
@@ -77,8 +79,6 @@ class Curve
     vector<int> hasse_weil_offsets(unsigned int max_prime_exponent) const;
 
     vector<int> ramification_type() const;
-    // todo: how does one compute the number of automorphisms?
-    unsigned int nmb_automorphisms();
 
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 

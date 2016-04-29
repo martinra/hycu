@@ -26,8 +26,6 @@ Export("objs_config")
 
 sources_store = [
     "store/count_representative.cc"
-  , "store/legacy.cc"
-  , "store/representative.cc"
   , "store/store.cc"
   ]
 objs_store = [ env.Object(s) for s in sources_store ]
@@ -61,16 +59,6 @@ prg_threaded = env.Program(
   )
 inst_threaded = env.InstallAs(env["prefix"] + "/bin/thread", prg_threaded)
 Alias("threaded", inst_threaded)
-
-
-prg_legacy = env.Program(
-    "executables/legacy"
-  , [ "executables/legacy.cc" ]
-    + objs_curve
-    + objs_store
-  )
-inst_legacy = env.InstallAs(env["prefix"] + "/bin/legacy", prg_legacy)
-Alias("legacy", inst_legacy)
 
 
 prg_mpi = env_mpi.Program(

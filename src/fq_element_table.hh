@@ -70,8 +70,6 @@ class FqElementTable
     const unsigned int prime_exponent;
     unsigned int prime_power;
     unsigned int prime_power_pred;
-    // todo: implement
-    unsigned int primeinv_flint;
 
   private:
     fq_nmod_ctx_t fq_ctx;

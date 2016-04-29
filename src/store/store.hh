@@ -29,6 +29,7 @@
 
 #include "block_iterator.hh"
 #include "config/config_node.hh"
+#include "curve.hh"
 
 
 using std::string;
@@ -54,6 +55,18 @@ namespace std
 class Store
 {
   public:
+    unsigned int
+    inline
+    moduli_multiplicity(
+      const Curve & curve
+      )
+    {
+      return CurveIterator::multiplicity( curve.prime(), curve.prime_power(),
+                                          curve.rhs_support() );
+    };
+
+    curve_data twisted_curve_data(const curve_data & curve_data);
+
     string output_file_name(const MPIConfigNode & config, const vuu_block & block);
 
   protected:

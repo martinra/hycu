@@ -27,7 +27,6 @@
 #include <vector>
 
 #include "store/count_representative.hh"
-#include "store/representative.hh"
 
 
 using namespace std;
@@ -51,9 +50,8 @@ main(
   }
 
   auto store_type = string(argv[1]);
-  if (    store_type != "cr"
-       || store_type != "r" ) {
-    cerr << "store type must be cr or r" << endl;
+  if (    store_type != "cr" ) {
+    cerr << "store type must be cr" << endl;
     exit(1);
   }
 
@@ -75,8 +73,6 @@ main(
 
   if ( store_type == "cr" )
     merge<StoreCountRepresentative>(input_files, filesys::path(argv[3]));
-  else if ( store_type == "r" )
-    merge<StoreRepresentative>(input_files, filesys::path(argv[3]));
 
   return 0;
 }

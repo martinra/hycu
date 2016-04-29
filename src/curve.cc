@@ -88,6 +88,21 @@ genus()
     return (this->degree() - 1) / 2;
 }
 
+vector<unsigned int>
+Curve::
+rhs_support()
+  const
+{
+  auto zero_index = this->table->zero_index();
+  vector<unsigned int> support;
+
+  for ( size_t ix=0; ix<this->poly_coeff_exponents.size(); ++ix )
+    if ( this->poly_coeff_exponents[ix] != zero_index )
+      support.push_back(ix);
+
+  return support;
+}
+
 bool
 Curve::
 has_squarefree_rhs()
@@ -516,8 +531,7 @@ rhs_nmod_polynomial()
   }
 
   nmod_poly_struct poly;
-  nmod_poly_init2_preinv( &poly, this->table->prime, this->table->primeinv_flint,
-                          this->poly_coeff_exponents.size() );
+  nmod_poly_init2( &poly, this->table->prime, this->poly_coeff_exponents.size() );
 
   for (long ix=0; ix<this->poly_coeff_exponents.size(); ++ix)
     nmod_poly_set_coeff_ui(&poly, ix, this->table->at_nmod(this->poly_coeff_exponents[ix]));

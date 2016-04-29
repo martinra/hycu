@@ -54,6 +54,8 @@ class StoreCountRepresentative :
   public:
     void register_curve(const Curve & curve);
 
+    store_count_representative_data twisted_store_data(const store_count_representative_data & data, const Curve & curve);
+
     friend ostream & operator<<(ostream & stream, const StoreCountRepresentative & store);
     friend istream & operator>>(istream & stream, StoreCountRepresentative & store);
 

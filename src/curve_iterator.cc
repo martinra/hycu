@@ -34,7 +34,8 @@ CurveIterator(
     const FqElementTable & table,
     int genus,
     unsigned int package_size
-    )
+    ) :
+  prime ( table.prime )
 {
   for ( int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
     // next to hightest coefficient is zero
@@ -53,6 +54,9 @@ CurveIterator(
         blocks[degree] = table.block_non_zero();
         for ( size_t kx=degree-1; kx>ix; --kx )
           sets[kx] = {table.zero_index()};
+
+        // fixme: it suffices to choose a square here, since there other curve is a twist,
+        // which we do not need enumerate separately
 
         // second nonzero coefficient is determined up to squaring
         sets[ix] = table.power_coset_representatives(2);
@@ -120,3 +124,37 @@ is_end()
 {
   return ( this->enumerator_it == this->enumerators.end() );
 }
+
+unsigned int
+CurveIterator::
+multiplicity(
+    unsigned int prime,
+    unsigned int prime_power,
+    vector<unsigned int> coeff_support
+    )
+{
+  unsigned int prime_power_pred = prime_power - 1;
+
+  unsigned int degree = coeff_support.back();
+  if ( prime <= degree || prime <= 3 ) {
+    cerr << "Curve::stabilizer_order_rhs_U: "
+         << "stabilizer implemented only if prime is larger than rhs degree and larger than 3" << endl;
+    throw;
+  }
+
+  if ( coeff_support.size() <= 2 )
+    // the orbit of a_n x^n consists of a_n b_2^2 (x+b_1)^n
+    return prime_power * prime_power_pred / 2;
+  else {
+    // the orbit of a_n x^n + a_m x^m + a_l x^l + ....
+    // is b_2^2 ( a_n (b_3 x+b_1)^n + a_m (b_3 x+b_1)^m + a_l (b_3 x+b_1)^l + .... )
+    // the orbit size comes from the (n-1)-th coefficent, the m-th coeffficent and the qutient of the
+    // m-th by the l-th one
+    unsigned int snd_exp = *(coeff_support.rend()+1);
+    unsigned int trd_exp = *(coeff_support.rend()+2);
+
+    return   prime_power * prime_power_pred / 2
+           * prime_power_pred / n_gcd(prime_power_pred, snd_exp-trd_exp);
+  }
+}
+

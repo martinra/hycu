@@ -67,3 +67,17 @@ output_file_name(
 
   return (config.result_path / path(output_name.str())).native();
 }
+
+curve_data
+Store::
+twisted_curve_data(
+    const curve_data & data
+    )
+{
+  vector<int> twisted_hasse_weil_offsets;
+  twisted_hasse_weil_offsets.reserve(data.hasse_weil_offsets.size());
+  for ( int offset : data.hasse_weil_offsets )
+    twisted_hasse_weil_offsets.push_back(-offset);
+
+  return { data.ramification_type, twisted_hasse_weil_offsets };
+}

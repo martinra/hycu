@@ -38,15 +38,43 @@ register_curve(
   curve_data curve_data =
     { curve.ramification_type(),
       curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) };
+  store_count_representative_data store_data =
+    {this->moduli_multiplicity(curve), curve.rhs_coeff_exponents()};
 
   auto store_it = this->store.find(curve_data);
-  if ( store_it == this->store.end() )
-    // fixme: take stabilizers into account
-    store[curve_data] = {1, curve.rhs_coeff_exponents()};
-  else
-    // fixme: take stabilizers into account
-    ++store_it->second.count;
+  if ( store_it == this->store.end() ) {
+    store[curve_data] = store_data;
+    store[this->twisted_curve_data(curve_data)] = this->twisted_store_data(store_data, curve);
+  }
+  else {
+    store_it->second.count += store_data.count;
+    store[this->twisted_curve_data(curve_data)].count += this->twisted_store_data(store_data, curve).count;
+  }
 }
+
+store_count_representative_data
+StoreCountRepresentative::
+twisted_store_data(
+    const store_count_representative_data & data,
+    const Curve & curve
+    )
+{
+  auto prime_power_pred = curve.prime_power() - 1;
+  auto zero_index = prime_power_pred;
+  unsigned int nonsquare = 1;
+
+  vector<int> twisted_poly_coeff_exponents;
+  twisted_poly_coeff_exponents.reserve(data.representative_poly_coeff_exponents.size());
+  for ( int coeff : data.representative_poly_coeff_exponents ) {
+    if ( coeff == zero_index )
+      twisted_poly_coeff_exponents.push_back(coeff);
+    else
+      twisted_poly_coeff_exponents.push_back((coeff + nonsquare) % prime_power_pred);
+  }
+
+  return { data.count, twisted_poly_coeff_exponents };
+}
+
 
 ostream &
 operator<<(
