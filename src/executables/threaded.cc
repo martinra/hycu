@@ -28,7 +28,7 @@
 
 #include "curve_iterator.hh"
 #include "mpi/config_node.hh"
-#include "mpi/thread_pool.hh"
+#include "threaded/thread_pool.hh"
 
 
 
@@ -110,6 +110,7 @@ main(
       }
     }
   }
+  thread_pool->shutdown_threads();
 
 
   return 0;

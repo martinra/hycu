@@ -32,7 +32,7 @@
 #include <set>
 #include <tuple>
 
-#include <mpi/thread_pool.hh>
+#include <threaded/thread_pool.hh>
 
 
 namespace mpi = boost::mpi;

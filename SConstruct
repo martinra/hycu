@@ -55,10 +55,8 @@ if not GetOption("clean"):
    
   ## standard compiler arguments
   env.Append(
-## debug:
-      CXXFLAGS = "-std=c++11 -g -pthread" # -O2
-    , CPPPATH  = [ Dir("#/src") ]
-## debug:
+      CXXFLAGS  = "-std=c++11 -O2 -pthread"
+    , CPPPATH   = [ Dir("#/src") ]
     , LINKFLAGS = "-pthread"
     )
 

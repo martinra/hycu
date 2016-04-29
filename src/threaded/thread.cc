@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 #include <mpi/store.hh>
-#include <mpi/thread.hh>
-#include <mpi/thread_pool.hh>
+#include <threaded/thread.hh>
+#include <threaded/thread_pool.hh>
 
 
 using namespace std;

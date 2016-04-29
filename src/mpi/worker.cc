@@ -22,9 +22,9 @@
 
 
 #include "mpi/serialization_tuple.hh"
-#include "mpi/thread_pool.hh"
 #include "mpi/worker.hh"
 #include "mpi/worker_pool.hh"
+#include "threaded/thread_pool.hh"
 
 
 namespace mpi = boost::mpi;

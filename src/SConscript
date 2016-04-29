@@ -14,35 +14,43 @@ sources_curve = [
   , "mpi/store.cc"
 ## todo: move to executable path 
   , "mpi/config_node.cc"
-## todo: move to threaded path
-  , "mpi/thread.cc"
-  , "mpi/thread_pool.cc"
   ]
 
 objs_curve = [ env.Object(s) for s in sources_curve ]
 Export("objs_curve")
 
 
+sources_threaded = [
+    "threaded/thread.cc"
+  , "threaded/thread_pool.cc"
+  ]
+objs_threaded = [ env.Object(s) for s in sources_threaded ]
+Export("objs_threaded")
+
+
 prg_single = env.Program(
     "executables/single"
-  , [ "executables/single.cc" ] + objs_curve
+  , [ "executables/single.cc" ]
+    + objs_curve
   )
 inst_single = env.InstallAs(env["prefix"] + "/bin/single", prg_single)
 Alias("single", inst_single)
 
 
-prg_thread = env.Program(
-    "executables/thread"
-  , [ "executables/thread.cc" ]
+prg_threaded = env.Program(
+    "executables/threaded"
+  , [ "executables/threaded.cc" ]
     + objs_curve
+    + objs_threaded
   )
-inst_thread = env.InstallAs(env["prefix"] + "/bin/thread", prg_thread)
-Alias("thread", inst_thread)
+inst_threaded = env.InstallAs(env["prefix"] + "/bin/thread", prg_threaded)
+Alias("threaded", inst_threaded)
 
 
 prg_legacy = env.Program(
     "executables/legacy"
-  , [ "executables/legacy.cc", "isogeny_count_store.cc" ] + objs_curve
+  , [ "executables/legacy.cc", "isogeny_count_store.cc" ]
+    + objs_curve
   )
 inst_legacy = env.InstallAs(env["prefix"] + "/bin/legacy", prg_legacy)
 Alias("legacy", inst_legacy)
@@ -56,6 +64,7 @@ prg_mpi = env_mpi.Program(
     , "mpi/worker_pool.cc"
     ]
     + objs_curve
+    + objs_threaded
   )
 inst_mpi = env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
 Alias("mpi", inst_mpi)

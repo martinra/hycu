@@ -24,7 +24,7 @@
 #include <vector>
 #include <tuple>
 
-#include "mpi/thread_pool.hh"
+#include "threaded/thread_pool.hh"
 #include "opencl_interface.hh"
 
 

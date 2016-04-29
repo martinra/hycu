@@ -27,7 +27,7 @@
 #include <thread>
 
 #include <block_iterator.hh>
-#include <mpi/thread.hh>
+#include <threaded/thread.hh>
 
 
 using std::deque;
