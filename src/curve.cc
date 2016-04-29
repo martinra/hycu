@@ -149,7 +149,8 @@ count(
   // todo: Use error checking for all calls. Some implementations don't seem to support try/catch, but doublecheck this.
 
   if ( reduction_table.prime != this->table->prime ) {
-    cerr << "Curve.count: primes of curve and table must coincide" << endl;
+    cerr << "Curve.count: primes of curve and table must coincide: "
+         << reduction_table.prime << " " << this->table->prime << endl;
     throw;
   }
   int prime_exponent = reduction_table.prime_exponent;
@@ -229,6 +230,7 @@ count_opencl(
   cl::Buffer buffer_minimal_fields(
                *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
 
+  // todo: move the kernel to the opencl interface class
   cl::Kernel kernel_evaluation(*opencl->program_evaluation, "evaluate");
   kernel_evaluation.setArg(0, buffer_poly_coeff_exponents);
   kernel_evaluation.setArg(1, sizeof(int), &poly_size);

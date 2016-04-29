@@ -21,7 +21,6 @@
 ===============================================================================*/
 
 
-#include <boost/mpi/communicator.hpp>
 #include <vector>
 #include <tuple>
 
@@ -33,18 +32,43 @@ using namespace std;
 
 
 MPIThreadPool::
-MPIThreadPool()
+~MPIThreadPool()
 {
-  for ( const auto & device : OpenCLInterface::devices() )
-    this->threads.push_back(make_shared<MPIThread>( shared_from_this(),
-                                                    make_shared<OpenCLInterface>(device) )); 
+  std::cerr << "in thread pool destructor" << std::endl;
+}
 
-  auto nmb_threads = thread::hardware_concurrency();
-  for ( size_t ix=this->threads.size(); ix<nmb_threads; ++ix )
-    this->threads.push_back(make_shared<MPIThread>(shared_from_this()));
+void
+MPIThreadPool::
+spark_threads()
+{
+  if ( !this->threads.empty() ) return;
 
-  for ( const auto thread : this->threads )
+  // debug:
+//  for ( const auto & device : OpenCLInterface::devices() )
+//    this->threads.push_back(make_shared<MPIThread>(
+//                                shared_from_this(), make_shared<OpenCLInterface>(device) )); 
+//
+//  auto nmb_threads = thread::hardware_concurrency();
+//  cerr << "nmb gpu threads: " << this->threads.size() << endl;
+//  cerr << "maximal concurrency: " << nmb_threads << endl;
+//  for ( size_t ix=this->threads.size(); ix<nmb_threads; ++ix )
+//    this->threads.push_back(make_shared<MPIThread>(shared_from_this()));
+  this->threads.push_back(make_shared<MPIThread>(shared_from_this()));
+
+
+  for ( const auto thread : this->threads ) {
+    thread->spark();
     this->ready_threads.push_back(thread);
+  }
+}
+
+void
+MPIThreadPool::
+shutdown_threads()
+{
+  cerr << "shutting down pool in thread " << this_thread::get_id() << endl;
+  for ( auto thread : this->threads )
+    thread->shutdown();
 }
 
 void
@@ -60,7 +84,7 @@ update_config(
 void
 MPIThreadPool::
 assign(
-    const vuu_block & block,
+    vuu_block block,
     bool opencl
     )
 {
@@ -86,31 +110,45 @@ assign(
 void
 MPIThreadPool::
 finished_block(
-    const vuu_block & block
+    vuu_block block
     )
 {
+  lock_guard<mutex> guard(this->data_mutex);
+  // this->data_mutex.lock();
+  // cerr << "entered finished_block: " << this_thread::get_id() << endl;
+  
   auto block_it = this->busy_threads.find(block);
+// debug:
+  // cerr << "auto block_it = this->busy_threads.find(block)" << endl;
   if ( block_it == this->busy_threads.end() ) {
     cerr << "MPIThreadPool::finished_block: block not found" << endl;
     throw; 
   }
   const auto thread = block_it->second;
   this->busy_threads.erase(block_it);
+// debug:
+  // cerr << "this->busy_threads.erase(block_it)" << endl;
 
   this->ready_threads.push_back(thread);
+// debug:
+  // cerr << "this->ready_threads.push_back(thread)" << endl;
   this->finished_blocks.push_back(block);
+// debug:
+  // cerr << "this->finished_blocks.push_back(block)" << endl;
+
+  // cerr << "leaving finished_block" << endl;
+
+  // this->data_mutex.unlock();
 }
 
 tuple<unsigned int, unsigned int>
 MPIThreadPool::
 flush_ready_threads()
 {
-  lock_guard<mutex>(this->data_mutex);
-
-
   unsigned int nmb_cpu_threads = 0;
   unsigned int nmb_opencl_threads = 0;
 
+  this->data_mutex.lock();
   for ( auto thread : this->ready_threads ) {
     if ( thread->is_opencl_thread() ) {
       ++nmb_opencl_threads;
@@ -124,6 +162,7 @@ flush_ready_threads()
   }
 
   this->ready_threads.clear();
+  this->data_mutex.unlock();
 
   return make_tuple(nmb_cpu_threads, nmb_opencl_threads);
 }

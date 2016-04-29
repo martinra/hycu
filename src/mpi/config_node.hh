@@ -52,7 +52,7 @@ struct MPIConfigNode
   {
     return (    prime != 0 && prime_exponent != 0
              && genus != 0
-             && is_directory(result_path)
+             && (is_directory(result_path) || create_directories(result_path))
              && package_size != 0
            );
   }
@@ -65,7 +65,12 @@ namespace boost {
 namespace serialization {
 
   template <class Archive>
-  void serialize(Archive & ar, MPIConfigNode & config, const unsigned int version)
+  void
+  serialize(
+      Archive & ar,
+      MPIConfigNode & config,
+      const unsigned int version
+      )
   {
     ar & config.prime;
     ar & config.prime_exponent;
@@ -88,54 +93,12 @@ namespace serialization {
 namespace YAML
 {
 
-template<>
-struct convert<MPIConfigNode>
-{
-  static
-  Node
-  encode(
-      const MPIConfigNode & config
-      )
+  template<>
+  struct convert<MPIConfigNode>
   {
-    Node node;
-
-    node["Prime"] = config.prime;
-    node["PrimeExponent"] = config.prime_exponent;
-    node["Genus"] = config.genus;
-
-    node["ResultPath"] = config.result_path.generic_string();
-
-    node["PackageSize"] = config.package_size;
-
-    return node;
-  }
-
-  static
-  bool
-  decode(
-      const Node & node,
-      MPIConfigNode & config
-      )
-  {
-    if (    !node["Prime"] || !node["PrimeExponent"]
-         || !node["Genus"]
-         || !node["ResultPath"]
-         || !node["PackageSize"] )
-      return false;
-
-    config.prime = node["Prime"].as<int>();
-    config.prime_exponent = node["PrimeExponent"].as<int>();
-
-    config.genus = node["Genus"].as<int>();
-
-    config.result_path = path(node["ResultPath"].as<string>());
-
-    config.package_size = node["PackageSize"].as<int>();
-
-    return true;
-  }
-
-};
+    static Node encode(const MPIConfigNode & config);
+    static bool decode(const Node & node, MPIConfigNode & config);
+  };
 
 }
 

@@ -25,16 +25,19 @@
 #define _H_BLOCK_ITERATOR
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <tuple>
 
 
 using std::map;
 using std::vector;
+using std::shared_ptr;
 using std::tuple;
 
 
 typedef vector<tuple<int,int>> vuu_block;
+typedef shared_ptr<vuu_block> svuu_block;
 
 
 class BlockIterator

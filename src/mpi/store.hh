@@ -57,20 +57,7 @@ namespace std
   template<> struct
   less<curve_data>
   {
-    bool
-    operator()(
-        const curve_data & lhs,
-        const curve_data & rhs
-        ) const
-    {
-      if ( lhs.ramification_type < rhs.ramification_type )
-        return true;
-      else if ( lhs.ramification_type == rhs.ramification_type )
-        if ( lhs.hasse_weil_offsets < rhs.hasse_weil_offsets )
-          return true;
-
-      return false;
-    };
+    bool operator()(const curve_data & lhs, const curve_data & rhs) const;
   };
 }
 
@@ -78,23 +65,17 @@ namespace std
 class MPIStore
 {
   public:
-    MPIStore(const MPIConfigNode & config, const vuu_block & block) :
-      config ( config ), block ( block ) {};
-  
     void register_curve(const Curve & curve);
 
-    void write_to_file();
+    void write_block_to_file(const MPIConfigNode & config, const vuu_block & block);
   
     friend ostream & operator<<(ostream & stream, const MPIStore & store);
     friend istream & operator>>(istream & stream, MPIStore & store);
 
   protected:
-    MPIConfigNode config;
-    vuu_block block;
-
     map<curve_data, store_data> store;
 
-    string output_file_name();
+    string output_file_name(const MPIConfigNode & config, const vuu_block & block);
 };
 
 #endif

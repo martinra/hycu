@@ -24,14 +24,12 @@
 #ifndef _H_MPI_THREAD_POOL
 #define _H_MPI_THREAD_POOL
 
-#include <boost/mpi.hpp>
 #include <thread>
 
 #include <block_iterator.hh>
 #include <mpi/thread.hh>
 
 
-namespace mpi = boost::mpi;
 using std::deque;
 using std::map;
 using std::mutex;
@@ -45,12 +43,15 @@ class MPIThreadPool :
   public std::enable_shared_from_this<MPIThreadPool>
 {
   public:
-    MPIThreadPool();
+    ~MPIThreadPool();
+
+    void spark_threads();
+    void shutdown_threads();
 
     void update_config(const MPIConfigNode & config);
 
-    void assign(const vuu_block & block, bool opencl);
-    void finished_block(const vuu_block & block);
+    void assign(vuu_block block, bool opencl);
+    void finished_block(vuu_block block);
 
     vector<vuu_block> flush_finished_blocks();
     tuple<unsigned int, unsigned int> flush_ready_threads();

@@ -45,3 +45,51 @@ operator<<(
 }
 
 
+namespace YAML
+{
+
+  Node
+  convert<MPIConfigNode>::
+  encode(
+      const MPIConfigNode & config
+      )
+  {
+    Node node;
+  
+    node["Prime"] = config.prime;
+    node["PrimeExponent"] = config.prime_exponent;
+    node["Genus"] = config.genus;
+  
+    node["ResultPath"] = config.result_path.generic_string();
+  
+    node["PackageSize"] = config.package_size;
+  
+    return node;
+  }
+  
+  bool
+  convert<MPIConfigNode>::
+  decode(
+      const Node & node,
+      MPIConfigNode & config
+      )
+  {
+    if (    !node["Prime"] || !node["PrimeExponent"]
+         || !node["Genus"]
+         || !node["ResultPath"]
+         || !node["PackageSize"] )
+      return false;
+  
+    config.prime = node["Prime"].as<int>();
+    config.prime_exponent = node["PrimeExponent"].as<int>();
+  
+    config.genus = node["Genus"].as<int>();
+  
+    config.result_path = path(node["ResultPath"].as<string>());
+  
+    config.package_size = node["PackageSize"].as<int>();
+  
+    return true;
+  }
+
+}

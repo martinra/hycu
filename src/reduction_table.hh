@@ -51,7 +51,6 @@ class ReductionTable
     void init_opencl_buffers();
     inline bool is_opencl_enabled() const { return (bool)opencl; };
     
-
     friend class Curve;
 
   protected:

@@ -10,6 +10,13 @@ sources_curve = [
   , "opencl_interface.cc"
   , "reduction_table.cc"
   , "single_curve_fp.cc"
+## todo: move to store path
+  , "mpi/store.cc"
+## todo: move to executable path 
+  , "mpi/config_node.cc"
+## todo: move to threaded path
+  , "mpi/thread.cc"
+  , "mpi/thread_pool.cc"
   ]
 
 objs_curve = [ env.Object(s) for s in sources_curve ]
@@ -17,42 +24,58 @@ Export("objs_curve")
 
 
 prg_single = env.Program(
-    "executable/single"
-  , [ "excutables/single.cc" ] + objs_curve
+    "executables/single"
+  , [ "executables/single.cc" ] + objs_curve
   )
-env.InstallAs(env["prefix"] + "/bin/single", prg_single)
-Alias("single", prg_single)
+inst_single = env.InstallAs(env["prefix"] + "/bin/single", prg_single)
+Alias("single", inst_single)
+
+
+prg_thread = env.Program(
+    "executables/thread"
+  , [ "executables/thread.cc" ]
+    + objs_curve
+  )
+inst_thread = env.InstallAs(env["prefix"] + "/bin/thread", prg_thread)
+Alias("thread", inst_thread)
 
 
 prg_legacy = env.Program(
-    "executable/legacy"
-  , [ "excutables/legacy.cc", "isogeny_count_store.cc" ] + objs_curve
+    "executables/legacy"
+  , [ "executables/legacy.cc", "isogeny_count_store.cc" ] + objs_curve
   )
-env.InstallAs(env["prefix"] + "/bin/legacy", prg_legacy)
-Alias("legacy", prg_legacy)
-
-
-prg_merger = env_merger.Program(
-    "executable/merger"
-  , [ "excutables/merge_isogeny_representatives.cc" ]
-    + objs_curve
-  )
-env_merger.InstallAs(env["prefix"] + "/bin/merger", prg_merger)
-Alias("merger", prg_merger)
+inst_legacy = env.InstallAs(env["prefix"] + "/bin/legacy", prg_legacy)
+Alias("legacy", inst_legacy)
 
 
 prg_mpi = env_mpi.Program(
-    "executable/mpi"
-  , [ "excutables/mpi.cc"
-    , "mpi/config_node.cc"
+    "executables/mpi"
+  , [ "executables/mpi.cc"
     , "mpi/master.cc"
-    , "mpi/store.cc"
-    , "mpi/thread.cc"
-    , "mpi/thread_pool.cc"
     , "mpi/worker.cc"
     , "mpi/worker_pool.cc"
     ]
     + objs_curve
   )
-env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
-Alias("mpi", prg_mpi)
+inst_mpi = env_mpi.InstallAs(env["prefix"] + "/bin/mpi", prg_mpi)
+Alias("mpi", inst_mpi)
+
+
+## todo: mergers for each store
+prg_merger = env_merger.Program(
+    "executables/merger"
+  , [ "executables/merge_isogeny_representatives.cc" ]
+    + objs_curve
+  )
+inst_merger = env_merger.InstallAs(env["prefix"] + "/bin/merger", prg_merger)
+Alias("merger", inst_merger)
+
+
+prg_merger_mpi = env_mpi.Program(
+    "executables/merger_mpi"
+  , [ "executables/merger_mpi.cc"
+    ]
+    + objs_curve
+  )
+inst_merger_mpi = env_merger.InstallAs(env["prefix"] + "/bin/merger_mpi", prg_merger_mpi)
+Alias("merger_mpi", inst_merger_mpi)

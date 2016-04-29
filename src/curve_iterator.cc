@@ -81,6 +81,7 @@ CurveIterator(
         for ( int kx = jx-1; kx>=0; --kx )
           blocks[kx] = table.block_complete();
 
+        // fixme: do not invoke copy constructor
         this->enumerators.emplace_back(
             BlockIterator(degree+1, blocks, package_size, sets, dependent_sets) );
       }

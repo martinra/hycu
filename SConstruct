@@ -43,6 +43,8 @@ if not GetOption("clean"):
   libs_and_paths = [ (lib, env["lib" + lib + "_path"])
                      for lib in [ "cl", "flint", "gmp" ] ]
   libs_and_paths.append( ("yaml-cpp", env["libyamlcpp_path"]) )
+  libs_and_paths += [ (lib, env["libboost_path"])
+                      for lib in ["boost_filesystem", "boost_system"] ]
   for (lib,path) in libs_and_paths :
     conf.env.AppendUnique( LIBPATH = [path] )
     if not conf.CheckLib(lib, language="C++"):
@@ -53,8 +55,11 @@ if not GetOption("clean"):
    
   ## standard compiler arguments
   env.Append(
-      CXXFLAGS = "-std=c++11 -O2 -pthread"
+## debug:
+      CXXFLAGS = "-std=c++11 -g -pthread" # -O2
     , CPPPATH  = [ Dir("#/src") ]
+## debug:
+    , LINKFLAGS = "-pthread"
     )
 
 

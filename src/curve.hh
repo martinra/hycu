@@ -63,6 +63,11 @@ class Curve
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
     void count(const ReductionTable & table);
+    void inline count(const shared_ptr<ReductionTable> table)
+    {
+      this->count(*table);
+    };
+
     bool has_counted(size_t fx) const { return (this->nmb_points.find(fx) != this->nmb_points.end()); };
 
     const map<unsigned int, tuple<int,int>> & number_of_points() const { return this->nmb_points; };
@@ -79,7 +84,7 @@ class Curve
 
     friend class IsogenyCountStore;
     friend class IsogenyRepresentativeStore;
-
+    
   protected:
     const shared_ptr<FqElementTable> table;
     vector<int> poly_coeff_exponents;

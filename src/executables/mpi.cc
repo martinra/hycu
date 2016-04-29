@@ -51,11 +51,14 @@ main(
     char** argv
     )
 {
-  mpi::environment mpi_environment(argc, argv);
+  mpi::environment mpi_environment(argc, argv, mpi::threading::funneled);
   auto mpi_world = make_shared<mpi::communicator>();
 
-  if (mpi_world->rank() == 0)
-    return main_master(argc, argv, mpi_world);
+  if (mpi_world->rank() == 0) {
+    int res = main_master(argc, argv, mpi_world);
+    cerr << "mpi_world references after master return: " << mpi_world.use_count() << endl;
+    return res;
+  }
   else
     return main_worker(mpi_world);
 }

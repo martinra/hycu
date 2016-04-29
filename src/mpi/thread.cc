@@ -28,47 +28,76 @@
 using namespace std;
 
 
+void
 MPIThread::
-MPIThread(
-    shared_ptr<MPIThreadPool> thread_pool,
-    shared_ptr<OpenCLInterface> opencl
-    ) :
-  thread_pool ( thread_pool ),
-  opencl ( opencl )
+spark()
 {
-  this->main_mutex.lock();
-  this->main_thread = thread(MPIThread::main, shared_from_this());
+  this->shutting_down = false;
+  this->main_std_thread = thread(MPIThread::main_thread, shared_from_this());
 }
 
 void
 MPIThread::
-main(
+shutdown()
+{
+  this->shutting_down = true;
+  this->main_cond_var.notify_all();
+  this->main_std_thread.join();
+}
+
+void
+MPIThread::
+main_thread(
     shared_ptr<MPIThread> thread
     )
 {
-  while (true) {
-    thread->main_mutex.lock();
+  unique_lock<mutex> main_lock(thread->main_mutex);
+  unique_lock<mutex> data_lock(thread->data_mutex, defer_lock);
+
+  while ( true ) {
+    while ( true ) {
+      if ( thread->shutting_down ) {
+        cerr << "exiting " << this_thread::get_id() << " main_thread with pointer count: " << thread.use_count() << endl;
+        return;
+      }
+
+      if ( thread->blocks.empty() )
+        thread->main_cond_var.wait(main_lock);
+      else
+        break;
+    }
+
 
     vuu_block block;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
 
-    thread->data_mutex.lock();
+    data_lock.lock();
     tie(block, fq_table, reduction_tables) = thread->blocks.front();
     thread->blocks.pop_front();
-    thread->data_mutex.unlock();
+    data_lock.unlock();
 
-    MPIStore store(thread->config, block);
+
+    MPIStore store;
     for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
       Curve curve(fq_table, iter.as_position());
-      for ( auto table : reduction_tables ) curve.count(*table);
+      for ( auto table : reduction_tables ) curve.count(table);
       store.register_curve(curve);
     }
 
-    store.write_to_file();
-    thread->thread_pool->finished_block(block);
 
-    thread->check_blocks();
+    data_lock.lock();
+    store.write_block_to_file(thread->config, block);
+
+    auto thread_pool_shared = thread->thread_pool.lock();
+    if ( thread_pool_shared )
+      thread_pool_shared->finished_block(block);
+    else {
+      cerr << "MPIThread::main_thread: expired thread_pool" << endl;
+      throw;
+    }
+    thread_pool_shared.reset();
+    data_lock.unlock();
   }
 }
 
@@ -94,16 +123,7 @@ assign(
 {
   this->data_mutex.lock();
   this->blocks.emplace_back(block, this->fq_table, this->reduction_tables);
-  this->main_mutex.unlock();
   this->data_mutex.unlock();
-}
 
-void
-MPIThread::
-check_blocks()
-{
-  this->data_mutex.lock();
-  if ( !this->blocks.empty() )
-    this->main_mutex.unlock();
-  this->data_mutex.unlock();
+  this->main_cond_var.notify_one();
 }

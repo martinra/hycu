@@ -21,28 +21,26 @@
 ===============================================================================*/
 
 
+#include <iostream>
+#include <vector>
+#include <tuple>
 #include <yaml-cpp/yaml.h>
 
 #include "curve_iterator.hh"
-#include "fq_element_table.hh"
 #include "mpi/config_node.hh"
-#include "mpi/master.hh"
-#include "mpi/worker_pool.hh"
+#include "mpi/thread_pool.hh"
 
 
-namespace mpi = boost::mpi;
+
 using namespace std;
 
 
 int
-main_master(
+main(
     int argc,
-    char** argv,
-    shared_ptr<mpi::communicator> mpi_world
+    char** argv
     )
 {
-  cerr << "master thread: " << this_thread::get_id() << endl;
-
   if (argc != 2) {
     cerr << "One argument, the configuration file, is needed" << endl;
     exit(1);
@@ -65,27 +63,54 @@ main_master(
     }
 
 
-  cerr << "mpi_world references before work pool creation: " << mpi_world.use_count() << endl;
-  auto mpi_worker_pool = new MPIWorkerPool(mpi_world);
-  cerr << "mpi_world references after work pool creation: " << mpi_world.use_count() << endl;
+  auto thread_pool = make_shared<MPIThreadPool>();
+  thread_pool->spark_threads();
+
+  unsigned int nmb_idle_cpu = 0;
+  unsigned int nmb_idle_opencl = 0;
+  set<vuu_block> assigned_blocks;
 
   for ( const auto & node : config ) {
-    mpi_worker_pool->broadcast_config(node);
+    thread_pool->update_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
     CurveIterator iter(enumeration_table, node.genus, node.package_size);
-    for (; !iter.is_end(); iter.step() )
-      mpi_worker_pool->assign(iter.as_block());
-    cerr << "finished one node" << endl;
+    for (; !iter.is_end(); iter.step() ) {
+      auto block_ptr = iter.as_block();
+      while ( true ) {
+        if ( nmb_idle_opencl > 0 ) {
+          thread_pool->assign(block_ptr, true);
+          --nmb_idle_opencl;
+          assigned_blocks.insert(block_ptr);
+          break;
+        }
+        else if ( nmb_idle_cpu > 0 ) {
+          thread_pool->assign(block_ptr, false);
+          --nmb_idle_cpu;
+          assigned_blocks.insert(block_ptr);
+          break;
+        }
+        else {
+          auto ready_threads = thread_pool->flush_ready_threads();
+          nmb_idle_cpu += get<0>(ready_threads);
+          nmb_idle_opencl += get<1>(ready_threads);
+
+          auto finished_blocks = thread_pool->flush_finished_blocks();
+          for ( const auto & block : finished_blocks ) {
+            if ( assigned_blocks.find(block) == assigned_blocks.end() ) {
+              cerr << "finished block: ";
+              for ( auto pt : block )
+                cerr << get<0>(pt) << "," << get<1>(pt) << "; ";
+              cerr << endl;
+            }
+            assigned_blocks.erase(block_ptr);
+          }
+          this_thread::sleep_for(chrono::milliseconds(50));
+        }
+      }
+    }
   }
 
-  cerr << "about to exit" << endl;
-
-  delete mpi_worker_pool;
-
-  cerr << "freed worker pool in main thread" << endl;
-
-  cerr << "references to mpi_world :" << mpi_world.use_count() << endl;
 
   return 0;
 }

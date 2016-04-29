@@ -50,7 +50,7 @@ typedef unsigned int u_process_id;
 class MPIWorkerPool
 {
   public:
-    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world) : mpi_world ( mpi_world ) {};
+    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world);
     ~MPIWorkerPool();
 
     void broadcast_config(const MPIConfigNode & node);
@@ -66,13 +66,14 @@ class MPIWorkerPool
     static constexpr unsigned int assign_opencl_block_tag = 2;
     static constexpr unsigned int assign_cpu_block_tag    = 3;
     static constexpr unsigned int finished_blocks_tag     = 4;
+    static constexpr unsigned int shutdown_tag            = 5;
 
     static constexpr unsigned int master_process_id = 0;
 
   private:
     shared_ptr<mpi::communicator> mpi_world;
 
-    MPIThreadPool master_thread_pool;
+    shared_ptr<MPIThreadPool> master_thread_pool;
 
     deque<u_process_id> cpu_idle_queue;
     deque<u_process_id> opencl_idle_queue;

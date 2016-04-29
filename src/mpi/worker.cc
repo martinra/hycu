@@ -36,7 +36,10 @@ main_worker(
     shared_ptr<mpi::communicator> mpi_world
     )
 {
-  MPIThreadPool thread_pool;
+  cerr << "worker thread: " << this_thread::get_id() << endl;
+
+  auto thread_pool = make_shared<MPIThreadPool>();
+  thread_pool->spark_threads();
 
   while ( true ) {
     mpi::status mpi_status = mpi_world->probe();
@@ -45,21 +48,26 @@ main_worker(
       MPIConfigNode config;
       mpi_world->recv( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::update_config_tag, config );
-      thread_pool.update_config(config);
+      thread_pool->update_config(config);
     }
 
     else if ( mpi_status.tag() == MPIWorkerPool::assign_opencl_block_tag ) {
       vuu_block block;
       mpi_world->recv( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::assign_opencl_block_tag, block );
-      thread_pool.assign(block, true);
+      thread_pool->assign(block, true);
     }
 
     else if ( mpi_status.tag() == MPIWorkerPool::assign_cpu_block_tag ) {
       vuu_block block;
       mpi_world->recv( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::assign_cpu_block_tag, block );
-      thread_pool.assign(block, false);
+      // debug:
+//      cerr << "receiving at process " << mpi_world->rank() << ": ";
+//      for ( auto bds : block )
+//        cerr << get<0>(bds) << "," << get<1>(bds) << "; ";
+//      cerr << endl;
+      thread_pool->assign(block, false);
     }
 
     else if ( mpi_status.tag() == MPIWorkerPool::flush_ready_threads_tag ) { 
@@ -69,7 +77,7 @@ main_worker(
 
       mpi_world->send( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::flush_ready_threads_tag,
-                       thread_pool.flush_ready_threads() );
+                       thread_pool->flush_ready_threads() );
     }
 
     else if ( mpi_status.tag() == MPIWorkerPool::finished_blocks_tag ) {
@@ -77,9 +85,27 @@ main_worker(
       mpi_world->recv( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::finished_blocks_tag, dummy );
 
+      // debug:
+      // auto blocks = thread_pool->flush_finished_blocks();
+//      for ( auto block : blocks ) {
+//        cerr << "finished in process " << mpi_world->rank() << ": ";
+//        for ( auto bds : block )
+//          cerr << get<0>(bds) << "," << get<1>(bds) << "; ";
+//        cerr << endl;
+//      }
       mpi_world->send( MPIWorkerPool::master_process_id,
                        MPIWorkerPool::finished_blocks_tag,
-                       thread_pool.flush_finished_blocks() );
+                       thread_pool->flush_finished_blocks() );
+    }
+
+    else if ( mpi_status.tag() == MPIWorkerPool::shutdown_tag ) {
+      cerr << "receiving shutdown" << endl;
+      bool dummy;
+      mpi_world->recv( MPIWorkerPool::master_process_id,
+                       MPIWorkerPool::shutdown_tag, dummy );
+      thread_pool->shutdown_threads();
+      cerr << "shut down pool in thread " << this_thread::get_id() << endl;
+      break;
     }
 
     else {
@@ -87,4 +113,13 @@ main_worker(
       exit(1);
     }
   }
+
+  cerr << "ready to shutdown worker in " << this_thread::get_id() << endl;
+  return 0;
+
+//  mpi::status mpi_status = mpi_world->probe();
+//  // should never receive a message that gets past this point
+//  cerr << "received MPI message in worker " << mpi_world->rank()
+//       << " after shutdown" << endl;
+//  exit(1);
 }
