@@ -16,13 +16,14 @@ resources = \
   , ( "boost_serialization", "boost/serialization/serialization.hpp", "boost" )
   , ( "boost_system", None, "boost" )
   , ( "boost_unit_test_framework", "boost/test/unit_test.hpp", "boost" )
-  , ( "cl", "CL/cl.h", "opencl" )
+  , ( "OpenCL", "CL/cl.h", "opencl" )
   , ( "flint", "flint/flint.h", "flint" )
   , ( "gmp", "gmp.h", "gmp" )
   , ( "yaml-cpp", "yaml-cpp/yaml.h", "yaml_cpp" )
   ]
 AddResourceOptions(opts, resources)
 
+opts.Add( "opencl_library", "library for opencl", "OpenCL" )
 
 ## we construct a main environment, from which all subsystems can diverge
 env = Environment(variables = opts)
@@ -32,6 +33,9 @@ opts.Save('scons_variables.cache', env)
 
 ## list of libraries and headers attached to resources
 libs_and_headers = LibsAndHeaders(env, resources)
+
+## opencl requires extra configuration
+libs_and_headers["OpenCL"]["lib"] = env["opencl_library"]
 
 
 if not GetOption("clean"):
@@ -61,7 +65,7 @@ if not GetOption("clean"):
     )
 
   for resource in [ "boost_system", "boost_filesystem",
-							      "cl", "flint", "gmp", "yaml-cpp" ]:
+							      "OpenCL", "flint", "gmp", "yaml-cpp" ]:
     AddResource(conf, resource, libs_and_headers)
 
   env = conf.Finish()
@@ -94,7 +98,7 @@ if not GetOption("clean"):
 
   env_test.Append( CPPPATH = [Dir("#/test").abspath] )
   env_test["ENV"]["LD_LIBRARY_PATH"] = ":".join([
-      libs_and_headers["cl"]["lib_path"]
+      libs_and_headers["OpenCL"]["lib_path"]
     , libs_and_headers["flint"]["lib_path"]
     , os.environ.get("LD_LIBRARY_PATH", "")
     ])

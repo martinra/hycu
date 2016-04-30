@@ -10,8 +10,6 @@ def AddResourceOptions(opts, resources):
     if package in added_resource_options: continue
     added_resource_options.add(package)
 
-    print "register lib: ", lib
-    print "register header: ", header
     if lib is not None:
       opts.Add( PathVariable( "{}_library_path".format(package), "path to library for {}".format(package),
                               "/usr/lib", PathVariable.PathIsDir ) )
