@@ -43,8 +43,10 @@ def LibsAndHeaders(env, resources):
 def AddResource(conf, name, libs_and_headers):
   resource = libs_and_headers[name]
 
-  conf.env.AppendUnique( CXXPATH = [resource["include_path"]],
-                         LIBPATH = [resource["lib_path"]] )
+  if "lib" in resource:
+    conf.env.PrependUnique( LIBPATH = [resource["lib_path"]] )
+  if "header" in resource:
+    conf.env.PrependUnique( CPPPATH = [resource["include_path"]] )
 
   if "lib" in resource and "header" in resource:
     check = conf.CheckLibWithHeader(resource["lib"], resource["header"], language="C++")
@@ -58,6 +60,3 @@ def AddResource(conf, name, libs_and_headers):
   if not check:
     print( "Resource {} not found".format(checked))
     exit(1)
-
-  if "lib" in resource:
-    conf.env.Append( LIBS = [resource["lib"]] )

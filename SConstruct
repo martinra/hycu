@@ -54,8 +54,8 @@ if not GetOption("clean"):
     print( "Invalid compiler {}".format(conf.env["CXX"]) )
     Exit(1)
 
-  conf.env["CXXPATH"] = [ env["prefix"] + "/include" ]
-  conf.env["LIBPATH"] = [ env["prefix"] + "/lib" ]
+  conf.env["CPPPATH"] = [ "/usr/include", env["prefix"] + "/include" ]
+  conf.env["LIBPATH"] = [ "/usr/lib", env["prefix"] + "/lib" ]
 
   ## standard compiler arguments
   conf.env.Append(
@@ -65,7 +65,7 @@ if not GetOption("clean"):
     )
 
   for resource in [ "boost_system", "boost_filesystem",
-							      "OpenCL", "flint", "gmp", "yaml-cpp" ]:
+                    "OpenCL", "flint", "gmp", "yaml-cpp" ]:
     AddResource(conf, resource, libs_and_headers)
 
   env = conf.Finish()
