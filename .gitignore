@@ -12,3 +12,4 @@ config.log
 scons_variables.cache
 .syntastic_clang_check_config
 .vimrc.local
+*.pyc
