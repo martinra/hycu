@@ -1,17 +1,27 @@
 import os
+from resource import *
 
 
 ## define all variables for the build
 opts = Variables(['scons_variables.cache'], ARGUMENTS)
 
 opts.Add( "CXX", None )
-opts.Add( PathVariable("libboost_path", "path to libboost", "/usr/lib/", PathVariable.PathIsDir) )
-opts.Add( PathVariable("libcl_path", "path to libcl", "/usr/lib/", PathVariable.PathIsDir) )
-opts.Add( PathVariable("libflint_path", "path to libflint", "/usr/lib/", PathVariable.PathIsDir) )
-opts.Add( PathVariable("libgmp_path", "path to libgmp", "/usr/lib/", PathVariable.PathIsDir) )
-opts.Add( PathVariable("libyamlcpp_path", "path to libyaml-cpp", "/usr/lib/", PathVariable.PathIsDir) )
-opts.Add( PathVariable("mpicxx_path", "path to configuration programm mpicxx", "mpic++", PathVariable.PathIsFile) )
 opts.Add( PathVariable("prefix", "prefix for installation", "/usr/", PathVariable.PathIsDir) )
+opts.Add( PathVariable("mpicxx_path", "path to configuration programm mpicxx", "/usr/bin/mpic++", PathVariable.PathIsFile) )
+
+
+resources = \
+  [ ( "boost_filesystem", "boost/filesystem.hpp", "boost" )
+  , ( "boost_mpi", "boost/mpi.hpp", "boost" )
+  , ( "boost_serialization", "boost/serialization/serialization.hpp", "boost" )
+  , ( "boost_system", None, "boost" )
+  , ( "boost_unit_test_framework", "boost/test/unit_test.hpp", "boost" )
+  , ( "cl", "CL/cl.h", "opencl" )
+  , ( "flint", "flint/flint.h", "flint" )
+  , ( "gmp", "gmp.h", "gmp" )
+  , ( "yaml-cpp", "yaml-cpp/yaml.h", "yaml_cpp" )
+  ]
+AddResourceOptions(opts, resources)
 
 
 ## we construct a main environment, from which all subsystems can diverge
@@ -20,6 +30,8 @@ env = Environment(variables = opts)
 ## cache variables for next build
 opts.Save('scons_variables.cache', env)
 
+## list of libraries and headers attached to resources
+libs_and_headers = LibsAndHeaders(env, resources)
 
 
 if not GetOption("clean"):
@@ -29,36 +41,31 @@ if not GetOption("clean"):
   if not env["CXX"]:
     for CXX in [ "clang++", "g++" ]:
       if conf.CheckProg(CXX):
-        env["CXX"] = CXX
+        conf.env["CXX"] = CXX
         break
     else:
       print( "No known compiler is installed" )
       Exit(1)
   if not conf.CheckCXX():
-    print( "Invalid compiler {}".format(env["CXX"]) )
+    print( "Invalid compiler {}".format(conf.env["CXX"]) )
     Exit(1)
 
+  conf.env["CXXPATH"] = [ env["prefix"] + "/include" ]
+  conf.env["LIBPATH"] = [ env["prefix"] + "/lib" ]
 
-  ## check libaries
-  libs_and_paths = [ (lib, env["lib" + lib + "_path"])
-                     for lib in [ "cl", "flint", "gmp" ] ]
-  libs_and_paths.append( ("yaml-cpp", env["libyamlcpp_path"]) )
-  libs_and_paths += [ (lib, env["libboost_path"])
-                      for lib in ["boost_filesystem", "boost_system"] ]
-  for (lib,path) in libs_and_paths :
-    conf.env.AppendUnique( LIBPATH = [path] )
-    if not conf.CheckLib(lib, language="C++"):
-      print( "Library {} not found".format(lib) )
-    conf.env.Append( LIBS = [lib] )
-
-  env = conf.Finish()
-   
   ## standard compiler arguments
-  env.Append(
+  conf.env.Append(
       CXXFLAGS  = "-std=c++11 -O2 -pthread"
     , CPPPATH   = [ Dir("#/src") ]
     , LINKFLAGS = "-pthread"
     )
+
+  for resource in [ "boost_system", "boost_filesystem",
+							      "cl", "flint", "gmp", "yaml-cpp" ]:
+    AddResource(conf, resource, libs_and_headers)
+
+  env = conf.Finish()
+   
 
 
 env_mpi = env.Clone()
@@ -70,13 +77,8 @@ if not GetOption("clean"):
   env_mpi.ParseConfig(env_mpi["mpicxx_path"] + " --showme:link")
 
   ## check libaries
-  libs_and_paths = [ (lib, env["libboost_path"])
-                     for lib in ["boost_mpi", "boost_serialization"] ]
-  for (lib,path) in libs_and_paths :
-    conf.env.AppendUnique( LIBPATH = [path] )
-    if not conf.CheckLib(lib, language="C++"):
-      print( "Library {} not found".format(lib) )
-    conf.env.Append( LIBS = [lib] )
+  for resource in [ "boost_mpi", "boost_serialization" ]:
+    AddResource(conf, resource, libs_and_headers)
 
   env_mpi = conf.Finish()
 
@@ -85,21 +87,15 @@ env_test = env.Clone()
 if not GetOption("clean"):
   conf = env_test.Configure()
 
-  ## check libaries
-  libs_and_paths = [ (lib, env["libboost_path"])
-                     for lib in ["boost_unit_test_framework"] ]
-  for (lib,path) in libs_and_paths :
-    conf.env.AppendUnique( LIBPATH = [path] )
-    if not conf.CheckLib(lib, language="C++"):
-      print( "Library {} not found".format(lib) )
-    conf.env.Append( LIBS = [lib] )
+  for resource in [ "boost_unit_test_framework" ]:
+    AddResource(conf, resource, libs_and_headers)
 
   env_test = conf.Finish()
 
   env_test.Append( CPPPATH = [Dir("#/test").abspath] )
   env_test["ENV"]["LD_LIBRARY_PATH"] = ":".join([
-      env_test["libcl_path"]
-    , env_test["libflint_path"]
+      libs_and_headers["cl"]["lib_path"]
+    , libs_and_headers["flint"]["lib_path"]
     , os.environ.get("LD_LIBRARY_PATH", "")
     ])
 
