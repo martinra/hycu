@@ -57,7 +57,7 @@ prg_threaded = env.Program(
     + objs_store
     + objs_threaded
   )
-inst_threaded = env.InstallAs(env["prefix"] + "/bin/hycu-thread", prg_threaded)
+inst_threaded = env.InstallAs(env["prefix"] + "/bin/hycu-threaded", prg_threaded)
 Alias("threaded", inst_threaded)
 
 
