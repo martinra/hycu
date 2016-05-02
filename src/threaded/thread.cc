@@ -83,6 +83,7 @@ main_thread(
     Store store;
     for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
       Curve curve(fq_table, iter.as_position());
+      if ( !curve.has_squarefree_rhs() ) continue;
       for ( auto table : reduction_tables ) curve.count(table);
       store.register_curve(curve);
     }
