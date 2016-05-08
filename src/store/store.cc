@@ -48,6 +48,72 @@ namespace std
   };
 }
 
+ostream &
+operator<<(
+    ostream & stream,
+    const curve_data & data
+    )
+{
+  if ( !data.ramification_type.empty() ) {
+    stream << data.ramification_type.front();
+    for (size_t ix=1; ix<data.ramification_type.size(); ++ix)
+      stream << "," << data.ramification_type[ix];
+  }
+
+  stream << ";";
+
+  if ( !data.hasse_weil_offsets.empty() ) {
+    stream << data.hasse_weil_offsets.front();
+    for (size_t ix=1; ix<data.hasse_weil_offsets.size(); ++ix)
+      stream << "," << data.hasse_weil_offsets[ix];
+  }
+
+  return stream;
+}
+
+istream &
+operator>>(
+    istream & stream,
+    curve_data & data
+    )
+{
+  int read_int;
+  char delimiter;
+  
+  data.ramification_type.clear();
+  data.hasse_weil_offsets.clear();
+
+  while ( true ) {
+    stream >> read_int;
+    data.ramification_type.push_back(read_int);
+  
+    delimiter = stream.peek();
+    if ( delimiter == ',' ) {
+      stream.ignore(1);
+      continue;
+    }
+    else if ( delimiter == ';' ) {
+      stream.ignore(1);
+      break;
+    }
+    else
+      return stream;
+  }
+
+  while ( true ) {
+    stream >> read_int;
+    data.hasse_weil_offsets.push_back(read_int);
+  
+    delimiter = stream.peek();
+    if ( delimiter == ',' ) {
+      stream.ignore(1);
+      continue;
+    }
+    else
+      return stream;
+  }
+}
+
 string
 Store::
 output_file_name(

@@ -82,35 +82,8 @@ operator<<(
     const StoreCountRepresentative & store
     )
 {
-  for ( auto & store_it : store.store ) {
-    const auto & curve_data = store_it.first;
-    const auto & store_data = store_it.second;
-
-    if ( !curve_data.ramification_type.empty() ) {
-      stream << curve_data.ramification_type.front();
-      for (size_t ix=1; ix<curve_data.ramification_type.size(); ++ix)
-        stream << "," << curve_data.ramification_type[ix];
-    }
-    stream << ";";
-
-    if ( !curve_data.hasse_weil_offsets.empty() ) {
-      stream << curve_data.hasse_weil_offsets.front();
-      for (size_t ix=1; ix<curve_data.hasse_weil_offsets.size(); ++ix)
-        stream << "," << curve_data.hasse_weil_offsets[ix];
-    }
-    stream << ":";
-
-    stream << store_data.count;
-    stream << ";";
-
-    if ( !store_data.representative_poly_coeff_exponents.empty() ) {
-      stream << store_data.representative_poly_coeff_exponents.front();
-      for (size_t ix=1; ix<store_data.representative_poly_coeff_exponents.size(); ++ix)
-        stream << "," << store_data.representative_poly_coeff_exponents[ix];
-    }
-
-    stream << endl;
-  }
+  for ( auto & store_it : store.store )
+    stream << store_it.first << ":" << store_it.second << endl;
 
   return stream;
 }
@@ -121,60 +94,89 @@ operator>>(
     StoreCountRepresentative & store
     )
 {
+  char delimiter;
+
   curve_data curve_data;
   store_count_representative_data store_data;
-  int read_int;
 
+  stream.peek();
+  while ( !stream.eof() ) {
+    stream >> curve_data;
+    delimiter = stream.peek();
+    if ( delimiter != ':' ) {
+      cerr << "operator>> StoreCountRepresentative cannot extract: character after curve data is " << delimiter << endl;
+      throw;
+    }
+    stream.ignore(1);
 
-  // read ramification_type
-  while ( !stream.eof() && (char)stream.peek() != ';' ) {
-    stream.ignore(1,',') >> read_int;
-    curve_data.ramification_type.push_back(read_int);
+    stream >> store_data;
+    delimiter = stream.peek();
+    if ( delimiter != '\n' ) {
+      cerr << "operator>> StoreCountRepresentative cannot extract: character after store data is " << delimiter <<  endl;
+      throw;
+    }
+    stream.ignore(1);
+
+    auto store_it = store.store.find(curve_data);
+    if ( store_it == store.store.end() )
+      store.store[curve_data] = store_data;
+    else
+      store.store[curve_data].count += store_data.count;
+
+    stream.peek();
   }
-
-  if ( stream.eof() ) {
-    cerr << "isogeny_representative_store.operator>>: "
-         << "unexpected end of file (ramification_type)" << endl;
-    throw;
-  }
-  stream.ignore(1,';');
-
-  // read hasse_weil_offsets
-  while ( !stream.eof() && (char)stream.peek() != ':' ) {
-    stream.ignore(1,',') >> read_int;
-    curve_data.hasse_weil_offsets.push_back(read_int);
-  }
-
-  if ( stream.eof() ) {
-    cerr << "isogeny_representative_store.operator>>: "
-         << "unexpected end of file (hasse_weil_offsets)" << endl;
-    throw;
-  }
-  stream.ignore(1,':');
-
-  // read count
-  if ( stream.eof() || (char)stream.peek() == ';' ) {
-    cerr << "isogeny_representative_store.operator>>: "
-         << "unexpected end of file (count)" << endl;
-    throw;
-  }
-
-  stream >> store_data.count;
-  stream.ignore(1,';');
-
-  // read representative_poly_coeff_exponents
-  while ( !stream.eof() && (char)stream.peek() != '\n' ) {
-    stream.ignore(1,',') >> read_int;
-    store_data.representative_poly_coeff_exponents.push_back(read_int);
-  }
-
-
-  auto store_it = store.store.find(curve_data);
-  if ( store_it == store.store.end() )
-    store.store[curve_data] = store_data;
-  else
-    store.store[curve_data].count += store_data.count;
-
 
   return stream;
+}
+
+ostream &
+operator<<(
+    ostream & stream,
+    const store_count_representative_data & data
+    )
+{
+  stream << data.count;
+
+  stream << ";";
+
+  if ( !data.representative_poly_coeff_exponents.empty() ) {
+    stream << data.representative_poly_coeff_exponents.front();
+    for (size_t ix=1; ix<data.representative_poly_coeff_exponents.size(); ++ix)
+      stream << "," << data.representative_poly_coeff_exponents[ix];
+  }
+
+  return stream;
+}
+
+istream &
+operator>>(
+    istream & stream,
+    store_count_representative_data & data
+    )
+{
+  int read_int;
+  char delimiter;
+  
+  data.representative_poly_coeff_exponents.clear();
+
+  stream >> data.count;
+  delimiter = stream.peek();
+  if ( delimiter == ';' )
+    stream.ignore(1);
+  else
+    return stream;
+
+
+  while ( true ) {
+    stream >> read_int;
+    data.representative_poly_coeff_exponents.push_back(read_int);
+  
+    delimiter = stream.peek();
+    if ( delimiter == ',' ) {
+      stream.ignore(1);
+      continue;
+    }
+    else
+      return stream;
+  }
 }

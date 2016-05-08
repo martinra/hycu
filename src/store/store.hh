@@ -32,6 +32,8 @@
 #include "curve.hh"
 
 
+using std::istream;
+using std::ostream;
 using std::string;
 using std::vector;
 
@@ -50,6 +52,9 @@ namespace std
     bool operator()(const curve_data & lhs, const curve_data & rhs) const;
   };
 }
+
+ostream & operator<<(ostream & stream, const curve_data & data);
+istream & operator>>(istream & stream, curve_data & data);
 
 
 class Store

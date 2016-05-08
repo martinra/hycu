@@ -38,6 +38,7 @@
 
 using std::istream;
 using std::map;
+using std::ostream;
 using std::vector;
 using std::string;
 
@@ -46,6 +47,10 @@ typedef struct {
   unsigned int count;
   vector<int> representative_poly_coeff_exponents;
 } store_count_representative_data;
+
+
+ostream & operator<<(ostream & stream, const store_count_representative_data & data);
+istream & operator>>(istream & stream, store_count_representative_data & data);
 
 
 class StoreCountRepresentative :
