@@ -194,9 +194,11 @@ devices()
 
   vector<cl::Device> devices, platform_devices;
   for ( const auto & platform : platforms ) {
+    platform_devices.clear();
     platform.getDevices(CL_DEVICE_TYPE_GPU, &platform_devices);
     devices.insert(devices.end(), platform_devices.begin(), platform_devices.end());
 
+    platform_devices.clear();
     platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &platform_devices);
     devices.insert(devices.end(), platform_devices.begin(), platform_devices.end());
   }
