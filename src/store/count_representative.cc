@@ -35,20 +35,20 @@ register_curve(
     const Curve & curve
     )
 {
-  curve_data curve_data =
+  curve_data key =
     { curve.ramification_type(),
       curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) };
   store_count_representative_data store_data =
     {this->moduli_multiplicity(curve), curve.rhs_coeff_exponents()};
 
-  auto store_it = this->store.find(curve_data);
+  auto store_it = this->store.find(key);
   if ( store_it == this->store.end() ) {
-    store[curve_data] = store_data;
-    store[this->twisted_curve_data(curve_data)] = this->twisted_store_data(store_data, curve);
+    store[key] = store_data;
+    store[this->twisted_curve_data(key)] = this->twisted_store_data(store_data, curve);
   }
   else {
     store_it->second.count += store_data.count;
-    store[this->twisted_curve_data(curve_data)].count += this->twisted_store_data(store_data, curve).count;
+    store[this->twisted_curve_data(key)].count += this->twisted_store_data(store_data, curve).count;
   }
 }
 
