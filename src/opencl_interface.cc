@@ -123,7 +123,7 @@ kernel_reduction_code =
   "  int lix = get_local_id(0);\n"
   "  int nmb_groups = get_num_groups(0);\n"
   "\n"
-  "  int acc;\n"
+  "  int acc = 0;\n"
   "  for (int bix=0; bix<nmb_bins; ++bix) {\n"
   "    for (int ix=get_global_id(0); ix<len; ix+=gsz)\n"
   "      if (bins[ix] == bix) acc += as[ix];\n"
