@@ -71,6 +71,11 @@ main(
     cout << o << ";  ";
   cout << endl;
 
+  cout << "ramification type: ";
+  for ( auto const& r : curve->ramification_type() )
+    cout << r << ",";
+  cout << endl;
+
 
   return 0;
 }
