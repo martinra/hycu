@@ -55,11 +55,11 @@ CurveIterator(
         for ( size_t kx=degree-1; kx>ix; --kx )
           sets[kx] = {table.zero_index()};
 
-        // fixme: it suffices to choose a square here, since there other curve is a twist,
-        // which we do not need enumerate separately
 
         // second nonzero coefficient is determined up to squaring
-        sets[ix] = table.power_coset_representatives(2);
+        // it suffices, however, to choose a square here, since the other
+        // curves are twists, which we do not need enumerate separately
+        sets[ix] = table.power_coset_representatives(1);
         for ( int kx=ix-1; kx>jx; --kx )
           sets[kx] = {table.zero_index()};
 
@@ -92,6 +92,9 @@ CurveIterator(
 
     { // the case of x^degree
       map<size_t, vector<int>> sets;
+      // first coefficient is determined up to squaring
+      // it suffices, however, to choose a square here, since the other
+      // curves are twists, which we do not need enumerate separately
       sets[degree] = table.power_coset_representatives(2);
       for (int kx=degree-1; kx>=0; --kx)
         sets[kx] = {table.zero_index()};
