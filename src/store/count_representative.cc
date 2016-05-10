@@ -44,11 +44,16 @@ register_curve(
   auto store_it = this->store.find(key);
   if ( store_it == this->store.end() ) {
     store[key] = store_data;
-    store[this->twisted_curve_data(key)] = this->twisted_store_data(store_data, curve);
+
+    auto twisted_key = this->twisted_curve_data(key);
+    if ( twisted_key == key )
+      store[key].count += store_data.count;
+    else
+      store[twisted_key] = this->twisted_store_data(store_data, curve);
   }
   else {
     store_it->second.count += store_data.count;
-    store[this->twisted_curve_data(key)].count += this->twisted_store_data(store_data, curve).count;
+    store[this->twisted_curve_data(key)].count += store_data.count;
   }
 }
 

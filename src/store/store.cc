@@ -48,6 +48,15 @@ namespace std
   };
 }
 
+bool
+operator==(
+    const curve_data & lhs,
+    const curve_data & rhs)
+{
+  return (    lhs.ramification_type == rhs.ramification_type
+           && lhs.hasse_weil_offsets == rhs.hasse_weil_offsets );
+}
+
 ostream &
 operator<<(
     ostream & stream,

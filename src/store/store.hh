@@ -53,6 +53,8 @@ namespace std
   };
 }
 
+bool operator==(const curve_data & lhs, const curve_data & rhs);
+
 ostream & operator<<(ostream & stream, const curve_data & data);
 istream & operator>>(istream & stream, curve_data & data);
 
