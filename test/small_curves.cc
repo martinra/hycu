@@ -88,20 +88,20 @@ BOOST_AUTO_TEST_CASE( fq_7_curve_0_3_3_3_0_6_opencl )
 
   auto nmb_points = curve->number_of_points();
   BOOST_CHECK_MESSAGE(
-      nmb_points[1] == make_tuple(6,0),
+      nmb_points[1] == make_tuple(2,4),
       "F_7 points: " << get<0>(nmb_points[1]) << " " << get<1>(nmb_points[1]) );
   BOOST_CHECK_MESSAGE(
-      nmb_points[2] == make_tuple(40,2),
+      nmb_points[2] == make_tuple(36,6),
       "F_49 points: " << get<0>(nmb_points[2]) << " " << get<1>(nmb_points[2]) );
 
 
   auto hasse_weil_offsets = curve->hasse_weil_offsets();
   BOOST_CHECK_MESSAGE(
-      hasse_weil_offsets[1] == -2,
+      hasse_weil_offsets[1] == 2,
       "Hasse Weil a1=" << hasse_weil_offsets[1] );
 
   BOOST_CHECK_MESSAGE(
-      hasse_weil_offsets[2] == -8,
+      hasse_weil_offsets[2] == 8,
       "Hasse Weil a2=" << hasse_weil_offsets[2] );
 }
 
@@ -112,19 +112,19 @@ BOOST_AUTO_TEST_CASE( fq_7_curve_0_3_3_3_0_6_cpu )
 
   auto nmb_points = curve->number_of_points();
   BOOST_CHECK_MESSAGE(
-      nmb_points[1] == make_tuple(6,0),
+      nmb_points[1] == make_tuple(2,4),
       "F_7 points: " << get<0>(nmb_points[1]) << " " << get<1>(nmb_points[1]) );
   BOOST_CHECK_MESSAGE(
-      nmb_points[2] == make_tuple(40,2),
+      nmb_points[2] == make_tuple(36,6),
       "F_49 points: " << get<0>(nmb_points[2]) << " " << get<1>(nmb_points[2]) );
 
 
   auto hasse_weil_offsets = curve->hasse_weil_offsets();
   BOOST_CHECK_MESSAGE(
-      hasse_weil_offsets[1] == -2,
+      hasse_weil_offsets[1] == 2,
       "Hasse Weil a1=" << hasse_weil_offsets[1] );
 
   BOOST_CHECK_MESSAGE(
-      hasse_weil_offsets[2] == -8,
+      hasse_weil_offsets[2] == 8,
       "Hasse Weil a2=" << hasse_weil_offsets[2] );
 }
