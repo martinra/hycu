@@ -588,23 +588,22 @@ ramification_type()
   unsigned int fx;
   for ( fx = 1; fx < this->degree(); ++fx ) {
     auto nmb_points_it = this->nmb_points.find(fx*this->prime_exponent());
-    if ( nmb_points_it != this->nmb_points.end() ) {
-      auto nmb_ramified_points_new =
-          get<1>(nmb_points_it->second) - nmb_ramified_points_from_lower[fx];
-
-      ramification_sum += nmb_ramified_points_new;
-      for ( size_t jx = 0; jx < nmb_ramified_points_new; jx += fx )
-        ramifications.push_back(fx);
-
-      for ( size_t gx = fx; gx < this->degree(); gx += fx )
-        nmb_ramified_points_from_lower[gx] += nmb_ramified_points_new;
-    }
-    else
+    if ( nmb_points_it == this->nmb_points.end() )
       break;
+   
+    auto nmb_ramified_points_new =
+        get<1>(nmb_points_it->second) - nmb_ramified_points_from_lower[fx];
+
+    ramification_sum += nmb_ramified_points_new;
+    for ( size_t jx = 0; jx < nmb_ramified_points_new; jx += fx )
+      ramifications.push_back(fx);
+
+    for ( size_t gx = fx; gx < this->degree(); gx += fx )
+      nmb_ramified_points_from_lower[gx] += nmb_ramified_points_new;
   }
 
 
-  int ramification_difference = this->degree() - ramification_sum;
+  int ramification_difference = 2*this->genus() + 2 - ramification_sum;
   if ( ramification_difference < 2*fx ) {
     if ( ramification_difference != 0 )
       ramifications.push_back(ramification_difference);
@@ -616,6 +615,8 @@ ramification_type()
   // factor the right hand side polynomial
 
   ramifications.clear();
+  if ( this->degree() % 2 == 1 )
+    ramifications.push_back(1);
   if ( this->table->is_prime_field() ) {
     auto poly = this->rhs_nmod_polynomial();
     nmod_poly_factor_t poly_factor;
