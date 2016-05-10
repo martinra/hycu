@@ -353,6 +353,15 @@ count_opencl(
     cerr << "count_opencl: could not enqueue kernel_reduction unramified" << endl;
     throw;
   }
+  status = opencl->queue->finish();
+  if ( status != CL_SUCCESS ) {
+    cerr << "count_opencl: could not finish queue unramified:" << endl;
+    if ( status == CL_OUT_OF_HOST_MEMORY )
+      cerr << "  out of host memory" << endl;
+    else if ( status == CL_INVALID_COMMAND_QUEUE )
+      cerr << "  invalid command queue" << endl;
+    throw;
+  }
 
 
   int * sums = new int[nmb_groups_reduction*prime_exponent];
@@ -362,11 +371,7 @@ count_opencl(
     cerr << "count_opencl: could not read sums unramified" << endl;
     throw;
   }
-  status = opencl->queue->finish();
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not finish queue unramified" << endl;
-    throw;
-  }
+
 
   for (size_t fx=1; fx<=prime_exponent; ++fx)
     if ( prime_exponent % fx == 0 )
@@ -414,6 +419,15 @@ count_opencl(
     cerr << "count_opencl: could not enqueue kernel_reduction ramified" << endl;
     throw;
   }
+  status = opencl->queue->finish();
+  if ( status != CL_SUCCESS ) {
+    cerr << "count_opencl: could not finish queue unramified" << endl;
+    if ( status == CL_OUT_OF_HOST_MEMORY )
+      cerr << "  out of host memory" << endl;
+    else if ( status == CL_INVALID_COMMAND_QUEUE )
+      cerr << "  invalid command queue" << endl;
+    throw;
+  }
 
 
   sums = new int[nmb_groups_reduction*prime_exponent];
@@ -423,11 +437,7 @@ count_opencl(
     cerr << "count_opencl: could not read sums ramified" << endl;
     throw;
   }
-  status = opencl->queue->finish();
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not finish queue unramified" << endl;
-    throw;
-  }
+
 
   for (size_t fx=1; fx<=prime_exponent; ++fx)
     if ( prime_exponent % fx == 0 )
