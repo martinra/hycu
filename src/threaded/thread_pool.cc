@@ -39,7 +39,7 @@ spark_threads()
 
   for ( const auto & device : OpenCLInterface::devices() )
     this->threads.push_back(
-        make_shared<MPIThread>( shared_from_this(),
+        make_shared<MPIThread>( shared_from_this(), this->store_factory,
                                 make_shared<OpenCLInterface>(device) ));
 
   // each GPU thread accounts for about 1/8 core
@@ -47,7 +47,7 @@ spark_threads()
   // package size in BlockIterator is large enough
   auto nmb_threads = thread::hardware_concurrency();
   for ( size_t ix=this->threads.size()/8; ix<nmb_threads; ++ix )
-    this->threads.push_back(make_shared<MPIThread>(shared_from_this()));
+    this->threads.push_back(make_shared<MPIThread>(shared_from_this(), this->store_factory));
 
 
   for ( const auto thread : this->threads ) {

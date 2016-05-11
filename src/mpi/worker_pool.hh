@@ -33,6 +33,7 @@
 #include <tuple>
 
 #include "threaded/thread_pool.hh"
+#include "store/store_factory.hh"
 
 
 namespace mpi = boost::mpi;
@@ -50,7 +51,7 @@ typedef unsigned int u_process_id;
 class MPIWorkerPool
 {
   public:
-    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world);
+    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world, StoreType store_type);
     ~MPIWorkerPool();
 
     void broadcast_config(const MPIConfigNode & node);
@@ -61,17 +62,20 @@ class MPIWorkerPool
     void finished_block(u_process_id process_id, const vuu_block & block);
     void wait_for_assigned_blocks();
 
-    static constexpr unsigned int update_config_tag       = 0;
-    static constexpr unsigned int flush_ready_threads_tag = 1;
-    static constexpr unsigned int assign_opencl_block_tag = 2;
-    static constexpr unsigned int assign_cpu_block_tag    = 3;
-    static constexpr unsigned int finished_blocks_tag     = 4;
-    static constexpr unsigned int shutdown_tag            = 5;
+    static constexpr unsigned int store_type_tag          = 0;
+    static constexpr unsigned int update_config_tag       = 1;
+    static constexpr unsigned int flush_ready_threads_tag = 2;
+    static constexpr unsigned int assign_opencl_block_tag = 3;
+    static constexpr unsigned int assign_cpu_block_tag    = 4;
+    static constexpr unsigned int finished_blocks_tag     = 5;
+    static constexpr unsigned int shutdown_tag            = 6;
 
     static constexpr unsigned int master_process_id = 0;
 
   private:
     shared_ptr<mpi::communicator> mpi_world;
+
+    const StoreType store_type;
 
     shared_ptr<MPIThreadPool> master_thread_pool;
 

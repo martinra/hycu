@@ -28,6 +28,7 @@
 
 #include "curve_iterator.hh"
 #include "config/config_node.hh"
+#include "store/store_factory.hh"
 #include "threaded/thread_pool.hh"
 
 
@@ -62,7 +63,7 @@ main(
     }
 
 
-  auto thread_pool = make_shared<MPIThreadPool>();
+  auto thread_pool = make_shared<MPIThreadPool>(create_store_factory(StoreType::EC));
   thread_pool->spark_threads();
 
   unsigned int nmb_idle_cpu = 0;

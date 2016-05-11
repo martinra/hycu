@@ -37,6 +37,7 @@
 #include "opencl_interface.hh"
 #include "reduction_table.hh"
 #include "store/store_factory.hh"
+#include "store/store.hh"
 
 
 using std::condition_variable;
@@ -56,16 +57,18 @@ class MPIThread :
 {
   public:
     MPIThread( weak_ptr<MPIThreadPool> thread_pool,
+               const shared_ptr<StoreFactoryInterface> store_factory,
                shared_ptr<OpenCLInterface> opencl = {} ) :
-      thread_pool ( thread_pool ), opencl ( opencl ) {};
-  
+      thread_pool ( thread_pool ), opencl ( opencl ),
+      store_factory ( store_factory )  {};
+
     void spark();
     void shutdown();
 
     bool inline is_opencl_thread() const { return (bool)this->opencl; };
   
 
-    static void main_thread(shared_ptr<MPIThread> thread, shared_ptr<StoreFactoryInterface> store_factory);
+    static void main_thread(shared_ptr<MPIThread> thread, const shared_ptr<StoreFactoryInterface> store_factory);
   
     void update_config(const MPIConfigNode & config);
     void assign(vuu_block block);
@@ -80,6 +83,7 @@ class MPIThread :
     mutex data_mutex;
     condition_variable main_cond_var;
 
+    const shared_ptr<StoreFactoryInterface> store_factory;
     MPIConfigNode config;
     
     shared_ptr<OpenCLInterface> opencl;

@@ -38,6 +38,11 @@ using namespace std;
 constexpr
 unsigned int
 MPIWorkerPool::
+store_type_tag;
+
+constexpr
+unsigned int
+MPIWorkerPool::
 update_config_tag;
 
 constexpr
@@ -73,12 +78,15 @@ master_process_id;
 
 MPIWorkerPool::
 MPIWorkerPool(
-    shared_ptr<mpi::communicator> mpi_world
+    shared_ptr<mpi::communicator> mpi_world,
+    StoreType store_type
     ) :
-  mpi_world ( mpi_world )
+  mpi_world ( mpi_world ), store_type ( store_type )
 {
-  this->master_thread_pool = make_shared<MPIThreadPool>();
+  this->master_thread_pool = make_shared<MPIThreadPool>(create_store_factory(store_type));
   this->master_thread_pool->spark_threads();
+
+  mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::store_type_tag);
 }
 
 MPIWorkerPool::

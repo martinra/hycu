@@ -28,6 +28,7 @@
 #include "fq_element_table.hh"
 #include "mpi/master.hh"
 #include "mpi/worker_pool.hh"
+#include "store/store_factory.hh"
 
 
 namespace mpi = boost::mpi;
@@ -63,7 +64,7 @@ main_master(
     }
 
 
-  MPIWorkerPool mpi_worker_pool(mpi_world);
+  MPIWorkerPool mpi_worker_pool(mpi_world, StoreType::EC);
 
   for ( const auto & node : config ) {
     mpi_worker_pool.broadcast_config(node);

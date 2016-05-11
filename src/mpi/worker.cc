@@ -23,6 +23,7 @@
 
 #include "mpi/worker.hh"
 #include "mpi/worker_pool.hh"
+#include "store/store_factory.hh"
 #include "threaded/thread_pool.hh"
 #include "utils/serialization_tuple.hh"
 
@@ -36,7 +37,10 @@ main_worker(
     shared_ptr<mpi::communicator> mpi_world
     )
 {
-  auto thread_pool = make_shared<MPIThreadPool>();
+  StoreType store_type;
+  mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::store_type_tag);
+
+  auto thread_pool = make_shared<MPIThreadPool>(create_store_factory(store_type));
   thread_pool->spark_threads();
 
   while ( true ) {

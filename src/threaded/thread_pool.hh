@@ -27,6 +27,7 @@
 #include <thread>
 
 #include "block_iterator.hh"
+#include "store/store_factory.hh"
 #include "threaded/thread.hh"
 
 
@@ -43,6 +44,9 @@ class MPIThreadPool :
   public std::enable_shared_from_this<MPIThreadPool>
 {
   public:
+    MPIThreadPool(const shared_ptr<StoreFactoryInterface> store_factory) :
+      store_factory ( store_factory ) {};
+
     void spark_threads();
     void shutdown_threads();
 
@@ -55,6 +59,8 @@ class MPIThreadPool :
     tuple<unsigned int, unsigned int> flush_ready_threads();
 
   private:
+    const shared_ptr<StoreFactoryInterface> store_factory;
+
     mutex data_mutex;
 
     vector<shared_ptr<MPIThread>> threads;
