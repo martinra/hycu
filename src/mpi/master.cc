@@ -49,13 +49,29 @@ main_master(
 
   auto config_yaml = YAML::LoadFile(argv[1]);
 
-  vector<MPIConfigNode> config;
-  if ( config_yaml.IsSequence() )
-    for ( const auto & node : config_yaml )
-      config.emplace_back(node.as<MPIConfigNode>());
 
-  else
+  StoreType store_type;
+  if ( !config_yaml["StoreType"] )
+    store_type = StoreType::EC;
+  else {
+    auto store_type_str = config_yaml["StoreType"].as<string>();
+    if ( store_type_str == "EC" )
+      store_type = StoreType::EC;
+    else if ( store_type_str == "ER" )
+      store_type = StoreType::ER;
+    else {
+      cerr << "Invalid store type given" << endl;
+      exit(1);
+    }
+  }
+
+
+  vector<MPIConfigNode> config;
+  if ( !config_yaml["Moduli"] )
     config.emplace_back(config_yaml.as<MPIConfigNode>());
+  else
+    for ( const auto & node : config_yaml["Moduli"] )
+      config.emplace_back(node.as<MPIConfigNode>());
 
   for ( const auto & node : config )
     if ( !node.verify() ) {
@@ -64,7 +80,7 @@ main_master(
     }
 
 
-  MPIWorkerPool mpi_worker_pool(mpi_world, StoreType::EC);
+  MPIWorkerPool mpi_worker_pool(mpi_world, store_type);
 
   for ( const auto & node : config ) {
     mpi_worker_pool.broadcast_config(node);
