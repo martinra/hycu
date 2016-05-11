@@ -53,7 +53,7 @@ ReductionTable(
 {
   this->compute_tables();
   if ( opencl )
-    this->init_opencl_buffers();
+    this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
 }
 
 ReductionTable::
@@ -70,7 +70,7 @@ ReductionTable(
 {
   this->compute_tables();
   if ( opencl )
-    this->init_opencl_buffers();
+    this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
 }
 
 void
@@ -82,28 +82,6 @@ compute_tables()
       this->compute_incrementation_table(prime, prime_exponent, prime_power);
   this->minimal_field_table =
       this->compute_minimal_field_table(prime, prime_exponent, prime_power);
-}
-
-void
-ReductionTable::
-init_opencl_buffers()
-{
-  this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->exponent_reduction_table->size() );
-  this->buffer_incrementation_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->incrementation_table->size() );
-  this->buffer_minimal_field_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->minimal_field_table->size() );
-
-  this->opencl->queue->enqueueWriteBuffer(*this->buffer_exponent_reduction_table, CL_TRUE, 0,
-      sizeof(int)*this->exponent_reduction_table->size(),
-      this->exponent_reduction_table->data() );
-  this->opencl->queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_TRUE, 0,
-      sizeof(int)*this->incrementation_table->size(),
-      this->incrementation_table->data() );
-  this->opencl->queue->enqueueWriteBuffer(*this->buffer_minimal_field_table, CL_TRUE, 0,
-      sizeof(int)*this->minimal_field_table->size(),
-      this->minimal_field_table->data() );
 }
 
 shared_ptr<vector<int>>

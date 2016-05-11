@@ -29,6 +29,7 @@
 #include <CL/cl.hpp>
 
 #include "opencl/interface.hh"
+#include "opencl/kernel_evaluation.hh"
 
 
 using std::shared_ptr;
@@ -49,10 +50,10 @@ class ReductionTable
     ReductionTable(int prime, int prime_exponent, const shared_ptr<OpenCLInterface> & opencl);
 
     void compute_tables();
-    void init_opencl_buffers();
     inline bool is_opencl_enabled() const { return (bool)opencl; };
     
     friend class Curve;
+    friend OpenCLKernelEvaluation;
 
   protected:
     const int prime;
@@ -61,6 +62,7 @@ class ReductionTable
     const int prime_power_pred;
 
     shared_ptr<OpenCLInterface> opencl;
+    shared_ptr<OpenCLKernelEvaluation> kernel_evaluation;
 
     // the reduction table is the reduction table modulo q-1 for integers less than max(r,2)*(q-1)
     shared_ptr<vector<int>> exponent_reduction_table;
@@ -69,11 +71,6 @@ class ReductionTable
     shared_ptr<vector<int>> incrementation_table;
     // given an exponent determine the minimal prime exponent for which it occurs as an element
     shared_ptr<vector<int>> minimal_field_table;
-
-    // opencl buffers that store the corresponding table
-    shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
-    shared_ptr<cl::Buffer> buffer_incrementation_table;
-    shared_ptr<cl::Buffer> buffer_minimal_field_table;
 
   private:
     shared_ptr<vector<int>> compute_exponent_reduction_table(int prime_power);

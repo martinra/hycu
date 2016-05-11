@@ -8,7 +8,9 @@ sources_curve = [
   , "curve.cc"
   , "curve_iterator.cc"
   , "fq_element_table.cc"
-  , "opencl_interface.cc"
+  , "opencl/interface.cc"
+  , "opencl/program_evaluation.cc"
+  , "opencl/kernel_evaluation.cc"
   , "reduction_table.cc"
   , "single_curve_fp.cc"
   ]

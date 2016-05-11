@@ -21,40 +21,44 @@
 ===============================================================================*/
 
 
-#ifndef _H_OPENCL_INTERFACE
-#define _H_OPENCL_INTERFACE
+#ifndef _H_OPENCL_KERNEL_EVALUATION
+#define _H_OPENCL_KERNEL_EVALUATION
 
 #include <memory>
+#include <vector>
 #include <CL/cl.hpp>
-
-#include "opencl/program_evaluation.hh"
 
 
 using std::shared_ptr;
 using std::vector;
 
 
-class OpenCLInterface
+class ReductionTable;
+
+class OpenCLKernelEvaluation
 {
   public:
-    OpenCLInterface() : OpenCLInterface ( OpenCLInterface::devices().front() ) {};
-    OpenCLInterface(cl::Device device);
+    OpenCLKernelEvaluation(const ReductionTable & table);
 
-    static vector<cl::Device> devices();
+    void enqueue(vector<int> poly_coeff_exponents);
 
+    // todo: remove when second kernel is refactored
     friend class Curve;
-    friend class ReductionTable;
-    friend class OpenCLProgramEvaluation;
-    friend class OpenCLKernelEvaluation;
 
   protected:
+    unsigned int prime_power_pred;
 
-    shared_ptr<cl::Device> device;
-    shared_ptr<cl::Context> context;
-    shared_ptr<cl::CommandQueue> queue;
+    shared_ptr<OpenCLInterface> opencl;
 
-    shared_ptr<OpenCLProgramEvaluation> program_evaluation;
-    shared_ptr<cl::Program> program_reduction;
+    shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
+    shared_ptr<cl::Buffer> buffer_incrementation_table;
+    shared_ptr<cl::Buffer> buffer_minimal_field_table;
+
+    shared_ptr<cl::Buffer> buffer_nmbs_unramified;
+    shared_ptr<cl::Buffer> buffer_nmbs_ramified;
+    shared_ptr<cl::Buffer> buffer_minimal_fields;
+
+    shared_ptr<cl::Kernel> kernel_cl;
 };
 
 #endif

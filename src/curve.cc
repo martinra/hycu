@@ -228,84 +228,10 @@ count_opencl(
   int prime_exponent = reduction_table.prime_exponent;
   int prime_power_pred = reduction_table.prime_power_pred;
 
-  int poly_size = (int)poly_coeff_exponents.size();
-
-
   auto opencl = reduction_table.opencl;
 
-  cl::Buffer buffer_poly_coeff_exponents(
-               *opencl->context, CL_MEM_READ_ONLY,
-               sizeof(int) * poly_size);
-  status = opencl->queue->enqueueWriteBuffer(buffer_poly_coeff_exponents, CL_TRUE, 0,
-                              sizeof(int) * poly_size, poly_coeff_exponents.data());
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not write poly_coeff_exponents" << endl;
-    throw;
-  }
 
-
-  cl::Buffer buffer_nmbs_unramified(
-               *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
-  cl::Buffer buffer_nmbs_ramified(
-               *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
-  cl::Buffer buffer_minimal_fields(
-               *opencl->context, CL_MEM_READ_WRITE, sizeof(int) * reduction_table.prime_power_pred);
-
-  // todo: move the kernel to the opencl interface class
-  cl::Kernel kernel_evaluation(*opencl->program_evaluation, "evaluate");
-
-  status = kernel_evaluation.setArg(0, buffer_poly_coeff_exponents);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set poly_coeff_exponents" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(1, sizeof(int), &poly_size);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set poly_size" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(2, sizeof(int), &prime_power_pred);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set prime_power_pred" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(3, *reduction_table.buffer_exponent_reduction_table);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set exponent_reduction_table" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(4, *reduction_table.buffer_incrementation_table);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set incremetion_table" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(5, *reduction_table.buffer_minimal_field_table);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set minimal_field_table" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(6, buffer_nmbs_unramified);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set nmbs_unramified" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(7, buffer_nmbs_ramified);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set nmbs_ramified" << endl;
-    throw;
-  }
-  status = kernel_evaluation.setArg(8, buffer_minimal_fields);
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not set poly_coeff_exponents" << endl;
-    throw;
-  }
-
-  status = opencl->queue->enqueueNDRangeKernel( kernel_evaluation,
-               cl::NullRange, cl::NDRange(reduction_table.prime_power_pred), cl::NullRange );
-  if ( status != CL_SUCCESS ) {
-    cerr << "count_opencl: could not enqueue kernel_evaluation" << endl;
-    throw;
-  }
+  reduction_table.kernel_evaluation->enqueue(poly_coeff_exponents);
 
 
   const int global_size_reduction = 1024;
@@ -316,12 +242,12 @@ count_opencl(
 
   auto kernel_reduction = make_shared<cl::Kernel>(*opencl->program_reduction, "reduce");
 
-  status = kernel_reduction->setArg(0, buffer_nmbs_unramified);
+  status = kernel_reduction->setArg(0, *reduction_table.kernel_evaluation->buffer_nmbs_unramified);
   if ( status != CL_SUCCESS ) {
     cerr << "count_opencl: could not set reduction_unramified:nmbs_unramified" << endl;
     throw;
   }
-  status = kernel_reduction->setArg(1, buffer_minimal_fields);
+  status = kernel_reduction->setArg(1, *reduction_table.kernel_evaluation->buffer_minimal_fields);
   if ( status != CL_SUCCESS ) {
     cerr << "count_opencl: could not set reduction_unramified:minimal_fields" << endl;
     throw;
@@ -382,12 +308,12 @@ count_opencl(
 
 
   kernel_reduction = make_shared<cl::Kernel>(*opencl->program_reduction, "reduce");
-  status = kernel_reduction->setArg(0, buffer_nmbs_ramified);
+  status = kernel_reduction->setArg(0, *reduction_table.kernel_evaluation->buffer_nmbs_ramified);
   if ( status != CL_SUCCESS ) {
     cerr << "count_opencl: could not set reduction_ramified:nmbs_ramified" << endl;
     throw;
   }
-  status = kernel_reduction->setArg(1, buffer_minimal_fields);
+  status = kernel_reduction->setArg(1, *reduction_table.kernel_evaluation->buffer_minimal_fields);
   if ( status != CL_SUCCESS ) {
     cerr << "count_opencl: could not set reduction_ramified:minimal_fields" << endl;
     throw;

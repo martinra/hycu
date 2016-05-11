@@ -21,40 +21,33 @@
 ===============================================================================*/
 
 
-#ifndef _H_OPENCL_INTERFACE
-#define _H_OPENCL_INTERFACE
+#ifndef _H_OPENCL_PROGRAM_EVALUATION
+#define _H_OPENCL_PROGRAM_EVALUATION
 
 #include <memory>
+#include <string>
 #include <CL/cl.hpp>
 
-#include "opencl/program_evaluation.hh"
 
+class OpenCLInterface;
 
 using std::shared_ptr;
-using std::vector;
+using std::string;
 
 
-class OpenCLInterface
+class OpenCLProgramEvaluation
 {
   public:
-    OpenCLInterface() : OpenCLInterface ( OpenCLInterface::devices().front() ) {};
-    OpenCLInterface(cl::Device device);
+    OpenCLProgramEvaluation(const OpenCLInterface & opencl);
 
-    static vector<cl::Device> devices();
-
-    friend class Curve;
-    friend class ReductionTable;
-    friend class OpenCLProgramEvaluation;
     friend class OpenCLKernelEvaluation;
 
   protected:
+    shared_ptr<cl::Program> cl_program;
 
-    shared_ptr<cl::Device> device;
-    shared_ptr<cl::Context> context;
-    shared_ptr<cl::CommandQueue> queue;
-
-    shared_ptr<OpenCLProgramEvaluation> program_evaluation;
-    shared_ptr<cl::Program> program_reduction;
+  private:
+    static const string code;
+    static const string function_name;
 };
 
 #endif
