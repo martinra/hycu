@@ -22,6 +22,7 @@
 
 
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -31,9 +32,10 @@
 #include "store/store_data.hh"
 
 
-using namespace std;
 namespace filesys = boost::filesystem;
-
+namespace popt = boost::program_options;
+using namespace std;
+using popt::value;
 
 
 template<class Store>
@@ -47,25 +49,58 @@ main(
     char** argv
     )
 {
-  if (argc < 4) {
-    cerr << "Arguments: store_type, input_folder, output_file" << endl;
-    exit(1);
+  popt::options_description visible_options("Available options"), all_options;
+  popt::positional_options_description positional_options;
+
+  visible_options.add_options()
+    ( "help,h", "show help message" )
+    ( "store_type", value<string>(),
+      "the type of the store; c: Count, r: Representative" )
+    ( "input_path", value<string>(),
+      "path to the input folder" )
+    ( "output_file", value<string>(),
+      "path to the output file" );
+
+  positional_options.add("store_type", 1)
+                    .add("input_path", 2)
+                    .add("output_file", 2);
+
+  popt::variables_map options_map;
+  popt::store( popt::command_line_parser(argc, argv)
+                 .options(visible_options)
+                 .positional(positional_options)
+                 .run(),
+               options_map );
+  popt::notify(options_map);
+
+
+  if ( options_map.count("help") ) {
+    cerr << visible_options;
+    exit(0);
   }
 
-  auto store_type = string(argv[1]);
-  if (    store_type != "cr" ) {
-    cerr << "store type must be cr" << endl;
-    exit(1);
+
+  if ( !options_map.count("store_type") ) {
+   cerr << "store_type has to be set";
+   exit(1);
   }
+  if ( !options_map.count("input_path") ) {
+   cerr << "input_path has to be set";
+   exit(1);
+  }
+  if ( !options_map.count("output_file") ) {
+   cerr << "output_file has to be set";
+   exit(1);
+  }
+  
 
-
-  filesys::path input(argv[2]);
+  filesys::path input(options_map["input_path"].as<string>());
   if ( !filesys::exists(input) ) {
-    cerr << "input folder does not exist" << endl;
+    cerr << "input path does not exist" << endl;
     exit(1);
   }
   if ( !filesys::is_directory(input) ) {
-    cerr << "input folder is not a directory" << endl;
+    cerr << "input path is not a folder" << endl;
     exit(1);
   }
 
@@ -74,12 +109,19 @@ main(
         back_inserter(input_files) );
 
 
+  filesys::path output_file(options_map["output_file"].as<string>());
+
+  string store_type = options_map["store_type"].as<string>();
   if ( store_type == "c" )
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
-      (input_files, filesys::path(argv[3]));
+      (input_files, output_file);
   else if ( store_type == "r" )
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>>
-      (input_files, filesys::path(argv[3]));
+      (input_files, output_file);
+  else {
+      cerr << "undefined store type: " << options_map["store_type"].as<string>() << endl;
+      exit(1);
+  }
 
   return 0;
 }
