@@ -25,7 +25,7 @@
 #include <tuple>
 
 #include "threaded/thread_pool.hh"
-#include "opencl_interface.hh"
+#include "opencl/interface.hh"
 
 
 using namespace std;

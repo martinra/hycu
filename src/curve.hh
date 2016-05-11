@@ -34,7 +34,7 @@
 
 #include "curve_iterator.hh"
 #include "fq_element_table.hh"
-#include "opencl_interface.hh"
+#include "opencl/interface.hh"
 #include "reduction_table.hh"
 
 

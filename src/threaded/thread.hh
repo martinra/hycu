@@ -34,7 +34,7 @@
 #include "block_iterator.hh"
 #include "fq_element_table.hh"
 #include "config/config_node.hh"
-#include "opencl_interface.hh"
+#include "opencl/interface.hh"
 #include "reduction_table.hh"
 #include "store/store_factory.hh"
 #include "store/store.hh"

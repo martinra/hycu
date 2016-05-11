@@ -35,7 +35,7 @@
 #include "mpi/master.hh"
 #include "mpi/worker.hh"
 #include "mpi/worker_pool.hh"
-#include "opencl_interface.hh"
+#include "opencl/interface.hh"
 #include "reduction_table.hh"
 
 

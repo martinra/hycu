@@ -23,7 +23,7 @@
 
 #include <map>
 
-#include "opencl_interface.hh"
+#include "opencl/interface.hh"
 #include "reduction_table.hh"
 #include "single_curve_fp.hh"
 

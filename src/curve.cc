@@ -38,7 +38,7 @@
 #include <CL/cl.hpp>
 
 #include "curve.hh"
-#include "opencl_interface.hh"
+#include "opencl/interface.hh"
 #include "reduction_table.hh"
 
 
