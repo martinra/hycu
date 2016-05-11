@@ -23,108 +23,50 @@
 #include <sstream>
 #include <string>
 
+#include "store/curve_data.hh"
 #include "store/store.hh"
+#include "store/store_data.hh"
 
 
 using namespace std;
 
 
-namespace std
-{
-  bool
-  less<curve_data>::
-  operator()(
-      const curve_data & lhs,
-      const curve_data & rhs
-      ) const
-  {
-    if ( lhs.ramification_type < rhs.ramification_type )
-      return true;
-    else if ( lhs.ramification_type == rhs.ramification_type )
-      if ( lhs.hasse_weil_offsets < rhs.hasse_weil_offsets )
-        return true;
-
-    return false;
-  };
-}
-
-bool
-operator==(
-    const curve_data & lhs,
-    const curve_data & rhs)
-{
-  return (    lhs.ramification_type == rhs.ramification_type
-           && lhs.hasse_weil_offsets == rhs.hasse_weil_offsets );
-}
-
-ostream &
-operator<<(
-    ostream & stream,
-    const curve_data & data
+template<
+  class CurveData,
+  class StoreData
+  >
+void
+Store<CurveData, StoreData>::
+register_curve(
+    const Curve & curve
     )
 {
-  if ( !data.ramification_type.empty() ) {
-    stream << data.ramification_type.front();
-    for (size_t ix=1; ix<data.ramification_type.size(); ++ix)
-      stream << "," << data.ramification_type[ix];
-  }
+  CurveData key_data(curve);
+  auto key = key_data.as_value();
+  auto twisted_key = key_data.twist().as_value();
+  StoreData data(curve);
 
-  stream << ";";
+  auto store_it = this->store.find(key);
+  if ( store_it == this->store.end() ) {
+    store[key] = data;
 
-  if ( !data.hasse_weil_offsets.empty() ) {
-    stream << data.hasse_weil_offsets.front();
-    for (size_t ix=1; ix<data.hasse_weil_offsets.size(); ++ix)
-      stream << "," << data.hasse_weil_offsets[ix];
-  }
-
-  return stream;
-}
-
-istream &
-operator>>(
-    istream & stream,
-    curve_data & data
-    )
-{
-  int read_int;
-  char delimiter;
-  
-  data.ramification_type.clear();
-  data.hasse_weil_offsets.clear();
-
-  while ( true ) {
-    stream >> read_int;
-    data.ramification_type.push_back(read_int);
-  
-    delimiter = stream.peek();
-    if ( delimiter == ',' ) {
-      stream.ignore(1);
-      continue;
-    }
-    else if ( delimiter == ';' ) {
-      stream.ignore(1);
-      break;
-    }
+    if ( twisted_key == key )
+      store[key] += data;
     else
-      return stream;
+      store[twisted_key] = data.twist();
   }
-
-  while ( true ) {
-    stream >> read_int;
-    data.hasse_weil_offsets.push_back(read_int);
-  
-    delimiter = stream.peek();
-    if ( delimiter == ',' ) {
-      stream.ignore(1);
-      continue;
-    }
-    else
-      return stream;
+  else {
+    store_it->second += data;
+    store[twisted_key] += data;
   }
 }
 
+template<
+  class CurveData,
+  class StoreData
+  >
 string
-Store::
+Store<CurveData, StoreData>::
 output_file_name(
     const MPIConfigNode & config,
     const vuu_block & block
@@ -143,16 +85,76 @@ output_file_name(
   return (config.result_path / path(output_name.str())).native();
 }
 
-curve_data
-Store::
-twisted_curve_data(
-    const curve_data & data
+template<
+  class CurveData,
+  class StoreData
+  >
+ostream &
+operator<<(
+    ostream & stream,
+    const Store<CurveData,StoreData> & store
     )
 {
-  vector<int> twisted_hasse_weil_offsets;
-  twisted_hasse_weil_offsets.reserve(data.hasse_weil_offsets.size());
-  for ( int offset : data.hasse_weil_offsets )
-    twisted_hasse_weil_offsets.push_back(-offset);
+  for ( auto & store_it : store.store )
+    stream << store_it.first << ":" << store_it.second << endl;
 
-  return { data.ramification_type, twisted_hasse_weil_offsets };
+  return stream;
 }
+
+template<
+  class CurveData,
+  class StoreData
+  >
+istream &
+operator>>(
+    istream & stream,
+    Store<CurveData,StoreData> & store
+    )
+{
+  char delimiter;
+
+  typename CurveData::ValueType curve_value;
+  typename StoreData::ValueType store_value;
+
+  stream.peek();
+  while ( !stream.eof() ) {
+    stream >> curve_value;
+    delimiter = stream.peek();
+    if ( delimiter != ':' ) {
+      cerr << "operator>> Store: cannot extract: character after curve value is " << delimiter << endl;
+      throw;
+    }
+    stream.ignore(1);
+
+    stream >> store_value;
+    delimiter = stream.peek();
+    if ( delimiter != '\n' ) {
+      cerr << "operator>> Store: cannot extract: character after store value is " << delimiter <<  endl;
+      throw;
+    }
+    stream.ignore(1);
+
+    auto store_it = store.store.find(curve_value);
+    if ( store_it == store.store.end() )
+      store.store[curve_value] = store_value;
+    else
+      store.store[curve_value] += store_value;
+
+    stream.peek();
+  }
+
+  return stream;
+}
+
+
+template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>;
+template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>;
+
+typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count> StoreEC;
+typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative> StoreER;
+
+template ostream & operator<<(ostream & stream, const StoreEC & store);
+template ostream & operator<<(ostream & stream, const StoreER & store);
+
+template istream & operator>>(istream & stream, StoreEC & store);
+template istream & operator>>(istream & stream, StoreER & store);

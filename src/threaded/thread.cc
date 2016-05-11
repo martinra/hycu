@@ -22,7 +22,9 @@
 
 #include <fstream>
 
-#include "store/count_representative.hh"
+#include "store/curve_data.hh"
+#include "store/store.hh"
+#include "store/store_data.hh"
 #include "threaded/thread.hh"
 #include "threaded/thread_pool.hh"
 
@@ -30,12 +32,15 @@
 using namespace std;
 
 
+typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count> DefaultStore;
+
+
 void
 MPIThread::
 spark()
 {
   this->shutting_down = false;
-  this->main_std_thread = thread( MPIThread::main_thread<StoreCountRepresentative>,
+  this->main_std_thread = thread( MPIThread::main_thread<DefaultStore>,
                                   shared_from_this() );
 }
 

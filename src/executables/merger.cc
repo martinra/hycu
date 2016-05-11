@@ -26,11 +26,14 @@
 #include <iostream>
 #include <vector>
 
-#include "store/count_representative.hh"
+#include "store/curve_data.hh"
+#include "store/store.hh"
+#include "store/store_data.hh"
 
 
 using namespace std;
 namespace filesys = boost::filesystem;
+
 
 
 template<class Store>
@@ -71,8 +74,12 @@ main(
         back_inserter(input_files) );
 
 
-  if ( store_type == "cr" )
-    merge<StoreCountRepresentative>(input_files, filesys::path(argv[3]));
+  if ( store_type == "c" )
+    merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
+      (input_files, filesys::path(argv[3]));
+  else if ( store_type == "r" )
+    merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>>
+      (input_files, filesys::path(argv[3]));
 
   return 0;
 }

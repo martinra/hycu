@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 
-#ifndef _H_STORE_CURVE_DATA
-#define _H_STORE_CURVE_DATA
+#ifndef _H_STORE_STORE
+#define _H_STORE_STORE
 
 #include <string>
 #include <vector>
@@ -38,46 +38,28 @@ using std::string;
 using std::vector;
 
 
-typedef struct {
-  vector<int> ramification_type;
-  vector<int> hasse_weil_offsets;
-} curve_data;
+template<class CurveData, class StoreData> class Store;
+
+template<class CurveData, class StoreData>
+ostream & operator<<(ostream & stream, const Store<CurveData,StoreData> & store);
+
+template<class CurveData, class StoreData>
+istream & operator>>(istream & stream, Store<CurveData,StoreData> & store);
 
 
-namespace std
-{
-  template<> struct
-  less<curve_data>
-  {
-    bool operator()(const curve_data & lhs, const curve_data & rhs) const;
-  };
-}
-
-bool operator==(const curve_data & lhs, const curve_data & rhs);
-
-ostream & operator<<(ostream & stream, const curve_data & data);
-istream & operator>>(istream & stream, curve_data & data);
-
-
+template<class CurveData, class StoreData>
 class Store
 {
   public:
-    unsigned int
-    inline
-    moduli_multiplicity(
-      const Curve & curve
-      )
-    {
-      return CurveIterator::multiplicity( curve.prime(), curve.prime_power(),
-                                          curve.rhs_support() );
-    };
-
-    curve_data twisted_curve_data(const curve_data & curve_data);
+    void register_curve(const Curve & curve);
 
     string output_file_name(const MPIConfigNode & config, const vuu_block & block);
 
-  protected:
-    Store() = default;
+    friend ostream & operator<< <> (ostream & stream, const Store<CurveData,StoreData> & store);
+    friend istream & operator>> <> (istream & stream, Store<CurveData,StoreData> & store);
+
+  private:
+    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
 };
 
 #endif

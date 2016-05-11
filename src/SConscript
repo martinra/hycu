@@ -25,8 +25,9 @@ Export("objs_config")
 
 
 sources_store = [
-    "store/count_representative.cc"
+    "store/curve_data.cc"
   , "store/store.cc"
+  , "store/store_data.cc"
   ]
 objs_store = [ env.Object(s) for s in sources_store ]
 Export("objs_store")
