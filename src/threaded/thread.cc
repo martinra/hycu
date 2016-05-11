@@ -39,9 +39,10 @@ void
 MPIThread::
 spark()
 {
+  auto store_factory = dynamic_pointer_cast<StoreFactoryInterface>( make_shared<StoreFactory<DefaultStore>>() );
+
   this->shutting_down = false;
-  this->main_std_thread = thread( MPIThread::main_thread<DefaultStore>,
-                                  shared_from_this() );
+  this->main_std_thread = thread( MPIThread::main_thread, shared_from_this(), store_factory );
 }
 
 void
@@ -53,11 +54,11 @@ shutdown()
   this->main_std_thread.join();
 }
 
-template<class Store>
 void
 MPIThread::
 main_thread(
-    shared_ptr<MPIThread> thread
+    shared_ptr<MPIThread> thread,
+    shared_ptr<StoreFactoryInterface> store_factory
     )
 {
   unique_lock<mutex> main_lock(thread->main_mutex);
@@ -85,17 +86,17 @@ main_thread(
     data_lock.unlock();
 
 
-    Store store;
+    auto store = store_factory->create();
     for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
       Curve curve(fq_table, iter.as_position());
       if ( !curve.has_squarefree_rhs() ) continue;
       for ( auto table : reduction_tables ) curve.count(table);
-      store.register_curve(curve);
+      store->register_curve(curve);
     }
 
 
     data_lock.lock();
-    fstream(store.output_file_name(thread->config, block), ios_base::out) << store;
+    fstream(store->output_file_name(thread->config, block), ios_base::out) << *store;
 
     auto thread_pool_shared = thread->thread_pool.lock();
     if ( thread_pool_shared )

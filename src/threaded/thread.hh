@@ -36,6 +36,7 @@
 #include "config/config_node.hh"
 #include "opencl_interface.hh"
 #include "reduction_table.hh"
+#include "store/store_factory.hh"
 
 
 using std::condition_variable;
@@ -64,8 +65,7 @@ class MPIThread :
     bool inline is_opencl_thread() const { return (bool)this->opencl; };
   
 
-    template<class Store>
-      static void main_thread(shared_ptr<MPIThread> thread);
+    static void main_thread(shared_ptr<MPIThread> thread, shared_ptr<StoreFactoryInterface> store_factory);
   
     void update_config(const MPIConfigNode & config);
     void assign(vuu_block block);

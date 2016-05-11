@@ -90,12 +90,13 @@ template<
   class StoreData
   >
 ostream &
-operator<<(
-    ostream & stream,
-    const Store<CurveData,StoreData> & store
+Store<CurveData, StoreData>::
+insert_store(
+    ostream & stream
     )
+  const
 {
-  for ( auto & store_it : store.store )
+  for ( auto & store_it : this->store )
     stream << store_it.first << ":" << store_it.second << endl;
 
   return stream;
@@ -106,9 +107,9 @@ template<
   class StoreData
   >
 istream &
-operator>>(
-    istream & stream,
-    Store<CurveData,StoreData> & store
+Store<CurveData, StoreData>::
+extract_store(
+    istream & stream
     )
 {
   char delimiter;
@@ -134,11 +135,11 @@ operator>>(
     }
     stream.ignore(1);
 
-    auto store_it = store.store.find(curve_value);
-    if ( store_it == store.store.end() )
-      store.store[curve_value] = store_value;
+    auto store_it = this->store.find(curve_value);
+    if ( store_it == this->store.end() )
+      this->store[curve_value] = store_value;
     else
-      store.store[curve_value] += store_value;
+      this->store[curve_value] += store_value;
 
     stream.peek();
   }

@@ -38,6 +38,41 @@ using std::string;
 using std::vector;
 
 
+class StoreInterface
+{
+  public:
+    virtual void register_curve(const Curve & curve) = 0;
+
+    virtual string output_file_name(const MPIConfigNode & config, const vuu_block & block) = 0;
+
+    friend ostream & operator<<(ostream & stream, const StoreInterface & store);
+    friend istream & operator>>(istream & stream, StoreInterface & store);
+
+  private:
+    virtual ostream & insert_store(ostream & stream) const = 0;
+    virtual istream & extract_store(istream & stream) = 0; 
+};
+
+inline
+ostream &
+operator<<(
+    ostream & stream,
+    const StoreInterface & store
+    )
+{
+  return store.insert_store(stream);
+};
+
+inline
+istream &
+operator>>(
+    istream & stream,
+    StoreInterface & store
+    )
+{
+  return store.extract_store(stream);
+};
+
 template<class CurveData, class StoreData> class Store;
 
 template<class CurveData, class StoreData>
@@ -48,18 +83,44 @@ istream & operator>>(istream & stream, Store<CurveData,StoreData> & store);
 
 
 template<class CurveData, class StoreData>
-class Store
+class Store :
+  public StoreInterface
 {
   public:
-    void register_curve(const Curve & curve);
+    void register_curve(const Curve & curve) final;
 
-    string output_file_name(const MPIConfigNode & config, const vuu_block & block);
+    string output_file_name(const MPIConfigNode & config, const vuu_block & block) final;
 
     friend ostream & operator<< <> (ostream & stream, const Store<CurveData,StoreData> & store);
     friend istream & operator>> <> (istream & stream, Store<CurveData,StoreData> & store);
 
   private:
+    ostream & insert_store(ostream & stream) const final;
+    istream & extract_store(istream & stream) final;
+
     map<typename CurveData::ValueType, typename StoreData::ValueType> store;
 };
+
+template<class CurveData, class StoreData>
+inline
+ostream &
+operator<<(
+    ostream & stream,
+    const Store<CurveData,StoreData> & store
+    )
+{
+  return store.insert_store(stream);
+};
+
+template<class CurveData, class StoreData>
+inline
+istream &
+operator>>(
+    istream & stream,
+    Store<CurveData,StoreData> & store
+    )
+{
+  return store.extract_store(stream);
+}
 
 #endif
