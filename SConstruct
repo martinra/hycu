@@ -13,6 +13,7 @@ opts.Add( PathVariable("mpicxx_path", "path to configuration programm mpicxx", "
 resources = \
   [ ( "boost_filesystem", "boost/filesystem.hpp", "boost" )
   , ( "boost_mpi", "boost/mpi.hpp", "boost" )
+  , ( "boost_program_options", "boost/program_options.hpp", "boost" )
   , ( "boost_serialization", "boost/serialization/serialization.hpp", "boost" )
   , ( "boost_system", None, "boost" )
   , ( "boost_unit_test_framework", "boost/test/unit_test.hpp", "boost" )
@@ -64,7 +65,8 @@ if not GetOption("clean"):
     , LINKFLAGS = "-pthread"
     )
 
-  for resource in [ "boost_system", "boost_filesystem",
+  for resource in [ "boost_program_options",
+                    "boost_system", "boost_filesystem",
                     "OpenCL", "flint", "gmp", "yaml-cpp" ]:
     AddResource(conf, resource, libs_and_headers)
 
