@@ -49,16 +49,16 @@ using std::tuple;
 using std::weak_ptr;
 
 
-class MPIThreadPool;
+class ThreadPool;
 
 
-class MPIThread :
-  public std::enable_shared_from_this<MPIThread>
+class Thread :
+  public std::enable_shared_from_this<Thread>
 {
   public:
-    MPIThread( weak_ptr<MPIThreadPool> thread_pool,
-               const shared_ptr<StoreFactoryInterface> store_factory,
-               shared_ptr<OpenCLInterface> opencl = {} ) :
+    Thread( weak_ptr<ThreadPool> thread_pool,
+            const shared_ptr<StoreFactoryInterface> store_factory,
+            shared_ptr<OpenCLInterface> opencl = {} ) :
       thread_pool ( thread_pool ), opencl ( opencl ),
       store_factory ( store_factory )  {};
 
@@ -68,13 +68,13 @@ class MPIThread :
     bool inline is_opencl_thread() const { return (bool)this->opencl; };
   
 
-    static void main_thread(shared_ptr<MPIThread> thread, const shared_ptr<StoreFactoryInterface> store_factory);
+    static void main_thread(shared_ptr<Thread> thread, const shared_ptr<StoreFactoryInterface> store_factory);
   
     void update_config(const MPIConfigNode & config);
     void assign(vuu_block block);
 
   private:
-    weak_ptr<MPIThreadPool> thread_pool;
+    weak_ptr<ThreadPool> thread_pool;
 
     thread main_std_thread;
     bool shutting_down;

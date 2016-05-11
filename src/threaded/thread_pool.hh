@@ -40,11 +40,11 @@ using std::shared_ptr;
 using std::tuple;
 
 
-class MPIThreadPool :
-  public std::enable_shared_from_this<MPIThreadPool>
+class ThreadPool :
+  public std::enable_shared_from_this<ThreadPool>
 {
   public:
-    MPIThreadPool(const shared_ptr<StoreFactoryInterface> store_factory) :
+    ThreadPool(const shared_ptr<StoreFactoryInterface> store_factory) :
       store_factory ( store_factory ) {};
 
     void spark_threads();
@@ -63,10 +63,10 @@ class MPIThreadPool :
 
     mutex data_mutex;
 
-    vector<shared_ptr<MPIThread>> threads;
-    deque<shared_ptr<MPIThread>> idle_threads;
-    vector<shared_ptr<MPIThread>> ready_threads;
-    map<vuu_block, shared_ptr<MPIThread>> busy_threads;
+    vector<shared_ptr<Thread>> threads;
+    deque<shared_ptr<Thread>> idle_threads;
+    vector<shared_ptr<Thread>> ready_threads;
+    map<vuu_block, shared_ptr<Thread>> busy_threads;
 
     vector<vuu_block> finished_blocks;
 };

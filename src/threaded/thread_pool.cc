@@ -32,22 +32,22 @@ using namespace std;
 
 
 void
-MPIThreadPool::
+ThreadPool::
 spark_threads()
 {
   if ( !this->threads.empty() ) return;
 
   for ( const auto & device : OpenCLInterface::devices() )
     this->threads.push_back(
-        make_shared<MPIThread>( shared_from_this(), this->store_factory,
-                                make_shared<OpenCLInterface>(device) ));
+        make_shared<Thread>( shared_from_this(), this->store_factory,
+                             make_shared<OpenCLInterface>(device) ));
 
   // each GPU thread accounts for about 1/8 core
   // we slightly oversubscribe here, assuming that the
   // package size in BlockIterator is large enough
   auto nmb_threads = thread::hardware_concurrency();
   for ( size_t ix=this->threads.size()/8; ix<nmb_threads; ++ix )
-    this->threads.push_back(make_shared<MPIThread>(shared_from_this(), this->store_factory));
+    this->threads.push_back(make_shared<Thread>(shared_from_this(), this->store_factory));
 
 
   for ( const auto thread : this->threads ) {
@@ -57,7 +57,7 @@ spark_threads()
 }
 
 void
-MPIThreadPool::
+ThreadPool::
 shutdown_threads()
 {
   for ( auto thread : this->threads )
@@ -65,7 +65,7 @@ shutdown_threads()
 }
 
 void
-MPIThreadPool::
+ThreadPool::
 update_config(
     const MPIConfigNode & config
     )
@@ -75,13 +75,13 @@ update_config(
 }
 
 void
-MPIThreadPool::
+ThreadPool::
 assign(
     vuu_block block,
     bool opencl
     )
 {
-  shared_ptr<MPIThread> thread;
+  shared_ptr<Thread> thread;
   if ( opencl ) {
     thread = this->idle_threads.front();
     this->idle_threads.pop_front();
@@ -92,7 +92,7 @@ assign(
   }
 
   if ( opencl != thread->is_opencl_thread() ) {
-    cerr << "MPIThreadPool::assign: could not meet opencl requirement" << endl;
+    cerr << "ThreadPool::assign: could not meet opencl requirement" << endl;
     throw;
   }
 
@@ -101,7 +101,7 @@ assign(
 }
 
 void
-MPIThreadPool::
+ThreadPool::
 finished_block(
     vuu_block block
     )
@@ -110,7 +110,7 @@ finished_block(
   
   auto block_it = this->busy_threads.find(block);
   if ( block_it == this->busy_threads.end() ) {
-    cerr << "MPIThreadPool::finished_block: block not found" << endl;
+    cerr << "ThreadPool::finished_block: block not found" << endl;
     throw; 
   }
 
@@ -121,7 +121,7 @@ finished_block(
 }
 
 tuple<unsigned int, unsigned int>
-MPIThreadPool::
+ThreadPool::
 flush_ready_threads()
 {
   unsigned int nmb_cpu_threads = 0;
@@ -147,7 +147,7 @@ flush_ready_threads()
 }
 
 vector<vuu_block>
-MPIThreadPool::
+ThreadPool::
 flush_finished_blocks()
 {
   lock_guard<mutex>(this->data_mutex);

@@ -79,7 +79,7 @@ main(
     }
 
 
-  auto thread_pool = make_shared<MPIThreadPool>(create_store_factory(store_type));
+  auto thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
   thread_pool->spark_threads();
 
   unsigned int nmb_idle_cpu = 0;

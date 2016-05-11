@@ -30,15 +30,15 @@ using namespace std;
 
 
 void
-MPIThread::
+Thread::
 spark()
 {
   this->shutting_down = false;
-  this->main_std_thread = thread( MPIThread::main_thread, shared_from_this(), this->store_factory );
+  this->main_std_thread = thread( Thread::main_thread, shared_from_this(), this->store_factory );
 }
 
 void
-MPIThread::
+Thread::
 shutdown()
 {
   this->shutting_down = true;
@@ -47,9 +47,9 @@ shutdown()
 }
 
 void
-MPIThread::
+Thread::
 main_thread(
-    shared_ptr<MPIThread> thread,
+    shared_ptr<Thread> thread,
     const shared_ptr<StoreFactoryInterface> store_factory
     )
 {
@@ -94,7 +94,7 @@ main_thread(
     if ( thread_pool_shared )
       thread_pool_shared->finished_block(block);
     else {
-      cerr << "MPIThread::main_thread: expired thread_pool in thread "
+      cerr << "Thread::main_thread: expired thread_pool in thread "
            << this_thread::get_id() << endl;
       throw;
     }
@@ -104,7 +104,7 @@ main_thread(
 }
 
 void
-MPIThread::
+Thread::
 update_config(
     const MPIConfigNode & config
     )
@@ -118,7 +118,7 @@ update_config(
 }
 
 void
-MPIThread::
+Thread::
 assign(
     vuu_block block
     )

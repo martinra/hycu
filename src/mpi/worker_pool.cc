@@ -83,7 +83,7 @@ MPIWorkerPool(
     ) :
   mpi_world ( mpi_world ), store_type ( store_type )
 {
-  this->master_thread_pool = make_shared<MPIThreadPool>(create_store_factory(store_type));
+  this->master_thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
   this->master_thread_pool->spark_threads();
 
   mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::store_type_tag);

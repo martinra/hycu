@@ -40,7 +40,7 @@ main_worker(
   StoreType store_type;
   mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::store_type_tag);
 
-  auto thread_pool = make_shared<MPIThreadPool>(create_store_factory(store_type));
+  auto thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
   thread_pool->spark_threads();
 
   while ( true ) {

@@ -77,7 +77,7 @@ class MPIWorkerPool
 
     const StoreType store_type;
 
-    shared_ptr<MPIThreadPool> master_thread_pool;
+    shared_ptr<ThreadPool> master_thread_pool;
 
     deque<u_process_id> cpu_idle_queue;
     deque<u_process_id> opencl_idle_queue;
