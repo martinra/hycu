@@ -62,14 +62,6 @@ class MPIWorkerPool
     void finished_block(u_process_id process_id, const vuu_block & block);
     void wait_for_assigned_blocks();
 
-    static constexpr unsigned int store_type_tag          = 0;
-    static constexpr unsigned int update_config_tag       = 1;
-    static constexpr unsigned int flush_ready_threads_tag = 2;
-    static constexpr unsigned int assign_opencl_block_tag = 3;
-    static constexpr unsigned int assign_cpu_block_tag    = 4;
-    static constexpr unsigned int finished_blocks_tag     = 5;
-    static constexpr unsigned int shutdown_tag            = 6;
-
     static constexpr unsigned int master_process_id = 0;
 
   private:
@@ -83,6 +75,17 @@ class MPIWorkerPool
     deque<u_process_id> opencl_idle_queue;
 
     map<u_process_id, set<vuu_block>> assigned_blocks;
+};
+
+enum MPIWorkerPoolTag
+{
+  store_type,
+  update_config,
+  flush_ready_threads,
+  assign_opencl_block,
+  assign_cpu_block,
+  finished_blocks,
+  shutdown
 };
 
 #endif

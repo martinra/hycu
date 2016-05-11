@@ -38,41 +38,6 @@ using namespace std;
 constexpr
 unsigned int
 MPIWorkerPool::
-store_type_tag;
-
-constexpr
-unsigned int
-MPIWorkerPool::
-update_config_tag;
-
-constexpr
-unsigned int
-MPIWorkerPool::
-flush_ready_threads_tag;
-
-constexpr
-unsigned int
-MPIWorkerPool::
-assign_opencl_block_tag;
-
-constexpr
-unsigned int
-MPIWorkerPool::
-assign_cpu_block_tag;
-
-constexpr
-unsigned int
-MPIWorkerPool::
-finished_blocks_tag;
-
-constexpr
-unsigned int
-MPIWorkerPool::
-shutdown_tag;
-
-constexpr
-unsigned int
-MPIWorkerPool::
 master_process_id;
 
 
@@ -86,7 +51,7 @@ MPIWorkerPool(
   this->master_thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
   this->master_thread_pool->spark_threads();
 
-  mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::store_type_tag);
+  mpi::broadcast(*mpi_world, store_type, MPIWorkerPoolTag::store_type);
 }
 
 MPIWorkerPool::
@@ -95,7 +60,7 @@ MPIWorkerPool::
   this->wait_for_assigned_blocks();
 
   for ( u_process_id ix = 1; ix < this->mpi_world->size(); ++ix )
-      mpi_world->send(ix, MPIWorkerPool::shutdown_tag, true);
+      mpi_world->send(ix, MPIWorkerPoolTag::shutdown, true);
   this->master_thread_pool->shutdown_threads();
 }
 
@@ -107,7 +72,7 @@ broadcast_config(
 {
   this->master_thread_pool->update_config(config);
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix )
-    this->mpi_world->send(ix, MPIWorkerPool::update_config_tag, config);
+    this->mpi_world->send(ix, MPIWorkerPoolTag::update_config, config);
 }
 
 void
@@ -127,7 +92,7 @@ assign(
     if ( process_id == MPIWorkerPool::master_process_id )
       this->master_thread_pool->assign(block, true);
     else
-      this->mpi_world->send(process_id, MPIWorkerPool::assign_opencl_block_tag, block);
+      this->mpi_world->send(process_id, MPIWorkerPoolTag::assign_opencl_block, block);
   }
   else  {
     process_id = this->cpu_idle_queue.front();
@@ -136,7 +101,7 @@ assign(
     if ( process_id == MPIWorkerPool::master_process_id )
       this->master_thread_pool->assign(block, false);
     else
-      this->mpi_world->send(process_id, MPIWorkerPool::assign_cpu_block_tag, block);
+      this->mpi_world->send(process_id, MPIWorkerPoolTag::assign_cpu_block, block);
   }
 
   this->assigned_blocks[process_id].insert(block);
@@ -158,8 +123,8 @@ fill_idle_queues()
       this->opencl_idle_queue.push_back(MPIWorkerPool::master_process_id);
 
     for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
-      this->mpi_world->send(ix, MPIWorkerPool::flush_ready_threads_tag, true);
-      this->mpi_world->recv(ix, MPIWorkerPool::flush_ready_threads_tag, nmb_cpu_opencl);
+      this->mpi_world->send(ix, MPIWorkerPoolTag::flush_ready_threads, true);
+      this->mpi_world->recv(ix, MPIWorkerPoolTag::flush_ready_threads, nmb_cpu_opencl);
 
       for ( size_t jx=0; jx<get<0>(nmb_cpu_opencl); ++jx)
         this->cpu_idle_queue.push_back(ix);
@@ -184,8 +149,8 @@ flush_finished_blocks()
 
   for ( u_process_id ix=1; ix<this->mpi_world->size(); ++ix ) {
     blocks.clear();
-    this->mpi_world->send(ix, MPIWorkerPool::finished_blocks_tag, true);
-    this->mpi_world->recv(ix, MPIWorkerPool::finished_blocks_tag, blocks);
+    this->mpi_world->send(ix, MPIWorkerPoolTag::finished_blocks, true);
+    this->mpi_world->recv(ix, MPIWorkerPoolTag::finished_blocks, blocks);
     for ( const auto & block : blocks )
       this->finished_block(ix, block);
   }
