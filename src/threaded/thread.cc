@@ -20,8 +20,6 @@
 
 ===============================================================================*/
 
-#include <fstream>
-
 #include "threaded/thread.hh"
 #include "threaded/thread_pool.hh"
 
@@ -88,7 +86,7 @@ main_thread(
 
 
     data_lock.lock();
-    fstream(store->output_file_name(thread->config, block), ios_base::out) << *store;
+    store->save(thread->config, block);
 
     auto thread_pool_shared = thread->thread_pool.lock();
     if ( thread_pool_shared )

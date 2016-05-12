@@ -20,6 +20,7 @@
 
 ===============================================================================*/
 
+#include <fstream>
 #include <sstream>
 #include <string>
 
@@ -59,6 +60,20 @@ register_curve(
     store_it->second += data;
     store[twisted_key] += data;
   }
+}
+
+template<
+  class CurveData,
+  class StoreData
+  >
+void
+Store<CurveData, StoreData>::
+save(
+    const MPIConfigNode & config,
+    const vuu_block & block
+)
+{
+  fstream(this->output_file_name(config, block), ios_base::out) << *this;
 }
 
 template<
