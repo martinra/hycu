@@ -28,6 +28,7 @@
 #include <CL/cl.hpp>
 
 #include "opencl/program_evaluation.hh"
+#include "opencl/program_reduction.hh"
 
 
 using std::shared_ptr;
@@ -46,6 +47,7 @@ class OpenCLInterface
     friend class ReductionTable;
     friend class OpenCLProgram;
     friend class OpenCLKernelEvaluation;
+    friend class OpenCLKernelReduction;
 
   protected:
 
@@ -54,7 +56,7 @@ class OpenCLInterface
     shared_ptr<cl::CommandQueue> queue;
 
     shared_ptr<OpenCLProgramEvaluation> program_evaluation;
-    shared_ptr<cl::Program> program_reduction;
+    shared_ptr<OpenCLProgramReduction> program_reduction;
 };
 
 #endif

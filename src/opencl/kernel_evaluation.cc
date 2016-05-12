@@ -36,8 +36,9 @@ OpenCLKernelEvaluation(
   prime_power_pred ( table.prime_power_pred ),
   opencl ( table.opencl )
 {
+  const auto & function_name = this->opencl->program_evaluation->function_name();
   this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_evaluation->program_cl,
-                                            this->opencl->program_evaluation->function_name().c_str());
+                                            function_name.c_str());
 
   this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
       *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.exponent_reduction_table->size() );

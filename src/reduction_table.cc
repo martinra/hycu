@@ -52,8 +52,10 @@ ReductionTable(
   opencl( move(opencl) )
 {
   this->compute_tables();
-  if ( opencl )
+  if ( opencl ) {
     this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
+    this->kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
+  }
 }
 
 ReductionTable::
@@ -69,8 +71,10 @@ ReductionTable(
   opencl( opencl )
 {
   this->compute_tables();
-  if ( opencl )
+  if ( opencl ) {
     this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
+    this->kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
+  }
 }
 
 void

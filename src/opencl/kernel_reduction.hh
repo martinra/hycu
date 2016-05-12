@@ -21,43 +21,50 @@
 ===============================================================================*/
 
 
-#ifndef _H_OPENCL_KERNEL_EVALUATION
-#define _H_OPENCL_KERNEL_EVALUATION
+#ifndef _H_OPENCL_KERNEL_REDUCTION
+#define _H_OPENCL_KERNEL_REDUCTION
 
+#include <map>
 #include <memory>
+#include <tuple>
 #include <vector>
 #include <CL/cl.hpp>
 
 
+using std::map;
 using std::shared_ptr;
+using std::tuple;
 using std::vector;
 
 
 class ReductionTable;
 
-class OpenCLKernelEvaluation
+class OpenCLKernelReduction
 {
   public:
-    OpenCLKernelEvaluation(const ReductionTable & table);
+    OpenCLKernelReduction(const ReductionTable & table);
 
-    void enqueue(vector<int> poly_coeff_exponents);
-
-    friend class OpenCLKernelReduction;
-
-  protected:
-    shared_ptr<cl::Buffer> buffer_nmbs_unramified;
-    shared_ptr<cl::Buffer> buffer_nmbs_ramified;
-    shared_ptr<cl::Buffer> buffer_minimal_fields;
+    void reduce(map<unsigned int, tuple<int,int>> & nmb_points);
 
   private:
+    unsigned int prime_exponent;
     unsigned int prime_power_pred;
 
     shared_ptr<OpenCLInterface> opencl;
     shared_ptr<cl::Kernel> kernel_cl;
 
-    shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
-    shared_ptr<cl::Buffer> buffer_incrementation_table;
-    shared_ptr<cl::Buffer> buffer_minimal_field_table;
+    shared_ptr<cl::Buffer> buffer_nmbs_unramified;
+    shared_ptr<cl::Buffer> buffer_nmbs_ramified;
+
+    shared_ptr<cl::Buffer> buffer_sums;
+    vector<int> sums;
+
+    const int global_size_reduction = 1024;
+    const int local_size_reduction = 32;
+    const int nmb_groups_reduction = global_size_reduction / local_size_reduction;
+
+
+    void _reduce(shared_ptr<cl::Buffer> buffer_nmbs);
 };
 
 #endif

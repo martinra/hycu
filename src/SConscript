@@ -9,9 +9,11 @@ sources_curve = [
   , "curve_iterator.cc"
   , "fq_element_table.cc"
   , "opencl/interface.cc"
+  , "opencl/kernel_evaluation.cc"
+  , "opencl/kernel_reduction.cc"
   , "opencl/program.cc"
   , "opencl/program_evaluation.cc"
-  , "opencl/kernel_evaluation.cc"
+  , "opencl/program_reduction.cc"
   , "reduction_table.cc"
   , "single_curve_fp.cc"
   ]

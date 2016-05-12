@@ -30,6 +30,7 @@
 
 #include "opencl/interface.hh"
 #include "opencl/kernel_evaluation.hh"
+#include "opencl/kernel_reduction.hh"
 
 
 using std::shared_ptr;
@@ -54,6 +55,7 @@ class ReductionTable
     
     friend class Curve;
     friend OpenCLKernelEvaluation;
+    friend OpenCLKernelReduction;
 
   protected:
     const int prime;
@@ -63,6 +65,7 @@ class ReductionTable
 
     shared_ptr<OpenCLInterface> opencl;
     shared_ptr<OpenCLKernelEvaluation> kernel_evaluation;
+    shared_ptr<OpenCLKernelReduction> kernel_reduction;
 
     // the reduction table is the reduction table modulo q-1 for integers less than max(r,2)*(q-1)
     shared_ptr<vector<int>> exponent_reduction_table;

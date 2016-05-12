@@ -35,7 +35,7 @@ init_program_cl(
     const OpenCLInterface & opencl
     )
 {
-  auto code = this->code();
+  const auto & code = this->code();
   cl::Program::Sources source; source.push_back({code.c_str(), code.length()});
 
   this->program_cl = make_shared<cl::Program>(*opencl.context, source);

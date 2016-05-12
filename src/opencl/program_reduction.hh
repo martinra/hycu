@@ -21,43 +21,43 @@
 ===============================================================================*/
 
 
-#ifndef _H_OPENCL_KERNEL_EVALUATION
-#define _H_OPENCL_KERNEL_EVALUATION
+#ifndef _H_OPENCL_PROGRAM_REDUCTION
+#define _H_OPENCL_PROGRAM_REDUCTION
 
 #include <memory>
-#include <vector>
+#include <string>
 #include <CL/cl.hpp>
+
+#include "opencl/program.hh"
 
 
 using std::shared_ptr;
-using std::vector;
+using std::string;
 
 
-class ReductionTable;
+class OpenCLInterface;
 
-class OpenCLKernelEvaluation
+
+class OpenCLProgramReduction :
+  public OpenCLProgram
 {
   public:
-    OpenCLKernelEvaluation(const ReductionTable & table);
-
-    void enqueue(vector<int> poly_coeff_exponents);
+    OpenCLProgramReduction(const OpenCLInterface & opencl)
+    {
+      this->init_program_cl(opencl);
+    };
 
     friend class OpenCLKernelReduction;
 
   protected:
-    shared_ptr<cl::Buffer> buffer_nmbs_unramified;
-    shared_ptr<cl::Buffer> buffer_nmbs_ramified;
-    shared_ptr<cl::Buffer> buffer_minimal_fields;
+    shared_ptr<cl::Program> cl_program;
+
+    const string code() const final { return this->_code; };
+    const string function_name() const final { return this->_function_name; };
 
   private:
-    unsigned int prime_power_pred;
-
-    shared_ptr<OpenCLInterface> opencl;
-    shared_ptr<cl::Kernel> kernel_cl;
-
-    shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
-    shared_ptr<cl::Buffer> buffer_incrementation_table;
-    shared_ptr<cl::Buffer> buffer_minimal_field_table;
+    static const string _code;
+    static const string _function_name;
 };
 
 #endif

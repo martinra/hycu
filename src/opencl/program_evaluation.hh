@@ -47,15 +47,15 @@ class OpenCLProgramEvaluation :
       this->init_program_cl(opencl);
     };
 
+    friend class OpenCLKernelEvaluation;
+
   protected:
     shared_ptr<cl::Program> cl_program;
 
-    friend class OpenCLKernelEvaluation;
-
-  private:
     const string code() const final { return this->_code; };
     const string function_name() const final { return this->_function_name; };
 
+  private:
     static const string _code;
     static const string _function_name;
 };
