@@ -36,8 +36,8 @@ OpenCLKernelEvaluation(
   prime_power_pred ( table.prime_power_pred ),
   opencl ( table.opencl )
 {
-  this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_evaluation->cl_program,
-                                            OpenCLProgramEvaluation::function_name.c_str());
+  this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_evaluation->program_cl,
+                                            this->opencl->program_evaluation->function_name().c_str());
 
   this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
       *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.exponent_reduction_table->size() );
@@ -52,7 +52,6 @@ OpenCLKernelEvaluation(
       *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
   this->buffer_minimal_fields = make_shared<cl::Buffer>(
       *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
-
 
   cl_int status;
 

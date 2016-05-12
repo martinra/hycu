@@ -20,41 +20,29 @@
 
 ===============================================================================*/
 
+#include <iostream>
 
-#ifndef _H_OPENCL_INTERFACE
-#define _H_OPENCL_INTERFACE
-
-#include <memory>
-#include <CL/cl.hpp>
-
-#include "opencl/program_evaluation.hh"
+#include "opencl/interface.hh"
+#include "opencl/program.hh"
 
 
-using std::shared_ptr;
-using std::vector;
+using namespace std;
 
 
-class OpenCLInterface
+void
+OpenCLProgram::
+init_program_cl(
+    const OpenCLInterface & opencl
+    )
 {
-  public:
-    OpenCLInterface() : OpenCLInterface ( OpenCLInterface::devices().front() ) {};
-    OpenCLInterface(cl::Device device);
+  auto code = this->code();
+  cl::Program::Sources source; source.push_back({code.c_str(), code.length()});
 
-    static vector<cl::Device> devices();
+  this->program_cl = make_shared<cl::Program>(*opencl.context, source);
+  if (this->program_cl->build({*opencl.device}) != CL_SUCCESS) {
+    cerr << "Error building code for function \"" << this->function_name() << "\":" << endl;
+    cerr << this->program_cl->getBuildInfo<CL_PROGRAM_BUILD_LOG>(*opencl.device);
+    throw;
+  }
+}
 
-    friend class Curve;
-    friend class ReductionTable;
-    friend class OpenCLProgram;
-    friend class OpenCLKernelEvaluation;
-
-  protected:
-
-    shared_ptr<cl::Device> device;
-    shared_ptr<cl::Context> context;
-    shared_ptr<cl::CommandQueue> queue;
-
-    shared_ptr<OpenCLProgramEvaluation> program_evaluation;
-    shared_ptr<cl::Program> program_reduction;
-};
-
-#endif

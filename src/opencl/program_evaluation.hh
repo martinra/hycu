@@ -28,26 +28,36 @@
 #include <string>
 #include <CL/cl.hpp>
 
+#include "opencl/program.hh"
 
-class OpenCLInterface;
 
 using std::shared_ptr;
 using std::string;
 
 
-class OpenCLProgramEvaluation
+class OpenCLInterface;
+
+
+class OpenCLProgramEvaluation :
+  public OpenCLProgram
 {
   public:
-    OpenCLProgramEvaluation(const OpenCLInterface & opencl);
-
-    friend class OpenCLKernelEvaluation;
+    OpenCLProgramEvaluation(const OpenCLInterface & opencl)
+    {
+      this->init_program_cl(opencl);
+    };
 
   protected:
     shared_ptr<cl::Program> cl_program;
 
+    friend class OpenCLKernelEvaluation;
+
   private:
-    static const string code;
-    static const string function_name;
+    const string code() const final { return this->_code; };
+    const string function_name() const final { return this->_function_name; };
+
+    static const string _code;
+    static const string _function_name;
 };
 
 #endif

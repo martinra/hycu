@@ -29,31 +29,14 @@
 using namespace std;
 
 
-OpenCLProgramEvaluation::
-OpenCLProgramEvaluation(
-    const OpenCLInterface & opencl
-    )
-{
-  cl::Program::Sources source;
-  source.push_back({OpenCLProgramEvaluation::code.c_str(),
-                    OpenCLProgramEvaluation::code.length()});
-
-  this->cl_program = make_shared<cl::Program>(*opencl.context, source);
-  if (this->cl_program->build({*opencl.device}) != CL_SUCCESS) {
-    cerr << "Error building evaluation code:" << endl;
-    cerr << this->cl_program->getBuildInfo<CL_PROGRAM_BUILD_LOG>(*opencl.device);
-    throw;
-  }
-}
-
 const string
 OpenCLProgramEvaluation::
-function_name =
+_function_name =
   "evaluate";
 
 const string
 OpenCLProgramEvaluation::
-code =
+_code =
   "void\n"
   "kernel\n"
   "evaluate(\n"
