@@ -95,7 +95,7 @@ CurveIterator(
       // first coefficient is determined up to squaring
       // it suffices, however, to choose a square here, since the other
       // curves are twists, which we do not need enumerate separately
-      sets[degree] = table.power_coset_representatives(2);
+      sets[degree] = table.power_coset_representatives(1);
       for (int kx=degree-1; kx>=0; --kx)
         sets[kx] = {table.zero_index()};
 

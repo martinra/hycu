@@ -91,15 +91,14 @@ BOOST_AUTO_TEST_CASE( enumerate_f3_g0 )
 
 
   vector<vector<int>> positions_deg2_valid = 
-       { {0,0,1}, {0,0,2}
+       { {0,0,1}
        , {1,0,1}, {1,0,2}
-       , {2,0,1}, {2,0,2}
        };
   if ( positions_deg2 != positions_deg2_valid )
     message_positions("genus 1 degree 2 curves / F_3: ", positions_deg2);
 
   vector<vector<int>> positions_deg1_valid = 
-       { {0,1}, {0,2}
+       { {0,1},
        };
   if ( positions_deg1 != positions_deg1_valid )
     message_positions("genus 1 degree 1 curves / F_3: ", positions_deg1);
