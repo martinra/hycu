@@ -17,7 +17,7 @@ def write_reference_store(prime, genus):
     , ""
     ]
     
-  for ((ramification_type,hasse_weil_offsets), count) in curve_count.items():
+  for ((ramification_type,hasse_weil_offsets), count) in sorted(curve_count.items()):
     code.append(
       "  store[{{{{ vector<int>{{{{ {ramification_type} }}}}, vector<int>{{{{ {hasse_weil_offsets} }}}} }}}}] = {{{{ {count} }}}};"
       .format( ramification_type = ','.join(map(str, ramification_type))
