@@ -52,6 +52,11 @@ class Count
     
     inline const Count twist() { return *this; };
 
+    inline bool operator==(const Count & rhs) const
+    {
+      return this->value.counter == rhs.value.counter;
+    };
+
     struct ValueType
     {
       unsigned int counter;
