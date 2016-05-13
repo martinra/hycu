@@ -37,6 +37,12 @@ sources_store = [
 objs_store = [ env.Object(s) for s in sources_store ]
 Export("objs_store")
 
+sources_standalone_worker_pool = [
+    "worker_pool/standalone.cc"
+  ]
+objs_standalone_worker_pool = \
+   [ env.Object(s) for s in sources_standalone_worker_pool ]
+Export("objs_standalone_worker_pool")
 
 sources_threaded = [
     "threaded/thread.cc"
@@ -57,13 +63,12 @@ Alias("single", inst_single)
 
 prg_threaded = env.Program(
     "executables/hycu-threaded"
-  , [ "executables/threaded.cc"
-    , "worker_pool/standalone.cc"
-    ]
+  , [ "executables/threaded.cc" ]
     + objs_curve
     + objs_config
     + objs_store
     + objs_threaded
+    + objs_standalone_worker_pool
   )
 inst_threaded = env.InstallAs(env["prefix"] + "/bin/hycu-threaded", prg_threaded)
 Alias("threaded", inst_threaded)

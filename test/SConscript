@@ -2,11 +2,21 @@ Import("env_test")
 
 
 sources_test = Glob("./*.cc")
-Import("objs_curve")
+Import([ "objs_curve"
+       , "objs_config"
+       , "objs_store"
+       , "objs_threaded"
+       , "objs_standalone_worker_pool"
+       ])
 
 prg_test = env_test.Program(
     "test"
-  , sources_test + objs_curve
+  ,   sources_test
+    + objs_curve
+    + objs_config
+    + objs_store
+    + objs_threaded
+    + objs_standalone_worker_pool
   )
 
 run_test = env_test.Alias("test", prg_test, prg_test[0].get_abspath())

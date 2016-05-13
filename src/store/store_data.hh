@@ -68,6 +68,11 @@ class Count
       ValueType(Count && count) : counter ( count.value.counter ) {};
 
 
+      friend inline bool operator==(const ValueType & lhs, const ValueType & rhs)
+      {
+        return lhs.counter == rhs.counter;
+      };
+
       friend inline void operator+=(ValueType & lhs, const ValueType & rhs)
       {
         lhs.counter += rhs.counter;

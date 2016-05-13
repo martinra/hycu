@@ -87,16 +87,18 @@ class Store :
 {
   public:
     void register_curve(const Curve & curve) final;
-    void save(const MPIConfigNode & config, const vuu_block & block);
+    virtual void save(const MPIConfigNode & config, const vuu_block & block);
 
     friend ostream & operator<< <> (ostream & stream, const Store<CurveData,StoreData> & store);
     friend istream & operator>> <> (istream & stream, Store<CurveData,StoreData> & store);
+
+  protected:
+    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
 
   private:
     ostream & insert_store(ostream & stream) const final;
     istream & extract_store(istream & stream) final;
 
-    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
 
     string output_file_name(const MPIConfigNode & config, const vuu_block & block);
 };

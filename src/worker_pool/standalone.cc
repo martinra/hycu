@@ -32,10 +32,10 @@ using namespace std;
 
 StandaloneWorkerPool::
 StandaloneWorkerPool(
-    StoreType store_type
+    shared_ptr<StoreFactoryInterface> store_factory
     )
 {
-  this->master_thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
+  this->master_thread_pool = make_shared<ThreadPool>(store_factory);
   this->master_thread_pool->spark_threads();
 }
 
