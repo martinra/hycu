@@ -47,7 +47,7 @@ Export("objs_threaded")
 
 
 prg_single = env.Program(
-    "executables/single"
+    "executables/hycu-single"
   , [ "executables/single.cc" ]
     + objs_curve
   )
@@ -56,8 +56,10 @@ Alias("single", inst_single)
 
 
 prg_threaded = env.Program(
-    "executables/threaded"
-  , [ "executables/threaded.cc" ]
+    "executables/hycu-threaded"
+  , [ "executables/threaded.cc"
+    , "worker_pool/standalone.cc"
+    ]
     + objs_curve
     + objs_config
     + objs_store
@@ -68,11 +70,11 @@ Alias("threaded", inst_threaded)
 
 
 prg_mpi = env_mpi.Program(
-    "executables/mpi"
+    "executables/hycu-mpi"
   , [ "executables/mpi.cc"
-    , "mpi/master.cc"
-    , "mpi/worker.cc"
-    , "mpi/worker_pool.cc"
+    , "executables/mpi/master.cc"
+    , "executables/mpi/worker.cc"
+    , "worker_pool/mpi.cc"
     ]
     + objs_curve
     + objs_config
@@ -84,7 +86,7 @@ Alias("mpi", inst_mpi)
 
 
 prg_merger = env.Program(
-    "executables/merger"
+    "executables/hycu-merger"
   , [ "executables/merger.cc" ]
     + objs_curve
     + objs_store

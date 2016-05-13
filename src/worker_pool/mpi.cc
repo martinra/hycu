@@ -22,16 +22,14 @@
 
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 #include <vector>
 #include <tuple>
 
-#include "mpi/worker_pool.hh"
 #include "utils/serialization_tuple.hh"
+#include "worker_pool/mpi.hh"
 
 
 namespace mpi = boost::mpi;
-using boost::optional;
 using namespace std;
 
 
@@ -46,7 +44,7 @@ MPIWorkerPool(
     shared_ptr<mpi::communicator> mpi_world,
     StoreType store_type
     ) :
-  mpi_world ( mpi_world ), store_type ( store_type )
+  mpi_world ( mpi_world )
 {
   this->master_thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
   this->master_thread_pool->spark_threads();
@@ -66,7 +64,7 @@ MPIWorkerPool::
 
 void
 MPIWorkerPool::
-broadcast_config(
+set_config(
     const MPIConfigNode & config
     )
 {

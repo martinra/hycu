@@ -21,16 +21,14 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_WORKER_POOL
-#define _H_MPI_WORKER_POOL
+#ifndef _H_WORKER_POOL_MPI
+#define _H_WORKER_POOL_MPI
 
 #include <boost/mpi.hpp>
 #include <deque>
 #include <map>
 #include <memory>
-#include <vector>
 #include <set>
-#include <tuple>
 
 #include "threaded/thread_pool.hh"
 #include "store/store_factory.hh"
@@ -39,10 +37,8 @@
 namespace mpi = boost::mpi;
 using std::deque;
 using std::map;
-using std::vector;
 using std::set;
 using std::shared_ptr;
-using std::tuple;
 
 
 typedef unsigned int u_process_id;
@@ -54,7 +50,7 @@ class MPIWorkerPool
     MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world, StoreType store_type);
     ~MPIWorkerPool();
 
-    void broadcast_config(const MPIConfigNode & node);
+    void set_config(const MPIConfigNode & node);
 
     void assign(vuu_block);
     void fill_idle_queues();
@@ -65,17 +61,16 @@ class MPIWorkerPool
     static constexpr unsigned int master_process_id = 0;
 
   private:
-    shared_ptr<mpi::communicator> mpi_world;
-
-    const StoreType store_type;
-
     shared_ptr<ThreadPool> master_thread_pool;
+
+    shared_ptr<mpi::communicator> mpi_world;
 
     deque<u_process_id> cpu_idle_queue;
     deque<u_process_id> opencl_idle_queue;
 
     map<u_process_id, set<vuu_block>> assigned_blocks;
 };
+
 
 enum MPIWorkerPoolTag
 {

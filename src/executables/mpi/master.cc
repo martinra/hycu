@@ -25,10 +25,10 @@
 
 #include "config/config_node.hh"
 #include "curve_iterator.hh"
+#include "executables/mpi/master.hh"
 #include "fq_element_table.hh"
-#include "mpi/master.hh"
-#include "mpi/worker_pool.hh"
 #include "store/store_factory.hh"
+#include "worker_pool/mpi.hh"
 
 
 namespace mpi = boost::mpi;
@@ -80,15 +80,15 @@ main_master(
     }
 
 
-  MPIWorkerPool mpi_worker_pool(mpi_world, store_type);
+  MPIWorkerPool worker_pool(mpi_world, store_type);
 
   for ( const auto & node : config ) {
-    mpi_worker_pool.broadcast_config(node);
+    worker_pool.set_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
     CurveIterator iter(enumeration_table, node.genus, node.package_size);
     for (; !iter.is_end(); iter.step() )
-      mpi_worker_pool.assign(iter.as_block());
+      worker_pool.assign(iter.as_block());
   }
 
   return 0;

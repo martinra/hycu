@@ -29,7 +29,7 @@
 #include "curve_iterator.hh"
 #include "config/config_node.hh"
 #include "store/store_factory.hh"
-#include "threaded/thread_pool.hh"
+#include "worker_pool/standalone.hh"
 
 
 using namespace std;
@@ -79,56 +79,16 @@ main(
     }
 
 
-  auto thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
-  thread_pool->spark_threads();
-
-  unsigned int nmb_idle_cpu = 0;
-  unsigned int nmb_idle_opencl = 0;
-  set<vuu_block> assigned_blocks;
+  StandaloneWorkerPool worker_pool(store_type);
 
   for ( const auto & node : config ) {
-    thread_pool->update_config(node);
+    worker_pool.set_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
     CurveIterator iter(enumeration_table, node.genus, node.package_size);
-    for (; !iter.is_end(); iter.step() ) {
-      auto block_ptr = iter.as_block();
-      while ( true ) {
-        if ( nmb_idle_opencl > 0 ) {
-          thread_pool->assign(block_ptr, true);
-          --nmb_idle_opencl;
-          assigned_blocks.insert(block_ptr);
-          break;
-        }
-        else if ( nmb_idle_cpu > 0 ) {
-          thread_pool->assign(block_ptr, false);
-          --nmb_idle_cpu;
-          assigned_blocks.insert(block_ptr);
-          break;
-        }
-        else {
-          auto ready_threads = thread_pool->flush_ready_threads();
-          nmb_idle_cpu += get<0>(ready_threads);
-          nmb_idle_opencl += get<1>(ready_threads);
-
-          auto finished_blocks = thread_pool->flush_finished_blocks();
-          for ( const auto & block : finished_blocks ) {
-            if ( assigned_blocks.find(block) == assigned_blocks.end() ) {
-              cerr << "finished block was not assigned: ";
-              for ( auto pt : block )
-                cerr << get<0>(pt) << "," << get<1>(pt) << "; ";
-              cerr << endl;
-              exit(1);
-            }
-            assigned_blocks.erase(block_ptr);
-          }
-          this_thread::sleep_for(chrono::milliseconds(50));
-        }
-      }
-    }
+    for (; !iter.is_end(); iter.step() )
+      worker_pool.assign(iter.as_block());
   }
-  thread_pool->shutdown_threads();
-
 
   return 0;
 }

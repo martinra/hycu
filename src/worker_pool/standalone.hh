@@ -21,39 +21,41 @@
 ===============================================================================*/
 
 
-#include <boost/mpi.hpp>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <tuple>
-#include <yaml-cpp/yaml.h>
+#ifndef _H_WORKER_POOL_STANDALONE
+#define _H_WORKER_POOL_STANDALONE
 
-#include "block_iterator.hh"
-#include "config/config_node.hh"
-#include "curve.hh"
-#include "curve_iterator.hh"
-#include "executables/mpi/master.hh"
-#include "executables/mpi/worker.hh"
-#include "worker_pool/mpi.hh"
-#include "opencl/interface.hh"
-#include "reduction_table.hh"
+#include <memory>
+#include <set>
+
+#include "threaded/thread_pool.hh"
+#include "store/store_factory.hh"
 
 
-namespace mpi = boost::mpi;
-using namespace std;
+using std::set;
+using std::shared_ptr;
 
 
-int
-main(
-    int argc,
-    char** argv
-    )
+class StandaloneWorkerPool
 {
-  mpi::environment mpi_environment(argc, argv, mpi::threading::funneled);
-  auto mpi_world = make_shared<mpi::communicator>();
+  public:
+    StandaloneWorkerPool(StoreType store_type);
+    ~StandaloneWorkerPool();
 
-  if ( mpi_world->rank() == 0 )
-    return main_master(argc, argv, mpi_world);
-  else
-    return main_worker(mpi_world);
-}
+    void set_config(const MPIConfigNode & node);
+
+    void assign(vuu_block);
+    void fill_idle_queues();
+    void flush_finished_blocks();
+    void finished_block(const vuu_block & block);
+    void wait_for_assigned_blocks();
+
+  private:
+    shared_ptr<ThreadPool> master_thread_pool;
+
+    unsigned int nmb_cpu_idle;
+    unsigned int nmb_opencl_idle;
+
+    set<vuu_block> assigned_blocks;
+};
+
+#endif

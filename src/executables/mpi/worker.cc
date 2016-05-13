@@ -21,11 +21,11 @@
 ===============================================================================*/
 
 
-#include "mpi/worker.hh"
-#include "mpi/worker_pool.hh"
+#include "executables/mpi/worker.hh"
 #include "store/store_factory.hh"
 #include "threaded/thread_pool.hh"
 #include "utils/serialization_tuple.hh"
+#include "worker_pool/mpi.hh"
 
 
 namespace mpi = boost::mpi;
