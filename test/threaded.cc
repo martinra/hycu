@@ -33,10 +33,11 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
 {
-  StandaloneWorkerPool worker_pool(
-      dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
-        StoreFactory<TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>>
-        >() ));
+  auto worker_pool = make_shared<StandaloneWorkerPool>(
+         dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
+           StoreFactory<TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>>
+           >() )
+         );
 
   MPIConfigNode node;
   node.prime = 7;
@@ -44,12 +45,13 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
   node.genus = 1;
   node.package_size = 30;
 
-  worker_pool.set_config(node);
+  worker_pool->set_config(node);
   FqElementTable enumeration_table(node.prime, node.prime_exponent);
   CurveIterator iter(enumeration_table, node.genus, node.package_size);
   for (; !iter.is_end(); iter.step() )
-    worker_pool.assign(iter.as_block());
+    worker_pool->assign(iter.as_block());
 
+  worker_pool.reset();
   auto computed_store = TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>::from_global_store();
   auto reference_store = create_reference_store<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>();
 
