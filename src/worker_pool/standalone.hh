@@ -52,8 +52,8 @@ class StandaloneWorkerPool
   private:
     shared_ptr<ThreadPool> master_thread_pool;
 
-    unsigned int nmb_cpu_idle;
-    unsigned int nmb_opencl_idle;
+    unsigned int nmb_cpu_idle = 0;
+    unsigned int nmb_opencl_idle = 0;
 
     set<vuu_block> assigned_blocks;
 };
