@@ -170,11 +170,11 @@ count(
   }
   int prime_exponent = reduction_table.prime_exponent;
 
-  if ( this->nmb_points.find( reduction_table.prime_exponent ) != this->nmb_points.end() )
+  if ( this->nmb_points.find( prime_exponent ) != this->nmb_points.end() )
     return;
   for (size_t fx=1; fx<=prime_exponent; ++fx)
     if ( prime_exponent % fx == 0 )
-        this->nmb_points[fx] = make_tuple(0,0);
+      this->nmb_points[fx] = make_tuple(0,0);
 
 
   // this also checks that the prime exponent is divisible by the one of the curve
