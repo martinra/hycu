@@ -50,8 +50,14 @@ twist()
 {
   vector<int> twisted_hasse_weil_offsets;
   twisted_hasse_weil_offsets.reserve(this->value.hasse_weil_offsets.size());
-  for ( int offset : this->value.hasse_weil_offsets )
-    twisted_hasse_weil_offsets.push_back(-offset);
+  bool odd = true;
+  for ( int offset : this->value.hasse_weil_offsets ) {
+    if ( odd )
+      twisted_hasse_weil_offsets.push_back(-offset);
+    else
+      twisted_hasse_weil_offsets.push_back(offset);
+    odd = !odd;
+  }
 
   return ExplicitRamificationHasseWeil(this->value.ramification_type, twisted_hasse_weil_offsets);
 }

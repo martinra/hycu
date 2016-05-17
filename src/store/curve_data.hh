@@ -30,6 +30,8 @@
 #include "curve.hh"
 
 
+using std::cerr;
+using std::endl;
 using std::istream;
 using std::move;
 using std::ostream;
@@ -50,7 +52,14 @@ class ExplicitRamificationHasseWeil
     ExplicitRamificationHasseWeil(const Curve & curve) :
       ExplicitRamificationHasseWeil(
           curve.ramification_type(),
-          curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) ) {};
+          curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) )
+    {
+      // todo: we use this asumption in the implementation of twist. Check the general formulas.
+      if ( curve.prime_exponent() != 1 ) {
+        cerr << "ExplicitRamificationHasseWeil: only implemented for prime_exponent 1" << endl;
+        throw;
+      }
+    };
     
     ExplicitRamificationHasseWeil twist();
 
