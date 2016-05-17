@@ -1,55 +1,56 @@
 def write_reference_store(prime, genus):
   curve_count = count_curves(prime, genus)
 
-  code = \
-    [ "#ifndef _H_TEST_STORE_REFERENCE_Q{prime_power}_G{genus}"
-    , "#define _H_TEST_STORE_REFERENCE_Q{prime_power}_G{genus}"
-    , ""
-    , ""
-    , "template <>"
-    , "TestStore<{prime_power}, {genus},"
-    , "          HyCu::CurveData::ExplicitRamificationHasseWeil,"
-    , "          HyCu::StoreData::Count>"
-    , "create_reference_store<{prime_power}, {genus},"
-    , "                       HyCu::CurveData::ExplicitRamificationHasseWeil,"
-    , "                       HyCu::StoreData::Count>()"
-    , "{{"
-    , "  map<typename HyCu::CurveData::ExplicitRamificationHasseWeil::ValueType,"
-    , "      typename HyCu::StoreData::Count::ValueType>"
-    , "    store;"
-    , ""
-    ]
+  code = """
+#ifndef _H_TEST_STORE_REFERENCE_Q{prime_power}_G{genus}
+#define _H_TEST_STORE_REFERENCE_Q{prime_power}_G{genus}
+
+
+template <>
+TestStore<{prime_power}, {genus},
+          HyCu::CurveData::ExplicitRamificationHasseWeil,
+          HyCu::StoreData::Count>
+create_reference_store<{prime_power}, {genus},
+                       HyCu::CurveData::ExplicitRamificationHasseWeil,
+                       HyCu::StoreData::Count>()
+{{
+  map<typename HyCu::CurveData::ExplicitRamificationHasseWeil::ValueType,
+      typename HyCu::StoreData::Count::ValueType>
+    store;
+
+"""
     
   for ((ramification_type,hasse_weil_offsets), count) in sorted(curve_count.items()):
-    code.append(
-      "  store[{{{{ vector<int>{{{{ {ramification_type} }}}}, vector<int>{{{{ {hasse_weil_offsets} }}}} }}}}] = {{{{ {count} }}}};"
+    code += """
+  store[{{{{ vector<int>{{{{ {ramification_type} }}}},
+          vector<int>{{{{ {hasse_weil_offsets} }}}} }}}}]
+    = {{{{ {count} }}}};""" \
       .format( ramification_type = ','.join(map(str, ramification_type))
              , hasse_weil_offsets = ','.join(map(str, hasse_weil_offsets))
              , count = str(count)
              )
-      )
 
-  code += \
-    [ ""
-    , "  return TestStore<{prime_power}, {genus},"
-    , "                   HyCu::CurveData::ExplicitRamificationHasseWeil,"
-    , "                   HyCu::StoreData::Count>"
-    , "             (store);"
-    , "}}"
-    , ""
-    , "template"
-    , "TestStore<{prime_power}, {genus},"
-    , "          HyCu::CurveData::ExplicitRamificationHasseWeil,"
-    , "          HyCu::StoreData::Count>"
-    , "create_reference_store<{prime_power},{genus},"
-    , "                        HyCu::CurveData::ExplicitRamificationHasseWeil,"
-    , "                        HyCu::StoreData::Count>();"
-    , ""
-    , "#endif"
-    ]
+  code += """
+
+  return TestStore<{prime_power}, {genus},
+                   HyCu::CurveData::ExplicitRamificationHasseWeil,
+                   HyCu::StoreData::Count>
+             (store);
+}}
+
+template
+TestStore<{prime_power}, {genus},
+          HyCu::CurveData::ExplicitRamificationHasseWeil,
+          HyCu::StoreData::Count>
+create_reference_store<{prime_power},{genus},
+                        HyCu::CurveData::ExplicitRamificationHasseWeil,
+                        HyCu::StoreData::Count>();
+
+#endif
+"""
 
   with file("reference_store_q{}_g{}.hh".format(prime,genus), 'w') as output:
-    output.writelines([line.format(prime_power = prime, genus = genus) + "\n" for line in code])
+    output.write(code.format(prime_power = prime, genus = genus))
 
 
 def count_curves(prime, genus):
