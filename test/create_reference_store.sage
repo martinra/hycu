@@ -77,7 +77,7 @@ def count_rhs(rhs, Ks, curve_count):
       if y == 0: ramified += 1
       elif y.is_square(): unramified += 2
     if rhs.degree() % 2 != 0: ramified += 1
-    elif rhs.leading_coefficient().is_square():
+    elif K(rhs.leading_coefficient()).is_square():
       unramified += 2
 
     hasse_weil_offsets[n] = len(K) + 1 - (unramified + ramified)
