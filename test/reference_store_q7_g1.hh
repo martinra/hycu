@@ -3,9 +3,12 @@
 
 
 template <>
-TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>
-create_reference_store<7,1,
-  HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>()
+TestStore<7, 1,
+          HyCu::CurveData::ExplicitRamificationHasseWeil,
+          HyCu::StoreData::Count>
+create_reference_store<7, 1,
+                       HyCu::CurveData::ExplicitRamificationHasseWeil,
+                       HyCu::StoreData::Count>()
 {
   map<typename HyCu::CurveData::ExplicitRamificationHasseWeil::ValueType,
       typename HyCu::StoreData::Count::ValueType>
@@ -34,12 +37,18 @@ create_reference_store<7,1,
   store[{ vector<int>{ 4 }, vector<int>{ 2 } }] = { 1008 };
   store[{ vector<int>{ 4 }, vector<int>{ 4 } }] = { 504 };
 
-  return TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>(store);
+  return TestStore<7, 1,
+                   HyCu::CurveData::ExplicitRamificationHasseWeil,
+                   HyCu::StoreData::Count>
+             (store);
 }
 
 template
-TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>
+TestStore<7, 1,
+          HyCu::CurveData::ExplicitRamificationHasseWeil,
+          HyCu::StoreData::Count>
 create_reference_store<7,1,
-  HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>();
+                        HyCu::CurveData::ExplicitRamificationHasseWeil,
+                        HyCu::StoreData::Count>();
 
 #endif

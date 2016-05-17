@@ -24,18 +24,53 @@
 #include <boost/test/unit_test.hpp>
 
 #include "test_store.hh"
-#include "reference_store_q7_g1.hh"
 #include "worker_pool/standalone.hh"
+
+#include "reference_store_q5_g1.hh"
+#include "reference_store_q7_g1.hh"
+#include "reference_store_q7_g2.hh"
 
 
 using namespace std;
 
 
+BOOST_AUTO_TEST_CASE( threaded_q5_g1 )
+{
+  auto worker_pool = make_shared<StandaloneWorkerPool>(
+         dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
+           StoreFactory<TestStore<5,1, HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>>
+           >() )
+         );
+
+  MPIConfigNode node;
+  node.prime = 5;
+  node.prime_exponent = 1;
+  node.genus = 1;
+  node.package_size = 30;
+
+  worker_pool->set_config(node);
+  FqElementTable enumeration_table(node.prime, node.prime_exponent);
+  CurveIterator iter(enumeration_table, node.genus, node.package_size);
+  for (; !iter.is_end(); iter.step() )
+    worker_pool->assign(iter.as_block());
+
+  worker_pool.reset();
+  auto computed_store = TestStore<5,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_global_store();
+  auto reference_store = create_reference_store<5,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>();
+
+  if ( computed_store != reference_store ) {
+    stringstream message;
+    message << "threaded computation of genus 1 curves / F_5:" << endl << computed_store;
+     
+    BOOST_FAIL( message.str() );
+  }
+}
+
 BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
 {
   auto worker_pool = make_shared<StandaloneWorkerPool>(
          dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
-           StoreFactory<TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>>
+           StoreFactory<TestStore<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>>
            >() )
          );
 
@@ -52,12 +87,44 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
     worker_pool->assign(iter.as_block());
 
   worker_pool.reset();
-  auto computed_store = TestStore<HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>::from_global_store();
-  auto reference_store = create_reference_store<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>();
+  auto computed_store = TestStore<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_global_store();
+  auto reference_store = create_reference_store<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>();
 
   if ( computed_store != reference_store ) {
     stringstream message;
     message << "threaded computation of genus 1 curves / F_7:" << endl << computed_store;
+     
+    BOOST_FAIL( message.str() );
+  }
+}
+
+BOOST_AUTO_TEST_CASE( threaded_q7_g2 )
+{
+  auto worker_pool = make_shared<StandaloneWorkerPool>(
+         dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
+           StoreFactory<TestStore<7,2, HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>>
+           >() )
+         );
+
+  MPIConfigNode node;
+  node.prime = 7;
+  node.prime_exponent = 1;
+  node.genus = 2;
+  node.package_size = 30;
+
+  worker_pool->set_config(node);
+  FqElementTable enumeration_table(node.prime, node.prime_exponent);
+  CurveIterator iter(enumeration_table, node.genus, node.package_size);
+  for (; !iter.is_end(); iter.step() )
+    worker_pool->assign(iter.as_block());
+
+  worker_pool.reset();
+  auto computed_store = TestStore<7,2, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_global_store();
+  auto reference_store = create_reference_store<7,2, HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>();
+
+  if ( computed_store != reference_store ) {
+    stringstream message;
+    message << "threaded computation of genus 2 curves / F_7:" << endl << computed_store;
      
     BOOST_FAIL( message.str() );
   }

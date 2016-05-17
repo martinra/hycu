@@ -35,7 +35,7 @@ using std::mutex;
 using std::unique_lock;
 
 
-template<class CurveData, class StoreData>
+template<unsigned int prime_power, unsigned int genus, class CurveData, class StoreData>
 class TestStore :
   public Store<CurveData, StoreData>
 {
@@ -49,20 +49,21 @@ class TestStore :
     static inline TestStore from_global_store()
     {
       TestStore store;
-      store.store = TestStore<CurveData,StoreData>::global_store;
+      store.store = TestStore<prime_power, genus, CurveData, StoreData>::global_store;
       return store;
     };
 
     void save(const MPIConfigNode & config, const vuu_block & block) final
     {
-      unique_lock<mutex> global_store_lock(TestStore<CurveData,StoreData>::global_store_mutex);
+      unique_lock<mutex> global_store_lock(TestStore<prime_power, genus, CurveData, StoreData>::global_store_mutex);
 
       for ( const auto & item : this->store ) {
-        auto store_it = TestStore<CurveData,StoreData>::global_store.find(item.first);
-        if ( store_it == TestStore<CurveData,StoreData>::global_store.end() )
-          TestStore<CurveData,StoreData>::global_store[item.first] = item.second;
+        auto store_it = TestStore<prime_power, genus, CurveData, StoreData>::global_store.find(item.first);
+
+        if ( store_it == TestStore<prime_power, genus, CurveData, StoreData>::global_store.end() )
+          TestStore<prime_power, genus, CurveData,StoreData>::global_store[item.first] = item.second;
         else
-          TestStore<CurveData,StoreData>::global_store[item.first] += item.second;
+          TestStore<prime_power, genus, CurveData,StoreData>::global_store[item.first] += item.second;
       }
     };
 
@@ -77,18 +78,18 @@ class TestStore :
     static map<typename CurveData::ValueType, typename StoreData::ValueType> global_store;
 };
 
-template<class CurveData, class StoreData>
+template<unsigned int prime_power, unsigned int genus, class CurveData, class StoreData>
 mutex
-TestStore<CurveData,StoreData>::
+TestStore<prime_power, genus, CurveData, StoreData>::
 global_store_mutex;
 
-template<class CurveData, class StoreData>
+template<unsigned int prime_power, unsigned int genus, class CurveData, class StoreData>
 map<typename CurveData::ValueType, typename StoreData::ValueType>
-TestStore<CurveData,StoreData>::
+TestStore<prime_power, genus, CurveData, StoreData>::
 global_store;
 
 
 template<unsigned int prime_power, unsigned int genus, class CurveData, class StoreData>
-  TestStore<CurveData,StoreData> create_reference_store();
+  TestStore<prime_power, genus, CurveData, StoreData> create_reference_store();
 
 #endif
