@@ -54,16 +54,16 @@ main(
 
   visible_options.add_options()
     ( "help,h", "show help message" )
-    ( "store_type", value<string>(),
+    ( "store-type", value<string>(),
       "the type of the store; c: Count, r: Representative" )
-    ( "input_path", value<string>(),
+    ( "input-path", value<string>(),
       "path to the input folder" )
-    ( "output_file", value<string>(),
+    ( "output-file", value<string>(),
       "path to the output file" );
 
-  positional_options.add("store_type", 1)
-                    .add("input_path", 2)
-                    .add("output_file", 2);
+  positional_options.add("store-type", 1)
+                    .add("input-path", 1)
+                    .add("output-file", 1);
 
   popt::variables_map options_map;
   popt::store( popt::command_line_parser(argc, argv)
@@ -80,27 +80,27 @@ main(
   }
 
 
-  if ( !options_map.count("store_type") ) {
-   cerr << "store_type has to be set";
+  if ( !options_map.count("store-type") ) {
+   cerr << "store-type has to be set" << endl;
    exit(1);
   }
-  if ( !options_map.count("input_path") ) {
-   cerr << "input_path has to be set";
+  if ( !options_map.count("input-path") ) {
+   cerr << "input-path has to be set" << endl;
    exit(1);
   }
-  if ( !options_map.count("output_file") ) {
-   cerr << "output_file has to be set";
+  if ( !options_map.count("output-file") ) {
+   cerr << "output-file has to be set" << endl;
    exit(1);
   }
   
 
-  filesys::path input(options_map["input_path"].as<string>());
+  filesys::path input(options_map["input-path"].as<string>());
   if ( !filesys::exists(input) ) {
-    cerr << "input path does not exist" << endl;
+    cerr << "input-path does not exist" << endl;
     exit(1);
   }
   if ( !filesys::is_directory(input) ) {
-    cerr << "input path is not a folder" << endl;
+    cerr << "input-path is not a folder" << endl;
     exit(1);
   }
 
@@ -109,9 +109,9 @@ main(
         back_inserter(input_files) );
 
 
-  filesys::path output_file(options_map["output_file"].as<string>());
+  filesys::path output_file(options_map["output-file"].as<string>());
 
-  string store_type = options_map["store_type"].as<string>();
+  string store_type = options_map["store-type"].as<string>();
   if ( store_type == "c" )
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
       (input_files, output_file);
@@ -119,7 +119,7 @@ main(
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>>
       (input_files, output_file);
   else {
-      cerr << "undefined store type: " << options_map["store_type"].as<string>() << endl;
+      cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
       exit(1);
   }
 
