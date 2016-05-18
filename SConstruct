@@ -8,6 +8,7 @@ opts = Variables(['scons_variables.cache'], ARGUMENTS)
 opts.Add( "CXX", None )
 opts.Add( PathVariable("prefix", "prefix for installation", "/usr/", PathVariable.PathIsDir) )
 opts.Add( PathVariable("mpicxx_path", "path to configuration programm mpicxx", "/usr/bin/mpic++", PathVariable.PathIsFile) )
+opts.Add( "with_opencl", default="y" )
 
 
 resources = \
@@ -39,6 +40,16 @@ libs_and_headers = LibsAndHeaders(env, resources)
 libs_and_headers["OpenCL"]["lib"] = env["opencl_library"]
 
 
+if env["with_opencl"] in ["y", "yes"]:
+  env["with_opencl"] = True
+  env.Append( CPPDEFINES = "WITH_OPENCL" )
+elif env["with_opencl"] in ["n", "no"]:
+  env["with_opencl"] = False
+else:
+  print( "Invalid value {} of option with_opencl".format(env["with_opencl"]) )
+  Exit(1)
+  
+
 if not GetOption("clean"):
   conf = env.Configure()
 
@@ -67,8 +78,10 @@ if not GetOption("clean"):
 
   for resource in [ "boost_program_options",
                     "boost_system", "boost_filesystem",
-                    "OpenCL", "flint", "gmp", "yaml-cpp" ]:
+                    "flint", "gmp", "yaml-cpp" ]:
     AddResource(conf, resource, libs_and_headers)
+  if env["with_opencl"]:
+    AddResource(conf, "OpenCL", libs_and_headers)
 
   env = conf.Finish()
    

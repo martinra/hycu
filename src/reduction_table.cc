@@ -30,7 +30,6 @@
 #include <memory>
 #include <tuple>
 #include <vector>
-#include <CL/cl.hpp>
 
 #include "opencl/interface.hh"
 #include "reduction_table.hh"
@@ -52,10 +51,12 @@ ReductionTable(
   opencl( move(opencl) )
 {
   this->compute_tables();
+#ifdef WITH_OPENCL
   if ( opencl ) {
     this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
     this->kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
   }
+#endif
 }
 
 ReductionTable::
@@ -71,10 +72,12 @@ ReductionTable(
   opencl( opencl )
 {
   this->compute_tables();
+#ifdef WITH_OPENCL
   if ( opencl ) {
     this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
     this->kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
   }
+#endif
 }
 
 void

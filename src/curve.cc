@@ -35,7 +35,6 @@
 #include <sstream>
 #include <tuple>
 #include <vector>
-#include <CL/cl.hpp>
 
 #include "curve.hh"
 #include "opencl/interface.hh"
@@ -223,8 +222,13 @@ count_opencl(
     const vector<int> & poly_coeff_exponents
     )
 {
+#ifdef WITH_OPENCL
   reduction_table.kernel_evaluation->enqueue(poly_coeff_exponents);
   reduction_table.kernel_reduction->reduce(this->nmb_points);
+#else
+  cerr << "Curve::count_opencl: compiled without OpenCL support" << endl;
+  throw;
+#endif
 }
 
 void

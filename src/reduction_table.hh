@@ -26,11 +26,13 @@
 
 #include <memory>
 #include <vector>
-#include <CL/cl.hpp>
 
 #include "opencl/interface.hh"
-#include "opencl/kernel_evaluation.hh"
-#include "opencl/kernel_reduction.hh"
+
+#ifdef WITH_OPENCL
+  #include "opencl/kernel_evaluation.hh"
+  #include "opencl/kernel_reduction.hh"
+#endif
 
 
 using std::shared_ptr;
@@ -54,8 +56,10 @@ class ReductionTable
     inline bool is_opencl_enabled() const { return (bool)opencl; };
     
     friend class Curve;
+#ifdef WITH_OPENCL
     friend OpenCLKernelEvaluation;
     friend OpenCLKernelReduction;
+#endif
 
   protected:
     const int prime;
@@ -64,8 +68,10 @@ class ReductionTable
     const int prime_power_pred;
 
     shared_ptr<OpenCLInterface> opencl;
+#ifdef WITH_OPENCL
     shared_ptr<OpenCLKernelEvaluation> kernel_evaluation;
     shared_ptr<OpenCLKernelReduction> kernel_reduction;
+#endif
 
     // the reduction table is the reduction table modulo q-1 for integers less than max(r,2)*(q-1)
     shared_ptr<vector<int>> exponent_reduction_table;

@@ -43,10 +43,12 @@ spark_threads(
   if ( nmb_working_threads == 0 )
     nmb_working_threads = thread::hardware_concurrency();
 
+#ifdef WITH_OPENCL
   for ( const auto & device : OpenCLInterface::devices() )
     this->threads.push_back(
         make_shared<Thread>( shared_from_this(), this->store_factory,
                              make_shared<OpenCLInterface>(device) ));
+#endif
 
   // each GPU thread accounts for about 1/8 core
   // we slightly oversubscribe here, assuming that the

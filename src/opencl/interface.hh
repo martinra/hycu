@@ -24,6 +24,12 @@
 #ifndef _H_OPENCL_INTERFACE
 #define _H_OPENCL_INTERFACE
 
+#ifndef WITH_OPENCL
+
+class OpenCLInterface {};
+
+#else
+
 #include <memory>
 #include <CL/cl.hpp>
 
@@ -58,5 +64,7 @@ class OpenCLInterface
     shared_ptr<OpenCLProgramEvaluation> program_evaluation;
     shared_ptr<OpenCLProgramReduction> program_reduction;
 };
+
+#endif // WITH_OPENCL
 
 #endif

@@ -22,21 +22,9 @@
 
 
 #include <boost/mpi.hpp>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <tuple>
-#include <yaml-cpp/yaml.h>
 
-#include "block_iterator.hh"
-#include "config/config_node.hh"
-#include "curve.hh"
-#include "curve_iterator.hh"
-#include "executables/mpi/master.hh"
-#include "executables/mpi/worker.hh"
-#include "worker_pool/mpi.hh"
-#include "opencl/interface.hh"
-#include "reduction_table.hh"
+#include <executables/mpi/master.hh>
+#include <executables/mpi/worker.hh>
 
 
 namespace mpi = boost::mpi;

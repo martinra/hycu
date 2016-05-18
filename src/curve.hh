@@ -28,7 +28,6 @@
 #include <memory>
 #include <vector>
 #include <tuple>
-#include <CL/cl.hpp>
 #include <flint/fq_nmod_poly.h>
 #include <flint/nmod_poly.h>
 
