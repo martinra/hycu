@@ -42,14 +42,15 @@ master_process_id;
 MPIWorkerPool::
 MPIWorkerPool(
     shared_ptr<mpi::communicator> mpi_world,
-    StoreType store_type
+    StoreType store_type,
+    unsigned int nmb_working_threads
     ) :
   mpi_world ( mpi_world )
 {
-  this->master_thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
-  this->master_thread_pool->spark_threads();
+  MPIWorkerPool::broadcast_initialization(mpi_world, store_type, nmb_working_threads);
 
-  mpi::broadcast(*mpi_world, store_type, MPIWorkerPoolTag::store_type);
+  this->master_thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
+  this->master_thread_pool->spark_threads(nmb_working_threads);
 }
 
 MPIWorkerPool::
@@ -60,6 +61,18 @@ MPIWorkerPool::
   for ( u_process_id ix = 1; ix < this->mpi_world->size(); ++ix )
       mpi_world->send(ix, MPIWorkerPoolTag::shutdown, true);
   this->master_thread_pool->shutdown_threads();
+}
+
+void
+MPIWorkerPool::
+broadcast_initialization(
+    shared_ptr<mpi::communicator> mpi_world,
+    StoreType & store_type,
+    unsigned int & nmb_working_threads
+    )
+{
+  mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::master_process_id);
+  mpi::broadcast(*mpi_world, nmb_working_threads, MPIWorkerPool::master_process_id);
 }
 
 void

@@ -38,10 +38,12 @@ main_worker(
     )
 {
   StoreType store_type;
-  mpi::broadcast(*mpi_world, store_type, MPIWorkerPoolTag::store_type);
+  unsigned int nmb_working_threads;
+  MPIWorkerPool::broadcast_initialization(mpi_world, store_type, nmb_working_threads);
 
   auto thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
-  thread_pool->spark_threads();
+  thread_pool->spark_threads(nmb_working_threads);
+
 
   while ( true ) {
     mpi::status mpi_status = mpi_world->probe();

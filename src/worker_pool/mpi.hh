@@ -47,8 +47,10 @@ typedef unsigned int u_process_id;
 class MPIWorkerPool
 {
   public:
-    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world, StoreType store_type);
+    MPIWorkerPool(shared_ptr<mpi::communicator> mpi_world, StoreType store_type, unsigned int nmb_working_threads);
     ~MPIWorkerPool();
+
+   static void broadcast_initialization(shared_ptr<mpi::communicator> mpi_world, StoreType & store_type, unsigned int & nmb_working_threads);
 
     void set_config(const MPIConfigNode & node);
 

@@ -21,6 +21,8 @@
 ===============================================================================*/
 
 
+#include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include "config/config_node.hh"
@@ -32,7 +34,13 @@
 
 
 namespace mpi = boost::mpi;
+namespace popt = boost::program_options;
 using namespace std;
+using boost::filesystem::current_path;
+using boost::filesystem::path;
+using boost::filesystem::is_directory;
+using boost::filesystem::is_regular_file;
+using popt::value;
 
 
 int
@@ -42,12 +50,63 @@ main_master(
     shared_ptr<mpi::communicator> mpi_world
     )
 {
+  popt::options_description visible_options("Available options"), all_options;
+  popt::positional_options_description positional_options;
+
+  visible_options.add_options()
+    ( "help,h", "show help message" )
+    ( "config-file,c", value<string>(),
+      "path to configuration file" )
+    ( "output-path", value<string>(),
+      "path to the output root" )
+    ( "nmb-threads,n", value<unsigned int>()->default_value(0),
+      "number of working threads per process" );
+
+  positional_options.add("config-file", 1)
+                    .add("output-path", 1);
+
+  popt::variables_map options_map;
+  popt::store( popt::command_line_parser(argc, argv)
+                 .options(visible_options)
+                 .positional(positional_options)
+                 .run(),
+               options_map );
+  popt::notify(options_map);
+
+
+  if ( options_map.count("help") ) {
+    cerr << visible_options;
+    exit(0);
+  }
+
+  if ( !options_map.count("config-file") ) {
+    cerr << "configuration file required" << endl;
+    exit(1);
+  }
+
+  if ( !options_map.count("output-path") ) {
+    cerr << "output path required" << endl;
+    exit(1);
+  }
+
+
+  path output_path(options_map["output-path"].as<string>());
+  if ( !( is_directory(output_path) || create_directories(output_path) ) ) {
+    cerr << "could not create output path" << endl;
+    exit(1);
+  }
+
+
+  path config_file(options_map["config-file"].as<string>());
+  if ( !is_regular_file(config_file) ) {
+    cerr << "could not find configuration file or it is not a regular file" << endl;
+    exit(1);
+  }
+  auto config_yaml = YAML::LoadFile(config_file.native());
   if (argc != 2) {
     cerr << "One argument, the configuration file, is needed" << endl;
     exit(1);
   }
-
-  auto config_yaml = YAML::LoadFile(argv[1]);
 
 
   StoreType store_type;
@@ -73,16 +132,17 @@ main_master(
     for ( const auto & node : config_yaml["Moduli"] )
       config.emplace_back(node.as<MPIConfigNode>());
 
-  for ( const auto & node : config )
+
+  MPIWorkerPool
+    worker_pool( mpi_world, store_type, options_map["nmb-threads"].as<unsigned int>() );
+
+  for ( auto & node : config ) {
+    node.prepend_output_path(canonical(output_path,current_path()));
     if ( !node.verify() ) {
       cerr << "Incorrect configuration node:" << endl << node;
       exit(1);
     }
 
-
-  MPIWorkerPool worker_pool(mpi_world, store_type);
-
-  for ( const auto & node : config ) {
     worker_pool.set_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
