@@ -32,11 +32,12 @@ using namespace std;
 
 StandaloneWorkerPool::
 StandaloneWorkerPool(
-    shared_ptr<StoreFactoryInterface> store_factory
+    shared_ptr<StoreFactoryInterface> store_factory,
+    unsigned int nmb_working_threads
     )
 {
   this->master_thread_pool = make_shared<ThreadPool>(store_factory);
-  this->master_thread_pool->spark_threads();
+  this->master_thread_pool->spark_threads(nmb_working_threads);
 }
 
 StandaloneWorkerPool::

@@ -47,7 +47,7 @@ class ThreadPool :
     ThreadPool(const shared_ptr<StoreFactoryInterface> store_factory) :
       store_factory ( store_factory ) {};
 
-    void spark_threads();
+    void spark_threads(unsigned int nmb_working_threads = 0);
     void shutdown_threads();
 
     void update_config(const MPIConfigNode & config);

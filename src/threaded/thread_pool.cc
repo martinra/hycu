@@ -33,9 +33,15 @@ using namespace std;
 
 void
 ThreadPool::
-spark_threads()
+spark_threads(
+    unsigned int nmb_working_threads
+    )
 {
-  if ( !this->threads.empty() ) return;
+  if ( !this->threads.empty() )
+    cerr << "ThreadPool::spark_threads: threads already run" << endl;
+
+  if ( nmb_working_threads == 0 )
+    nmb_working_threads = thread::hardware_concurrency();
 
   for ( const auto & device : OpenCLInterface::devices() )
     this->threads.push_back(
@@ -45,8 +51,7 @@ spark_threads()
   // each GPU thread accounts for about 1/8 core
   // we slightly oversubscribe here, assuming that the
   // package size in BlockIterator is large enough
-  auto nmb_threads = thread::hardware_concurrency();
-  for ( size_t ix=this->threads.size()/8; ix<nmb_threads; ++ix )
+  for ( size_t ix=this->threads.size()/8; ix<nmb_working_threads; ++ix )
     this->threads.push_back(make_shared<Thread>(shared_from_this(), this->store_factory));
 
 

@@ -38,9 +38,9 @@ using std::shared_ptr;
 class StandaloneWorkerPool
 {
   public:
-    StandaloneWorkerPool(shared_ptr<StoreFactoryInterface> store_factory);
-    StandaloneWorkerPool(StoreType store_type) :
-      StandaloneWorkerPool ( create_store_factory(store_type) ) {};
+    StandaloneWorkerPool(shared_ptr<StoreFactoryInterface> store_factory, unsigned int nmb_working_threads = 0);
+    StandaloneWorkerPool(StoreType store_type, unsigned int nmb_working_threads = 0) :
+      StandaloneWorkerPool ( create_store_factory(store_type), nmb_working_threads ) {};
     ~StandaloneWorkerPool();
 
     void set_config(const MPIConfigNode & node);

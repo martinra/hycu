@@ -48,14 +48,19 @@ struct MPIConfigNode
   unsigned int package_size;
 
 
-  bool inline verify() const
+  inline bool verify() const
   {
     return (    prime != 0 && prime_exponent != 0
              && genus != 0
              && (is_directory(result_path) || create_directories(result_path))
              && package_size != 0
            );
-  }
+  };
+
+  inline void prepend_output_path(const path & output_path)
+  {
+    this->result_path = output_path / this->result_path;
+  };
 };
 
 ostream & operator<<(ostream & stream, const MPIConfigNode & config);
