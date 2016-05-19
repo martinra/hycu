@@ -54,6 +54,7 @@ set_config(
     const MPIConfigNode & config
     )
 {
+  this->wait_for_assigned_blocks();
   this->master_thread_pool->update_config(config);
 }
 

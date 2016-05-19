@@ -81,6 +81,7 @@ set_config(
     const MPIConfigNode & config
     )
 {
+  this->wait_for_assigned_blocks();
   this->master_thread_pool->update_config(config);
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix )
     this->mpi_world->send(ix, MPIWorkerPoolTag::update_config, config);
