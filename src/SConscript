@@ -14,6 +14,7 @@ sources_curve = [
 if env["with_opencl"]:
   sources_curve += [
       "opencl/interface.cc"
+    , "opencl/buffer_evaluation.cc"
     , "opencl/kernel_evaluation.cc"
     , "opencl/kernel_reduction.cc"
     , "opencl/program.cc"

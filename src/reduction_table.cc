@@ -53,8 +53,8 @@ ReductionTable(
   this->compute_tables();
 #ifdef WITH_OPENCL
   if ( opencl ) {
-    this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
-    this->kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
+    this->_buffer_evaluation = make_shared<OpenCLBufferEvaluation>(*this);
+    this->_kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
   }
 #endif
 }
@@ -74,8 +74,8 @@ ReductionTable(
   this->compute_tables();
 #ifdef WITH_OPENCL
   if ( opencl ) {
-    this->kernel_evaluation = make_shared<OpenCLKernelEvaluation>(*this);
-    this->kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
+    this->_buffer_evaluation = make_shared<OpenCLBufferEvaluation>(*this);
+    this->_kernel_reduction = make_shared<OpenCLKernelReduction>(*this);
   }
 #endif
 }

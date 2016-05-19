@@ -157,7 +157,7 @@ convert_poly_coeff_exponents(
 void
 Curve::
 count(
-    const ReductionTable & reduction_table
+    ReductionTable & reduction_table
   )
 {
   // todo: Use error checking for all calls. Some implementations don't seem to support try/catch, but doublecheck this.
@@ -218,13 +218,13 @@ count(
 void
 Curve::
 count_opencl(
-    const ReductionTable & reduction_table,
+    ReductionTable & reduction_table,
     const vector<int> & poly_coeff_exponents
     )
 {
 #ifdef WITH_OPENCL
-  reduction_table.kernel_evaluation->enqueue(poly_coeff_exponents);
-  reduction_table.kernel_reduction->reduce(this->nmb_points);
+  reduction_table.kernel_evaluation(this->degree())->enqueue(poly_coeff_exponents);
+  reduction_table.kernel_reduction()->reduce(this->nmb_points);
 #else
   cerr << "Curve::count_opencl: compiled without OpenCL support" << endl;
   throw;

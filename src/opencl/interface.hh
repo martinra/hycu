@@ -30,6 +30,7 @@ class OpenCLInterface {};
 
 #else
 
+#include <map>
 #include <memory>
 #include <CL/cl.hpp>
 
@@ -37,6 +38,8 @@ class OpenCLInterface {};
 #include "opencl/program_reduction.hh"
 
 
+using std::map;
+using std::make_shared;
 using std::shared_ptr;
 using std::vector;
 
@@ -49,9 +52,26 @@ class OpenCLInterface
 
     static vector<cl::Device> devices();
 
+    inline shared_ptr<OpenCLProgramEvaluation> program_evaluation(unsigned int degree)
+    {
+      const auto & program_it = this->_program_evaluation.find(degree);
+      if ( program_it == this->_program_evaluation.end() ) {
+        this->_program_evaluation[degree] = make_shared<OpenCLProgramEvaluation>(*this, degree);
+        return this->_program_evaluation[degree];
+      }
+      else
+        return program_it->second;
+    };
+
+    inline shared_ptr<OpenCLProgramReduction> program_reduction() const
+    {
+      return this->_program_reduction;
+    };
+
     friend class Curve;
     friend class ReductionTable;
     friend class OpenCLProgram;
+    friend class OpenCLBufferEvaluation;
     friend class OpenCLKernelEvaluation;
     friend class OpenCLKernelReduction;
 
@@ -61,8 +81,8 @@ class OpenCLInterface
     shared_ptr<cl::Context> context;
     shared_ptr<cl::CommandQueue> queue;
 
-    shared_ptr<OpenCLProgramEvaluation> program_evaluation;
-    shared_ptr<OpenCLProgramReduction> program_reduction;
+    map<unsigned int, shared_ptr<OpenCLProgramEvaluation>> _program_evaluation;
+    shared_ptr<OpenCLProgramReduction> _program_reduction;
 };
 
 #endif // WITH_OPENCL

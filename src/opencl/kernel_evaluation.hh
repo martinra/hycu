@@ -38,26 +38,18 @@ class ReductionTable;
 class OpenCLKernelEvaluation
 {
   public:
-    OpenCLKernelEvaluation(const ReductionTable & table);
+    OpenCLKernelEvaluation(const ReductionTable & table, unsigned int degree);
 
     void enqueue(vector<int> poly_coeff_exponents);
 
-    friend class OpenCLKernelReduction;
-
-  protected:
-    shared_ptr<cl::Buffer> buffer_nmbs_unramified;
-    shared_ptr<cl::Buffer> buffer_nmbs_ramified;
-    shared_ptr<cl::Buffer> buffer_minimal_fields;
-
   private:
     unsigned int prime_power_pred;
+    unsigned int degree;
 
     shared_ptr<OpenCLInterface> opencl;
     shared_ptr<cl::Kernel> kernel_cl;
 
-    shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
-    shared_ptr<cl::Buffer> buffer_incrementation_table;
-    shared_ptr<cl::Buffer> buffer_minimal_field_table;
+    shared_ptr<cl::Buffer> buffer_poly_coeff_exponents;
 };
 
 #endif

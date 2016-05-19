@@ -36,14 +36,14 @@ OpenCLKernelReduction(
   prime_exponent ( table.prime_exponent ),
   prime_power_pred ( table.prime_power_pred ),
   opencl ( table.opencl ),
-  buffer_nmbs_unramified ( table.kernel_evaluation->buffer_nmbs_unramified ),
-  buffer_nmbs_ramified ( table.kernel_evaluation->buffer_nmbs_ramified )
+  buffer_nmbs_unramified ( table.buffer_evaluation()->buffer_nmbs_unramified ),
+  buffer_nmbs_ramified ( table.buffer_evaluation()->buffer_nmbs_ramified )
 {
   this->sums.resize(nmb_groups_reduction*prime_exponent);
 
 
-  const auto & function_name = this->opencl->program_reduction->function_name();
-  this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_reduction->program_cl,
+  const auto & function_name = this->opencl->program_reduction()->function_name();
+  this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_reduction()->program_cl,
                                             function_name.c_str());
 
 
@@ -52,7 +52,7 @@ OpenCLKernelReduction(
 
   cl_int status;
 
-  status = this->kernel_cl->setArg(1, *table.kernel_evaluation->buffer_minimal_fields);
+  status = this->kernel_cl->setArg(1, *table.buffer_evaluation()->buffer_minimal_fields);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelReduction: could not set minimal_fields" << endl;
     throw;

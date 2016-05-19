@@ -63,7 +63,7 @@ class Curve
 
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
-    void count(const ReductionTable & table);
+    void count(ReductionTable & table);
     void inline count(const shared_ptr<ReductionTable> table)
     {
       this->count(*table);
@@ -88,7 +88,7 @@ class Curve
     map<unsigned int, tuple<int,int>> nmb_points;
 
   private:
-    void count_opencl(const ReductionTable & table, const vector<int> & poly_coeff_exponents);
+    void count_opencl(ReductionTable & table, const vector<int> & poly_coeff_exponents);
     void count_cpu(const ReductionTable & table, const vector<int> & poly_coeff_exponents);
 };
 

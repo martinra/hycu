@@ -21,54 +21,39 @@
 ===============================================================================*/
 
 
-#ifndef _H_OPENCL_PROGRAM_EVALUATION
-#define _H_OPENCL_PROGRAM_EVALUATION
+#ifndef _H_OPENCL_BUFFER_EVALUATION
+#define _H_OPENCL_BUFFER_EVALUATION
 
 #include <memory>
-#include <string>
-#include <sstream>
 #include <CL/cl.hpp>
 
-#include "opencl/program.hh"
 
-
-using std::endl;
 using std::shared_ptr;
-using std::string;
-using std::stringstream;
 
 
-class OpenCLInterface;
+class ReductionTable;
 
-
-class OpenCLProgramEvaluation :
-  public OpenCLProgram
+class OpenCLBufferEvaluation
 {
   public:
-    OpenCLProgramEvaluation(const OpenCLInterface & opencl, unsigned int degree) :
-      degree ( degree )
-    {
-      this->init_program_cl(opencl);
-    };
+    OpenCLBufferEvaluation(const ReductionTable & table);
 
     friend class OpenCLKernelEvaluation;
+    friend class OpenCLKernelReduction;
 
   protected:
-    shared_ptr<cl::Program> cl_program;
+    shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
+    shared_ptr<cl::Buffer> buffer_incrementation_table;
+    shared_ptr<cl::Buffer> buffer_minimal_field_table;
 
-    const string code() const final
-    {
-      stringstream code;
-      code << "#define POLY_SIZE " << this->degree+1 << endl << this->_code;
-      return code.str();
-    };
-
-    const string function_name() const final { return this->_function_name; };
+    shared_ptr<cl::Buffer> buffer_nmbs_unramified;
+    shared_ptr<cl::Buffer> buffer_nmbs_ramified;
+    shared_ptr<cl::Buffer> buffer_minimal_fields;
 
   private:
-    const unsigned int degree;
-    static const string _code;
-    static const string _function_name;
+    unsigned int prime_power_pred;
+
+    shared_ptr<OpenCLInterface> opencl;
 };
 
 #endif

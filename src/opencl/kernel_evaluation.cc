@@ -31,99 +31,68 @@ using namespace std;
 
 OpenCLKernelEvaluation::
 OpenCLKernelEvaluation(
-    const ReductionTable & table
+    const ReductionTable & table,
+    unsigned int degree
     ) :
   prime_power_pred ( table.prime_power_pred ),
+  degree ( degree ),
   opencl ( table.opencl )
 {
-  const auto & function_name = this->opencl->program_evaluation->function_name();
-  this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_evaluation->program_cl,
-                                            function_name.c_str());
+  const auto & function_name = this->opencl->program_evaluation(degree)->function_name();
+  this->kernel_cl =
+    make_shared<cl::Kernel>( *this->opencl->program_evaluation(degree)->program_cl,
+                             function_name.c_str() );
 
-  this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.exponent_reduction_table->size() );
-  this->buffer_incrementation_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.incrementation_table->size() );
-  this->buffer_minimal_field_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.minimal_field_table->size() );
 
-  this->buffer_nmbs_unramified = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
-  this->buffer_nmbs_ramified = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
-  this->buffer_minimal_fields = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
+
+  this->buffer_poly_coeff_exponents = make_shared<cl::Buffer>(
+      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * (degree+1) );
+
 
   cl_int status;
 
-  status = this->opencl->queue->enqueueWriteBuffer(*this->buffer_exponent_reduction_table, CL_TRUE, 0,
-      sizeof(int) * table.exponent_reduction_table->size(),
-      table.exponent_reduction_table->data() );
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not write reduction_table" << endl;
-    throw;
-  }
-
-  status = this->opencl->queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_TRUE, 0,
-      sizeof(int) * table.incrementation_table->size(),
-      table.incrementation_table->data() );
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not write incrementation_table" << endl;
-    throw;
-  }
-
-  status = this->opencl->queue->enqueueWriteBuffer(*this->buffer_minimal_field_table, CL_TRUE, 0,
-      sizeof(int) * table.minimal_field_table->size(),
-      table.minimal_field_table->data() );
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not write minimal_field_table" << endl;
-    throw;
-  }
-
-
-  int prime_power_pred = table.prime_power_pred;
-  status = this->kernel_cl->setArg(2, sizeof(int), &prime_power_pred);
+  status = this->kernel_cl->setArg(1, sizeof(int), &this->prime_power_pred);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set prime_power_pred" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(3, *this->buffer_exponent_reduction_table);
+  status = this->kernel_cl->setArg(2, *table.buffer_evaluation()->buffer_exponent_reduction_table);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set exponent_reduction_table" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(4, *this->buffer_incrementation_table);
+  status = this->kernel_cl->setArg(3, *table.buffer_evaluation()->buffer_incrementation_table);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set incremetion_table" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(5, *this->buffer_minimal_field_table);
+  status = this->kernel_cl->setArg(4, *table.buffer_evaluation()->buffer_minimal_field_table);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set minimal_field_table" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(6, *this->buffer_nmbs_unramified);
+  status = this->kernel_cl->setArg(5, *table.buffer_evaluation()->buffer_nmbs_unramified);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set nmbs_unramified" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(7, *this->buffer_nmbs_ramified);
+  status = this->kernel_cl->setArg(6, *table.buffer_evaluation()->buffer_nmbs_ramified);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set nmbs_ramified" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(8, *this->buffer_minimal_fields);
+  status = this->kernel_cl->setArg(7, *table.buffer_evaluation()->buffer_minimal_fields);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set minimal_fields" << endl;
     throw;
   }
-};
+}
 
 void
 OpenCLKernelEvaluation::
@@ -133,28 +102,22 @@ enqueue(
 {
   cl_int status;
 
-  int poly_size = (int)poly_coeff_exponents.size();
+  if ( poly_coeff_exponents.size() != this->degree + 1 ) {
+    cerr << "OpenCLKernelEvaluation::enqueue: size of coefficient vector must correspond to degree" << endl;
+    throw;
+  }
 
-  cl::Buffer buffer_poly_coeff_exponents(
-               *this->opencl->context, CL_MEM_READ_ONLY,
-               sizeof(int) * poly_size);
-  status = this->opencl->queue->enqueueWriteBuffer(buffer_poly_coeff_exponents, CL_TRUE, 0,
-                                    sizeof(int) * poly_size, poly_coeff_exponents.data());
+  status = this->opencl->queue->enqueueWriteBuffer(*this->buffer_poly_coeff_exponents, CL_FALSE, 0,
+                                    sizeof(int) * (degree+1), poly_coeff_exponents.data());
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation::enqueue: could not write poly_coeff_exponents" << endl;
     throw;
   }
 
 
-  status = this->kernel_cl->setArg(0, buffer_poly_coeff_exponents);
+  status = this->kernel_cl->setArg(0, *this->buffer_poly_coeff_exponents);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation::enqueue: could not set poly_coeff_exponents" << endl;
-    throw;
-  }
-
-  status = this->kernel_cl->setArg(1, sizeof(int), &poly_size);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation::enqueue: could not set poly_size" << endl;
     throw;
   }
 
