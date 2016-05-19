@@ -31,7 +31,7 @@
 using namespace std;
 
 
-
+#ifdef WITH_OPENCL
 BOOST_AUTO_TEST_CASE( fq_5_curve_1_2_3_1_1_0_4_opencl )
 {
   auto curve = single_curve_fp(5, {1,2,3,1,1,0,4}, true);
@@ -55,6 +55,7 @@ BOOST_AUTO_TEST_CASE( fq_5_curve_1_2_3_1_1_0_4_opencl )
       hasse_weil_offsets[2] == -16,
       "Hasse Weil a2=" << hasse_weil_offsets[2] );
 }
+#endif
 
 BOOST_AUTO_TEST_CASE( fq_5_curve_1_2_3_1_1_0_4_cpu )
 {
@@ -81,6 +82,7 @@ BOOST_AUTO_TEST_CASE( fq_5_curve_1_2_3_1_1_0_4_cpu )
 }
 
 
+#ifdef WITH_OPENCL
 BOOST_AUTO_TEST_CASE( fq_7_curve_0_3_3_3_0_6_opencl )
 {
   auto curve = single_curve_fp(7, {0,3,3,3,0,6}, true);
@@ -104,6 +106,7 @@ BOOST_AUTO_TEST_CASE( fq_7_curve_0_3_3_3_0_6_opencl )
       hasse_weil_offsets[2] == 8,
       "Hasse Weil a2=" << hasse_weil_offsets[2] );
 }
+#endif
 
 BOOST_AUTO_TEST_CASE( fq_7_curve_0_3_3_3_0_6_cpu )
 {
