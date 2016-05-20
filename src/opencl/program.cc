@@ -37,9 +37,10 @@ init_program_cl(
 {
   const auto & code = this->code();
   cl::Program::Sources source; source.push_back({code.c_str(), code.length()});
+  const auto & build_options = this->build_options();
 
   this->program_cl = make_shared<cl::Program>(*opencl.context, source);
-  if (this->program_cl->build({*opencl.device}) != CL_SUCCESS) {
+  if ( this->program_cl->build({*opencl.device}, build_options.c_str()) != CL_SUCCESS ) {
     cerr << "Error building code for function \"" << this->function_name() << "\":" << endl;
     cerr << this->program_cl->getBuildInfo<CL_PROGRAM_BUILD_LOG>(*opencl.device);
     throw;

@@ -56,14 +56,15 @@ class OpenCLProgramEvaluation :
   protected:
     shared_ptr<cl::Program> cl_program;
 
-    const string code() const final
-    {
-      stringstream code;
-      code << "#define POLY_SIZE " << this->degree+1 << endl << this->_code;
-      return code.str();
-    };
-
+    const string code() const final { return this->_code; };
     const string function_name() const final { return this->_function_name; };
+
+    const string build_options() const final
+    {
+      stringstream options;
+      options << "-DPOLY_SIZE=" << (this->degree+1);
+      return options.str();
+    };
 
   private:
     const unsigned int degree;

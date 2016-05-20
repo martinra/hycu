@@ -46,6 +46,10 @@ class OpenCLProgram
   private:
     virtual const string code() const = 0;
     virtual const string function_name() const = 0;
+    virtual const string build_options() const
+    {
+      return string();
+    };
 };
 
 #endif
