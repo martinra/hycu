@@ -71,7 +71,7 @@ if not GetOption("clean"):
 
   ## standard compiler arguments
   conf.env.Append(
-      CXXFLAGS  = "-std=c++11 -O2 -pthread"
+      CXXFLAGS  = "-std=c++11 -O3 -pthread -fomit-frame-pointer"
     , CPPPATH   = [ Dir("#/src") ]
     , LINKFLAGS = "-pthread"
     )
