@@ -80,19 +80,9 @@ class ExplicitRamificationHasseWeil
       explicit inline ValueType(ExplicitRamificationHasseWeil && data) :
         ValueType(data.value.ramification_type, data.value.hasse_weil_offsets) {};
 
-      friend inline bool operator== (const ValueType & lhs, const ValueType & rhs)
-      {
-        return (  lhs.ramification_type == rhs.ramification_type
-               && lhs.hasse_weil_offsets == rhs.hasse_weil_offsets );
-      };
-
-      friend ostream & operator<<(ostream & stream, const ValueType & data);
-      friend istream & operator>>(istream & stream, ValueType & data);
     };
 
     inline ValueType as_value() { return ValueType( *this ); };
-
-    friend ValueType;
 
   private:
     ExplicitRamificationHasseWeil(const vector<int> & ramification_type, const vector<int> & hasse_weil_offsets) :
@@ -102,6 +92,21 @@ class ExplicitRamificationHasseWeil
 
     ValueType value;
 };
+
+
+inline
+bool
+operator==(
+    const ExplicitRamificationHasseWeil::ValueType & lhs,
+    const ExplicitRamificationHasseWeil::ValueType & rhs
+    )
+{
+  return (  lhs.ramification_type == rhs.ramification_type
+         && lhs.hasse_weil_offsets == rhs.hasse_weil_offsets );
+};
+
+ostream & operator<<(ostream & stream, const ExplicitRamificationHasseWeil::ValueType & value);
+istream & operator>>(istream & stream, ExplicitRamificationHasseWeil::ValueType & value);
 
 }
 }

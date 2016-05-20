@@ -66,40 +66,42 @@ class Count
 
       ValueType(const Count & count) : counter ( count.value.counter ) {};
       ValueType(Count && count) : counter ( count.value.counter ) {};
-
-
-      friend inline bool operator==(const ValueType & lhs, const ValueType & rhs)
-      {
-        return lhs.counter == rhs.counter;
-      };
-
-      friend inline void operator+=(ValueType & lhs, const ValueType & rhs)
-      {
-        lhs.counter += rhs.counter;
-      };
-
-      friend inline void operator+=(ValueType & lhs, const Count & rhs)
-      {
-        lhs.counter += rhs.value.counter;
-      };
-
-
-      friend inline ostream & operator<<(ostream & stream, const ValueType & value)
-      {
-        return stream << value.counter;
-      };
-      friend inline istream & operator>>(istream & stream, ValueType & value)
-      {
-        return stream >> value.counter;
-      };
     };
 
-    friend ValueType;
+    friend void operator+=(ValueType & lhs, const Count & rhs);
+
+  protected:
+    ValueType value;
 
   private:
     Count(unsigned int counter) : value ( counter ) {};
+};
 
-    ValueType value;
+
+inline bool operator==(const Count::ValueType & lhs, const Count::ValueType & rhs)
+{
+  return lhs.counter == rhs.counter;
+};
+
+inline void operator+=(Count::ValueType & lhs, const Count::ValueType & rhs)
+{
+  lhs.counter += rhs.counter;
+};
+
+inline void operator+=(Count::ValueType & lhs, const Count & rhs)
+{
+  lhs.counter += rhs.value.counter;
+};
+
+
+inline ostream & operator<<(ostream & stream, const Count::ValueType & value)
+{
+  return stream << value.counter;
+};
+
+inline istream & operator>>(istream & stream, Count::ValueType & value)
+{
+  return stream >> value.counter;
 };
 
 
@@ -122,31 +124,33 @@ class Representative
       ValueType(const Representative & data) : representatives ( data.value.representatives ) {};
       ValueType(Representative && data) : representatives ( data.value.representatives ) {};
 
-
-      friend inline void operator+=(ValueType & lhs, const ValueType & rhs)
-      {
-        lhs.representatives.insert(rhs.representatives.begin(), rhs.representatives.end());
-      };
-      friend inline void operator+=(ValueType & lhs, const Representative & rhs) { lhs += rhs.value; };
-
-
-      friend ostream & operator<<(ostream & stream, const ValueType & value);
-      friend istream & operator>>(istream & stream, ValueType & value);
-
       static ostream & insert_representative(ostream & stream, const vector<int> & representative);
       static istream & extract_representative(istream & stream, vector<int> & representative);
     };
 
-    friend ValueType;
+    friend void operator+=(ValueType & lhs, const Representative & rhs);
+
+  protected:
+    ValueType value;
 
   private:
     Representative(unsigned int prime_power_pred, set<vector<int>> representatives) :
       prime_power_pred ( prime_power_pred ), value ( representatives ) {};
   
     unsigned int prime_power_pred;
-    ValueType value;
 };
 
+
+inline void operator+=(Representative::ValueType & lhs, const Representative::ValueType & rhs)
+{
+  lhs.representatives.insert(rhs.representatives.begin(), rhs.representatives.end());
+};
+
+inline void operator+=(Representative::ValueType & lhs, const Representative & rhs) { lhs += rhs.value; };
+
+
+ostream & operator<<(ostream & stream, const Representative::ValueType & value);
+istream & operator>>(istream & stream, Representative::ValueType & value);
 
 }
 }
