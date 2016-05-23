@@ -37,8 +37,11 @@ spark_threads(
     unsigned int nmb_working_threads
     )
 {
-  if ( !this->threads.empty() )
+  if ( !this->threads.empty() ) {
     cerr << "ThreadPool::spark_threads: threads already run" << endl;
+    throw;
+  }
+
 
   if ( nmb_working_threads == 0 )
     nmb_working_threads = thread::hardware_concurrency();
@@ -69,6 +72,7 @@ shutdown_threads()
 {
   for ( auto thread : this->threads )
     thread->shutdown();
+  this->threads.clear();
 }
 
 void
@@ -88,6 +92,8 @@ assign(
     bool opencl
     )
 {
+  unique_lock<mutex> data_lock(this->data_mutex);
+
   shared_ptr<Thread> thread;
   if ( opencl ) {
     thread = this->idle_threads.front();
@@ -113,7 +119,7 @@ finished_block(
     vuu_block block
     )
 {
-  lock_guard<mutex> guard(this->data_mutex);
+  unique_lock<mutex> data_lock(this->data_mutex);
   
   auto block_it = this->busy_threads.find(block);
   if ( block_it == this->busy_threads.end() ) {
@@ -121,20 +127,20 @@ finished_block(
     throw; 
   }
 
-  const auto thread = block_it->second;
-  this->busy_threads.erase(block_it);
-  this->ready_threads.push_back(thread);
+  this->ready_threads.push_back(block_it->second);
   this->finished_blocks.push_back(block);
+  this->busy_threads.erase(block_it);
 }
 
 tuple<unsigned int, unsigned int>
 ThreadPool::
 flush_ready_threads()
 {
+  unique_lock<mutex> data_lock(this->data_mutex);
+
   unsigned int nmb_cpu_threads = 0;
   unsigned int nmb_opencl_threads = 0;
 
-  this->data_mutex.lock();
   for ( auto thread : this->ready_threads ) {
     if ( thread->is_opencl_thread() ) {
       ++nmb_opencl_threads;
@@ -148,7 +154,6 @@ flush_ready_threads()
   }
 
   this->ready_threads.clear();
-  this->data_mutex.unlock();
 
   return make_tuple(nmb_cpu_threads, nmb_opencl_threads);
 }
@@ -157,7 +162,7 @@ vector<vuu_block>
 ThreadPool::
 flush_finished_blocks()
 {
-  lock_guard<mutex>(this->data_mutex);
+  unique_lock<mutex> data_lock(this->data_mutex);
 
   return move(finished_blocks);
 }

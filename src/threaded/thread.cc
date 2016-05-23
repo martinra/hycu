@@ -39,7 +39,10 @@ void
 Thread::
 shutdown()
 {
+  this->data_mutex.lock();
   this->shutting_down = true;
+  this->data_mutex.unlock();
+
   this->main_cond_var.notify_all();
   this->main_std_thread.join();
 }
@@ -52,14 +55,18 @@ main_thread(
     )
 {
   unique_lock<mutex> main_lock(thread->main_mutex);
-  unique_lock<mutex> data_lock(thread->data_mutex, defer_lock);
 
   while ( true ) {
     while ( true ) {
-      if ( thread->shutting_down )
+      thread->data_mutex.lock();
+      bool shutting_down = thread->shutting_down;
+      bool blocks_empty = thread->blocks.empty();
+      thread->data_mutex.unlock();
+
+      if ( shutting_down )
         return;
 
-      if ( thread->blocks.empty() )
+      if ( blocks_empty )
         thread->main_cond_var.wait(main_lock);
       else
         break;
@@ -69,11 +76,12 @@ main_thread(
     vuu_block block;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
+    shared_ptr<MPIConfigNode> config;
 
-    data_lock.lock();
-    tie(block, fq_table, reduction_tables) = thread->blocks.front();
+    thread->data_mutex.lock();
+    tie(block, config, fq_table, reduction_tables) = thread->blocks.front();
     thread->blocks.pop_front();
-    data_lock.unlock();
+    thread->data_mutex.unlock();
 
 
     auto store = store_factory->create();
@@ -85,8 +93,7 @@ main_thread(
     }
 
 
-    data_lock.lock();
-    store->save(thread->config, block);
+    store->save(*config, block);
 
     auto thread_pool_shared = thread->thread_pool.lock();
     if ( thread_pool_shared )
@@ -97,7 +104,6 @@ main_thread(
       throw;
     }
     thread_pool_shared.reset();
-    data_lock.unlock();
   }
 }
 
@@ -107,7 +113,7 @@ update_config(
     const MPIConfigNode & config
     )
 {
-  this->config = config;
+  this->config = make_shared<MPIConfigNode>(config);
 
   this->fq_table = make_shared<FqElementTable>(config.prime, config.prime_exponent);
   this->reduction_tables.clear();
@@ -122,7 +128,7 @@ assign(
     )
 {
   this->data_mutex.lock();
-  this->blocks.emplace_back(block, this->fq_table, this->reduction_tables);
+  this->blocks.emplace_back(block, this->config, this->fq_table, this->reduction_tables);
   this->data_mutex.unlock();
 
   this->main_cond_var.notify_one();

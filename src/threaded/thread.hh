@@ -84,13 +84,13 @@ class Thread :
     condition_variable main_cond_var;
 
     const shared_ptr<StoreFactoryInterface> store_factory;
-    MPIConfigNode config;
     
+    shared_ptr<MPIConfigNode> config;
     shared_ptr<OpenCLInterface> opencl;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
 
-    deque<tuple< vuu_block, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >> blocks;
+    deque<tuple< vuu_block, shared_ptr<MPIConfigNode>, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >> blocks;
 };
 
 #endif
