@@ -6,17 +6,23 @@ from resource import *
 opts = Variables(['scons_variables.cache'], ARGUMENTS)
 
 opts.Add( "CXX", None )
+opts.Add( PathVariable("cxx_include_path", "path to C++ STL include files", None, PathVariable.PathIsDir) )
+opts.Add( PathVariable("cxx_library_path", "path to C++ library", None, PathVariable.PathIsDir) )
+
 opts.Add( PathVariable("prefix", "prefix for installation", "/usr/", PathVariable.PathIsDir) )
-opts.Add( PathVariable("mpicxx_path", "path to configuration programm mpicxx", "/usr/bin/mpic++", PathVariable.PathIsFile) )
+
 opts.Add( "with_opencl", default="y" )
+opts.Add( "opencl_library", "library for opencl", "OpenCL" )
+
+opts.Add( "openmpicxx_path", "path to OpenMPI mpicxx", None )
+opts.Add( "mpi_compiler_flags", "extra compiler flags for MPI", None )
+opts.Add( "mpi_linker_flags", "extra linker flags for MPI", None )
 
 
 resources = \
-  [ ( "boost_filesystem", "boost/filesystem.hpp", "boost" )
-  , ( "boost_mpi", "boost/mpi.hpp", "boost" )
+  [ ( ( "boost_filesystem", [ "boost_system" ] ), "boost/filesystem.hpp", "boost" )
+  , ( ( "boost_mpi", [ "boost_serialization" ] ), "boost/mpi.hpp", "boost" )
   , ( "boost_program_options", "boost/program_options.hpp", "boost" )
-  , ( "boost_serialization", "boost/serialization/serialization.hpp", "boost" )
-  , ( "boost_system", None, "boost" )
   , ( "boost_unit_test_framework", "boost/test/unit_test.hpp", "boost" )
   , ( "OpenCL", "CL/cl.h", "opencl" )
   , ( "flint", "flint/flint.h", "flint" )
@@ -25,10 +31,15 @@ resources = \
   ]
 AddResourceOptions(opts, resources)
 
-opts.Add( "opencl_library", "library for opencl", "OpenCL" )
 
 ## we construct a main environment, from which all subsystems can diverge
 env = Environment(variables = opts)
+for (key,value) in os.environ.items():
+  if key not in env:
+    try:
+      env[key] = value
+    except:
+       pass
 
 ## cache variables for next build
 opts.Save('scons_variables.cache', env)
@@ -66,18 +77,23 @@ if not GetOption("clean"):
     print( "Invalid compiler {}".format(conf.env["CXX"]) )
     Exit(1)
 
-  conf.env["CPPPATH"] = [ "/usr/include", env["prefix"] + "/include" ]
-  conf.env["LIBPATH"] = [ "/usr/lib", env["prefix"] + "/lib" ]
+  conf.env["CPPPATH"] = [ env["prefix"] + "/include" ]
+  conf.env["LIBPATH"] = [ env["prefix"] + "/lib" ]
+
+  if "cxx_include_path" in env:
+    conf.env.AppendUnique( CPPPATH = env["cxx_include_path"] )
+  if "cxx_library_path" in env:
+    conf.env.AppendUnique( CPPPATH = env["cxx_library_path"] )
 
   ## standard compiler arguments
   conf.env.Append(
-      CXXFLAGS  = "-std=c++11 -O3 -pthread -fomit-frame-pointer"
+      CXXFLAGS  = "-O2 -pthread"
     , CPPPATH   = [ Dir("#/src") ]
     , LINKFLAGS = "-pthread"
     )
 
   for resource in [ "boost_program_options",
-                    "boost_system", "boost_filesystem",
+                    "boost_filesystem",
                     "flint", "gmp", "yaml-cpp" ]:
     AddResource(conf, resource, libs_and_headers)
   if env["with_opencl"]:
@@ -91,12 +107,17 @@ env_mpi = env.Clone()
 if not GetOption("clean"):
   conf = env_mpi.Configure()
 
-  ## mpi compiler flags
-  env_mpi.ParseConfig(env_mpi["mpicxx_path"] + " --showme:compile")
-  env_mpi.ParseConfig(env_mpi["mpicxx_path"] + " --showme:link")
+  if "openmpicxx_path" in env_mpi:
+    env_mpi.ParseConfig(env_mpi["openmpicxx_path"] + " --showme:compile")
+    env_mpi.ParseConfig(env_mpi["openmpicxx_path"] + " --showme:link")
+
+  if "mpi_compiler_flags" in env_mpi:
+    conf.env.AppendUnique( CXXFLAGS = env_mpi["mpi_compiler_flags"] )
+  if "mpi_linker_flags" in env_mpi:
+    conf.env.AppendUnique( LINKFLAGS = env_mpi["mpi_linker_flags"] )
 
   ## check libaries
-  for resource in [ "boost_mpi", "boost_serialization" ]:
+  for resource in [ "boost_mpi" ]:
     AddResource(conf, resource, libs_and_headers)
 
   env_mpi = conf.Finish()
