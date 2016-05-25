@@ -22,6 +22,7 @@
 
 
 #include <map>
+#include <cmath>
 
 #include "opencl/interface.hh"
 #include "reduction_table.hh"
@@ -35,7 +36,8 @@ shared_ptr<Curve>
 single_curve_fp(
     unsigned int prime,
     vector<unsigned int> poly_coeffs,
-    bool use_opencl
+    bool use_opencl,
+    bool time
     )
 {
   auto enumeration_table = make_shared<FqElementTable>(prime, 1);
@@ -58,9 +60,25 @@ single_curve_fp(
                   make_shared<OpenCLInterface>() : shared_ptr<OpenCLInterface>();
   auto curve = make_shared<Curve>(enumeration_table, poly_coeff_exponents);
 
+  // todo: use C++ interface for time
+  int reduction_table_time = 0;
+  int curve_count_time = 0;
+  int cl;
   for ( size_t fx=curve->genus(); fx>curve->genus()/2; --fx ) {
+    if ( time )
+      cl = clock();
     ReductionTable reduction_table(prime, fx, opencl);
+    if ( time ) {
+      reduction_table_time += clock() - cl;
+      cl = clock();
+    }
     curve->count(reduction_table);
+    if ( time )
+      curve_count_time += clock() - cl;
+  }
+  if ( time ) {
+    cout << "Accumulated computation time for reduction tables: " << round((double)reduction_table_time/1e4)/1e2 << endl;
+    cout << "Accumulated computation time for curve couting: " << round((double)curve_count_time/1e4)/1e2 << endl;
   }
 
   return curve;

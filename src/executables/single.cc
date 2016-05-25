@@ -54,11 +54,11 @@ main(
                     .add("coefficients", -1);
 
   visible_options.add_options()
-    ( "help,h", "show help message" );
+    ( "help,h", "show help message" )
 #ifdef WITH_OPENCL
-  visible_options.add_options()
-    ( "opencl", "use OpenCL" );
+    ( "opencl", "use OpenCL" )
 #endif
+    ( "time", "measure times" );
 
   all_options.add(hidden_options)
              .add(visible_options);
@@ -107,10 +107,11 @@ main(
   auto curve = single_curve_fp( options_map["field_size"].as<unsigned int>(),
                                 options_map["coefficients"].as<vector<unsigned int>>(),
 #ifdef WITH_OPENCL
-                                (bool)options_map.count("opencl")
+                                (bool)options_map.count("opencl"),
 #else
-                                false
+                                false,
 #endif
+                                (bool)options_map.count("time")
                               );
     
   cout << *curve << endl;
