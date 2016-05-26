@@ -47,7 +47,7 @@ class FqElementTable
 
     bool inline is_prime_field() const { return this->prime_exponent == 1; };
 
-    inline const unsigned int at_nmod(int ix) const
+    inline unsigned int at_nmod(int ix) const
     {
       return nmod_poly_get_coeff_ui(this->fq_elements.at(ix), 0);
     };
@@ -55,8 +55,8 @@ class FqElementTable
     inline const fq_nmod_struct* operator[](int ix) const { return this->fq_elements[ix]; };
 
     int inline zero_index() const { return this->prime_power_pred; };
-    tuple<int,int> inline block_non_zero() const { return make_tuple(0, this->prime_power_pred); };
-    tuple<int,int> inline block_complete() const { return make_tuple(0, this->prime_power); };
+    inline tuple<int,int> block_non_zero() const { return make_tuple(0, (int)this->prime_power_pred); };
+    inline tuple<int,int> block_complete() const { return make_tuple(0, (int)this->prime_power); };
     vector<int> power_coset_representatives(unsigned int n) const;
 
     unsigned int inline reduce_index(unsigned int ix) const { return ix % this->prime_power_pred; };

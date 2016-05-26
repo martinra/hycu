@@ -37,7 +37,7 @@ env = Environment(variables = opts)
 for (key,value) in os.environ.items():
   if key not in env:
     try:
-      env[key] = value
+      env['ENV'][key] = value
     except:
        pass
 
@@ -112,9 +112,9 @@ if not GetOption("clean"):
     env_mpi.ParseConfig(env_mpi["openmpicxx_path"] + " --showme:link")
 
   if "mpi_compiler_flags" in env_mpi:
-    conf.env.AppendUnique( CXXFLAGS = env_mpi["mpi_compiler_flags"] )
+    conf.env.Append( CXXFLAGS = env_mpi["mpi_compiler_flags"].split() )
   if "mpi_linker_flags" in env_mpi:
-    conf.env.AppendUnique( LINKFLAGS = env_mpi["mpi_linker_flags"] )
+    conf.env.Append( LINKFLAGS = env_mpi["mpi_linker_flags"].split() )
 
   ## check libaries
   for resource in [ "boost_mpi" ]:
