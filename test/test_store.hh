@@ -53,6 +53,11 @@ class TestStore :
       return store;
     };
 
+    bool was_saved(const ConfigNode & config, const vuu_block & block) final
+    {
+      return false;
+    };
+
     void save(const ConfigNode & config, const vuu_block & block) final
     {
       unique_lock<mutex> global_store_lock(TestStore<prime_power, genus, CurveData, StoreData>::global_store_mutex);
@@ -65,6 +70,7 @@ class TestStore :
         else
           TestStore<prime_power, genus, CurveData,StoreData>::global_store[item.first] += item.second;
       }
+      this->store.clear();
     };
 
     inline bool operator!=(const TestStore & rhs) const

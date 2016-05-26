@@ -84,16 +84,17 @@ main_thread(
     thread->blocks.pop_front();
     thread->data_mutex.unlock();
 
-
     auto store = store_factory->create();
-    for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
-      Curve curve(fq_table, iter.as_position());
-      if ( !curve.has_squarefree_rhs() ) continue;
-      for ( auto table : reduction_tables ) curve.count(table);
-      store->register_curve(curve);
-    }
+    if ( !store->was_saved(*config,block) ) {
+      for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
+        Curve curve(fq_table, iter.as_position());
+        if ( !curve.has_squarefree_rhs() ) continue;
+        for ( auto table : reduction_tables ) curve.count(table);
+        store->register_curve(curve);
+      }
 
-    store->save(*config, block);
+      store->save(*config, block);
+    }
 
 
     auto thread_pool_shared = thread->thread_pool.lock();

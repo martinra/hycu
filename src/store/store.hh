@@ -42,6 +42,7 @@ class StoreInterface
 {
   public:
     virtual void register_curve(const Curve & curve) = 0;
+    virtual bool was_saved(const ConfigNode & config, const vuu_block & block) = 0;
     virtual void save(const ConfigNode & config, const vuu_block & block) = 0;
 
     friend ostream & operator<<(ostream & stream, const StoreInterface & store);
@@ -87,7 +88,8 @@ class Store :
 {
   public:
     void register_curve(const Curve & curve) final;
-    virtual void save(const ConfigNode & config, const vuu_block & block);
+    bool was_saved(const ConfigNode & config, const vuu_block & block);
+    void save(const ConfigNode & config, const vuu_block & block);
 
     friend ostream & operator<< <> (ostream & stream, const Store<CurveData,StoreData> & store);
     friend istream & operator>> <> (istream & stream, Store<CurveData,StoreData> & store);

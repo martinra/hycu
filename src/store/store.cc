@@ -20,6 +20,7 @@
 
 ===============================================================================*/
 
+#include <boost/filesystem.hpp>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -30,6 +31,8 @@
 
 
 using namespace std;
+using boost::filesystem::is_regular_file;
+using boost::filesystem::path;
 
 
 template<
@@ -60,6 +63,20 @@ register_curve(
     store_it->second += data;
     store[twisted_key] += data;
   }
+}
+
+template<
+  class CurveData,
+  class StoreData
+  >
+bool
+Store<CurveData, StoreData>::
+was_saved(
+    const ConfigNode & config,
+    const vuu_block & block
+    )
+{
+  return is_regular_file( path(this->output_file_name(config, block)) );
 }
 
 template<
