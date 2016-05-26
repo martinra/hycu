@@ -90,7 +90,9 @@ class Thread :
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
 
-    deque<tuple< vuu_block, shared_ptr<ConfigNode>, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >> blocks;
+    deque<tuple< vuu_block, shared_ptr<ConfigNode>,
+                 shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >>
+                   blocks;
 };
 
 #endif

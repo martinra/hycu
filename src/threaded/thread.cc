@@ -79,7 +79,8 @@ main_thread(
     shared_ptr<ConfigNode> config;
 
     thread->data_mutex.lock();
-    tie(block, config, fq_table, reduction_tables) = thread->blocks.front();
+    tie(block, config, fq_table, reduction_tables) =
+      thread->blocks.front();
     thread->blocks.pop_front();
     thread->data_mutex.unlock();
 
@@ -92,8 +93,8 @@ main_thread(
       store->register_curve(curve);
     }
 
-
     store->save(*config, block);
+
 
     auto thread_pool_shared = thread->thread_pool.lock();
     if ( thread_pool_shared )
