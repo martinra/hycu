@@ -51,7 +51,7 @@ StandaloneWorkerPool::
 void
 StandaloneWorkerPool::
 set_config(
-    const MPIConfigNode & config
+    const ConfigNode & config
     )
 {
   this->wait_for_assigned_blocks();

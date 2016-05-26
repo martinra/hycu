@@ -69,7 +69,7 @@ template<
 void
 Store<CurveData, StoreData>::
 save(
-    const MPIConfigNode & config,
+    const ConfigNode & config,
     const vuu_block & block
 )
 {
@@ -83,7 +83,7 @@ template<
 string
 Store<CurveData, StoreData>::
 output_file_name(
-    const MPIConfigNode & config,
+    const ConfigNode & config,
     const vuu_block & block
     )
 {

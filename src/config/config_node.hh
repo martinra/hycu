@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_CONFIG_NODE
-#define _H_MPI_CONFIG_NODE
+#ifndef _H_CONFIG_NODE
+#define _H_CONFIG_NODE
 
 #include <boost/filesystem.hpp>
 #include <ostream>
@@ -36,7 +36,7 @@ using std::ostream;
 using std::string;
 
 
-struct MPIConfigNode
+struct ConfigNode
 {
   unsigned int prime;
   unsigned int prime_exponent;
@@ -63,7 +63,7 @@ struct MPIConfigNode
   };
 };
 
-ostream & operator<<(ostream & stream, const MPIConfigNode & config);
+ostream & operator<<(ostream & stream, const ConfigNode & config);
 
 
 namespace boost {
@@ -73,7 +73,7 @@ namespace serialization {
   void
   serialize(
       Archive & ar,
-      MPIConfigNode & config,
+      ConfigNode & config,
       const unsigned int version
       )
   {
@@ -99,10 +99,10 @@ namespace YAML
 {
 
   template<>
-  struct convert<MPIConfigNode>
+  struct convert<ConfigNode>
   {
-    static Node encode(const MPIConfigNode & config);
-    static bool decode(const Node & node, MPIConfigNode & config);
+    static Node encode(const ConfigNode & config);
+    static bool decode(const Node & node, ConfigNode & config);
   };
 
 }

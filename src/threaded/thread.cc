@@ -76,7 +76,7 @@ main_thread(
     vuu_block block;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
-    shared_ptr<MPIConfigNode> config;
+    shared_ptr<ConfigNode> config;
 
     thread->data_mutex.lock();
     tie(block, config, fq_table, reduction_tables) = thread->blocks.front();
@@ -110,10 +110,10 @@ main_thread(
 void
 Thread::
 update_config(
-    const MPIConfigNode & config
+    const ConfigNode & config
     )
 {
-  this->config = make_shared<MPIConfigNode>(config);
+  this->config = make_shared<ConfigNode>(config);
 
   this->fq_table = make_shared<FqElementTable>(config.prime, config.prime_exponent);
   this->reduction_tables.clear();

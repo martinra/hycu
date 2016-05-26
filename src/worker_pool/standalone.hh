@@ -43,7 +43,7 @@ class StandaloneWorkerPool
       StandaloneWorkerPool ( create_store_factory(store_type), nmb_working_threads ) {};
     ~StandaloneWorkerPool();
 
-    void set_config(const MPIConfigNode & node);
+    void set_config(const ConfigNode & node);
 
     void assign(vuu_block);
     void fill_idle_queues();

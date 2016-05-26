@@ -78,7 +78,7 @@ broadcast_initialization(
 void
 MPIWorkerPool::
 set_config(
-    const MPIConfigNode & config
+    const ConfigNode & config
     )
 {
   this->wait_for_assigned_blocks();

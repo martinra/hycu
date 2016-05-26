@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE( threaded_q5_g1 )
            >() )
          );
 
-  MPIConfigNode node;
+  ConfigNode node;
   node.prime = 5;
   node.prime_exponent = 1;
   node.genus = 1;
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
            >() )
          );
 
-  MPIConfigNode node;
+  ConfigNode node;
   node.prime = 7;
   node.prime_exponent = 1;
   node.genus = 1;
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g2 )
            >() )
          );
 
-  MPIConfigNode node;
+  ConfigNode node;
   node.prime = 7;
   node.prime_exponent = 1;
   node.genus = 2;

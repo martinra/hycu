@@ -70,7 +70,7 @@ class Thread :
 
     static void main_thread(shared_ptr<Thread> thread, const shared_ptr<StoreFactoryInterface> store_factory);
   
-    void update_config(const MPIConfigNode & config);
+    void update_config(const ConfigNode & config);
     void assign(vuu_block block);
 
   private:
@@ -85,12 +85,12 @@ class Thread :
 
     const shared_ptr<StoreFactoryInterface> store_factory;
     
-    shared_ptr<MPIConfigNode> config;
+    shared_ptr<ConfigNode> config;
     shared_ptr<OpenCLInterface> opencl;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
 
-    deque<tuple< vuu_block, shared_ptr<MPIConfigNode>, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >> blocks;
+    deque<tuple< vuu_block, shared_ptr<ConfigNode>, shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >> blocks;
 };
 
 #endif

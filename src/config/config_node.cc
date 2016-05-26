@@ -33,7 +33,7 @@ using namespace YAML;
 ostream &
 operator<<(
     ostream & stream,
-    const MPIConfigNode & config
+    const ConfigNode & config
     )
 {
   stream << "base field: " << config.prime << "^" << config.prime_exponent << "; ";
@@ -49,9 +49,9 @@ namespace YAML
 {
 
   Node
-  convert<MPIConfigNode>::
+  convert<ConfigNode>::
   encode(
-      const MPIConfigNode & config
+      const ConfigNode & config
       )
   {
     Node node;
@@ -68,10 +68,10 @@ namespace YAML
   }
   
   bool
-  convert<MPIConfigNode>::
+  convert<ConfigNode>::
   decode(
       const Node & node,
-      MPIConfigNode & config
+      ConfigNode & config
       )
   {
     if (    !node["Prime"] || !node["PrimeExponent"]

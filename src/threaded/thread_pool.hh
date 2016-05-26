@@ -50,7 +50,7 @@ class ThreadPool :
     void spark_threads(unsigned int nmb_working_threads = 0);
     void shutdown_threads();
 
-    void update_config(const MPIConfigNode & config);
+    void update_config(const ConfigNode & config);
 
     void assign(vuu_block block, bool opencl);
     void finished_block(vuu_block block);

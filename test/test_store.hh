@@ -53,7 +53,7 @@ class TestStore :
       return store;
     };
 
-    void save(const MPIConfigNode & config, const vuu_block & block) final
+    void save(const ConfigNode & config, const vuu_block & block) final
     {
       unique_lock<mutex> global_store_lock(TestStore<prime_power, genus, CurveData, StoreData>::global_store_mutex);
 

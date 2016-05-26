@@ -42,7 +42,7 @@ class StoreInterface
 {
   public:
     virtual void register_curve(const Curve & curve) = 0;
-    virtual void save(const MPIConfigNode & config, const vuu_block & block) = 0;
+    virtual void save(const ConfigNode & config, const vuu_block & block) = 0;
 
     friend ostream & operator<<(ostream & stream, const StoreInterface & store);
     friend istream & operator>>(istream & stream, StoreInterface & store);
@@ -87,7 +87,7 @@ class Store :
 {
   public:
     void register_curve(const Curve & curve) final;
-    virtual void save(const MPIConfigNode & config, const vuu_block & block);
+    virtual void save(const ConfigNode & config, const vuu_block & block);
 
     friend ostream & operator<< <> (ostream & stream, const Store<CurveData,StoreData> & store);
     friend istream & operator>> <> (istream & stream, Store<CurveData,StoreData> & store);
@@ -100,7 +100,7 @@ class Store :
     istream & extract_store(istream & stream) final;
 
 
-    string output_file_name(const MPIConfigNode & config, const vuu_block & block);
+    string output_file_name(const ConfigNode & config, const vuu_block & block);
 };
 
 template<class CurveData, class StoreData>

@@ -49,7 +49,7 @@ main_worker(
     mpi::status mpi_status = mpi_world->probe();
 
     if ( mpi_status.tag() == MPIWorkerPoolTag::update_config ) {
-      MPIConfigNode config;
+      ConfigNode config;
       mpi_world->recv( MPIWorkerPool::master_process_id,
                        MPIWorkerPoolTag::update_config, config );
       thread_pool->update_config(config);

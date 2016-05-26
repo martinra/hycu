@@ -78,7 +78,7 @@ shutdown_threads()
 void
 ThreadPool::
 update_config(
-    const MPIConfigNode & config
+    const ConfigNode & config
     )
 {
   for ( auto & thread : this->threads )

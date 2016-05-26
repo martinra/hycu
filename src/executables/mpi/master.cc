@@ -125,12 +125,12 @@ main_master(
   }
 
 
-  vector<MPIConfigNode> config;
+  vector<ConfigNode> config;
   if ( !config_yaml["Moduli"] )
-    config.emplace_back(config_yaml.as<MPIConfigNode>());
+    config.emplace_back(config_yaml.as<ConfigNode>());
   else
     for ( const auto & node : config_yaml["Moduli"] )
-      config.emplace_back(node.as<MPIConfigNode>());
+      config.emplace_back(node.as<ConfigNode>());
 
 
   MPIWorkerPool
