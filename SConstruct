@@ -37,7 +37,7 @@ env = Environment(variables = opts)
 for (key,value) in os.environ.items():
   if key not in env:
     try:
-      env[key] = value
+      env['ENV'][key] = value
     except:
        pass
 
