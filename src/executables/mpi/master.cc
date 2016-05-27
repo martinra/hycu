@@ -103,10 +103,6 @@ main_master(
     exit(1);
   }
   auto config_yaml = YAML::LoadFile(config_file.native());
-  if (argc != 2) {
-    cerr << "One argument, the configuration file, is needed" << endl;
-    exit(1);
-  }
 
 
   StoreType store_type;
