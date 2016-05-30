@@ -48,13 +48,17 @@ class Curve
   public:
     Curve(shared_ptr<FqElementTable> table, const vector<int> poly_coeff_exponents);
 
+    inline const FqElementTable & base_field_table() const
+    {
+      return *(this->table);
+    };
     unsigned int inline prime() const { return this->table->prime; };
     unsigned int inline prime_exponent() const { return this->table->prime_exponent; };
     unsigned int inline prime_power() const { return this->table->prime_power; };
 
     int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
     int genus() const;
-    vector<int> inline rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
+    inline vector<int> rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
     vector<unsigned int> rhs_support() const;
 
     bool has_squarefree_rhs();
