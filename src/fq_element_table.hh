@@ -47,6 +47,7 @@ class FqElementTable
 
     bool inline is_prime_field() const { return this->prime_exponent == 1; };
 
+
     inline unsigned int at_nmod(int ix) const
     {
       return nmod_poly_get_coeff_ui(this->fq_elements.at(ix), 0);
@@ -59,7 +60,30 @@ class FqElementTable
     inline tuple<int,int> block_complete() const { return make_tuple(0, (int)this->prime_power); };
     vector<int> power_coset_representatives(unsigned int n) const;
 
-    unsigned int inline reduce_index(unsigned int ix) const { return ix % this->prime_power_pred; };
+    inline bool is_zero(int a) const
+    {
+      return a == this->prime_power_pred;
+    };
+    inline bool is_power_coset_representative(unsigned int n, int a) const
+    {
+      return a >=0 && a < n_gcd(n, this->prime_power_pred);
+    };
+
+
+    unsigned int inline reduce_index(unsigned int ix) const
+    {
+      return ix % this->prime_power_pred;
+    };
+
+    static inline unsigned int fq_as_index(const fq_nmod_struct * a)
+    {
+      unsigned int ax = 0;
+      for ( int dx=a->length-1; dx>=0; --dx ) {
+        ax *= a->mod.n;
+        ax += nmod_poly_get_coeff_ui(a,dx);
+      }
+    return ax;
+    };
 
     friend Curve;
     friend class CurveIterator;
