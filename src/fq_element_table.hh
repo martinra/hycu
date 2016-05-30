@@ -55,6 +55,16 @@ class FqElementTable
     inline const fq_nmod_struct* at(int ix) const { return this->fq_elements[ix]; };
     inline const fq_nmod_struct* operator[](int ix) const { return this->fq_elements[ix]; };
 
+    inline unsigned int generator_power(unsigned int a) const
+    {
+      return this->fq_generator_powers[a];
+    };
+    inline unsigned int generator_power(const fq_nmod_struct * a) const
+    {
+      return this->fq_generator_powers[FqElementTable::fq_as_index(a)];
+    };
+
+
     int inline zero_index() const { return this->prime_power_pred; };
     inline tuple<int,int> block_non_zero() const { return make_tuple(0, (int)this->prime_power_pred); };
     inline tuple<int,int> block_complete() const { return make_tuple(0, (int)this->prime_power); };
@@ -97,6 +107,7 @@ class FqElementTable
 
   private:
     fq_nmod_ctx_t fq_ctx;
+    vector<unsigned int> fq_generator_powers;
     vector<fq_nmod_struct*> fq_elements;
 };
 
