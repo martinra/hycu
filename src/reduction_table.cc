@@ -31,6 +31,7 @@
 #include <tuple>
 #include <vector>
 
+#include "fq_element_table.hh"
 #include "opencl/interface.hh"
 #include "reduction_table.hh"
 
@@ -140,13 +141,7 @@ compute_incrementation_table(
   fq_nmod_one(a, ctx);
 
   for ( size_t ix=0; ix<prime_power-1; ++ix) {
-    unsigned int coeff_sum = 0;
-    for ( int dx=prime_exponent-1; dx>=0; --dx ) {
-      coeff_sum *= prime;
-      coeff_sum += nmod_poly_get_coeff_ui(a,dx);
-    }
-
-    gen_powers[coeff_sum] = ix;
+    gen_powers[FqElementTable::fq_as_index(a)] = ix;
 
     fq_nmod_mul(a, a, gen, ctx);
     fq_nmod_reduce(a, ctx);
