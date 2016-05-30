@@ -92,11 +92,10 @@ Curve::
 rhs_support()
   const
 {
-  auto zero_index = this->table->zero_index();
   vector<unsigned int> support;
 
   for ( size_t ix=0; ix<this->poly_coeff_exponents.size(); ++ix )
-    if ( this->poly_coeff_exponents[ix] != zero_index )
+    if ( !this->table->is_zero(this->poly_coeff_exponents[ix]) )
       support.push_back(ix);
 
   return support;
