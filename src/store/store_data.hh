@@ -45,9 +45,7 @@ class Count
   public:
     inline Count(const Curve & curve)
     {
-      this->value.counter =
-        CurveIterator::multiplicity( curve.prime(), curve.prime_power(),
-                                     curve.rhs_support() );
+      this->value.counter = CurveIterator::multiplicity(curve);
     };
     
     inline const Count twist() { return *this; };
