@@ -89,13 +89,15 @@ genus()
 
 vector<unsigned int>
 Curve::
-rhs_support()
-  const
+_support(
+    shared_ptr<FqElementTable> table,
+    vector<int> poly_coeff_exponents
+    )
 {
   vector<unsigned int> support;
 
-  for ( size_t ix=0; ix<this->poly_coeff_exponents.size(); ++ix )
-    if ( !this->table->is_zero(this->poly_coeff_exponents[ix]) )
+  for ( size_t ix=0; ix<poly_coeff_exponents.size(); ++ix )
+    if ( !table->is_zero(poly_coeff_exponents[ix]) )
       support.push_back(ix);
 
   return support;

@@ -59,7 +59,11 @@ class Curve
     int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
     int genus() const;
     inline vector<int> rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
-    vector<unsigned int> rhs_support() const;
+    inline vector<unsigned int> rhs_support() const
+    {
+      return Curve::_support(this->table, this->poly_coeff_exponents);
+    }
+    static vector<unsigned int> _support(shared_ptr<FqElementTable> table, vector<int> poly_coeff_exponents);
 
     bool has_squarefree_rhs();
     nmod_poly_struct rhs_nmod_polynomial() const;
