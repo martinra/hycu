@@ -23,7 +23,12 @@
 
 #include <set>
 
+#include "curve.hh"
 #include "curve_iterator.hh"
+
+#include "flint/fmpz.h"
+#include "flint/fq_nmod.h"
+#include "flint/fq_nmod_poly.h"
 
 
 using namespace std;
@@ -155,11 +160,189 @@ multiplicity(
     // is b_2^2 ( a_n (b_3 x+b_1)^n + a_m (b_3 x+b_1)^m + a_l (b_3 x+b_1)^l + .... )
     // the orbit size comes from the (n-1)-th coefficent, the m-th coeffficent and the qutient of the
     // m-th by the l-th one
-    unsigned int snd_exp = *(coeff_support.rbegin()+1);
-    unsigned int trd_exp = *(coeff_support.rbegin()+2);
+    unsigned int snd_dx = *(support.rbegin()+1);
+    unsigned int trd_dx = *(support.rbegin()+2);
 
     return   prime_power * prime_power_pred / 2
-           * prime_power_pred / n_gcd(prime_power_pred, snd_exp-trd_exp);
+           * prime_power_pred / n_gcd(prime_power_pred, snd_dx-trd_dx);
   }
 }
 
+bool
+CurveIterator::
+is_reduced(
+    const Curve & curve
+    )
+{
+  unsigned int prime = curve.prime();
+  unsigned int prime_power_pred = curve.prime_power() - 1;
+  unsigned int degree = curve.degree();
+
+  if ( prime <= degree || prime <= 3 ) {
+    cerr << "CurveIterator::is_partially_reduced: "
+         << "curve iterator implemented only if prime is larger than rhs degree and larger than 3" << endl;
+    throw;
+  }
+
+
+  const auto & base_field_table = curve.base_field_table();
+
+  const auto & poly_coeff_exponents = curve.rhs_coeff_exponents();
+  if ( !base_field_table->is_zero(poly_coeff_exponents[degree-1]) )
+    return false;
+
+  const auto & support = curve.rhs_support();
+  if ( support.size() <= 2 )
+    return base_field_table->is_power_coset_representative( 2,
+                                          poly_coeff_exponents[support.front()] );
+  else {
+    unsigned int snd_dx = *(support.crbegin()+1);
+    unsigned int trd_dx = *(support.crbegin()+2);
+    int snd_coeff = poly_coeff_exponents[snd_dx];
+    int trd_coeff = poly_coeff_exponents[trd_dx];
+
+    return    base_field_table->is_power_coset_representative(2, snd_coeff)
+           && base_field_table->is_power_coset_representative(snd_dx-trd_dx, trd_coeff-snd_coeff);
+  }
+}
+
+Curve
+CurveIterator::
+reduce(
+    const Curve & curve
+    )
+{
+  auto base_field_table = curve.base_field_table();
+
+
+  // additive reduction
+  // we could use FLINT for this, but composition of polynomials hangs
+  auto fq_ctx = base_field_table->fq_ctx;
+
+  vector<fq_nmod_struct*> fq_rhs;
+  fq_rhs.reserve(curve.degree()+1);
+  for ( int e : curve.rhs_coeff_exponents() ) {
+    auto fq_coeff = new fq_nmod_struct;
+    fq_nmod_init(fq_coeff, fq_ctx);
+    fq_nmod_set(fq_coeff, base_field_table->at(e), fq_ctx);
+    fq_rhs.push_back(fq_coeff);
+  } 
+
+  fq_nmod_t shift;
+  fq_nmod_init(shift, fq_ctx);
+  fq_nmod_set(shift, fq_rhs[curve.degree()-1], fq_ctx);
+
+  fq_nmod_t tmp;
+  fq_nmod_init(tmp, fq_ctx);
+
+  // divide by degree
+  fq_nmod_set_ui(tmp, curve.degree(), fq_ctx);
+  fq_nmod_inv(tmp, tmp, fq_ctx);
+  fq_nmod_mul(shift, shift, tmp, fq_ctx);
+
+  // divide by highest coefficient
+  fq_nmod_set(tmp, fq_rhs.back(), fq_ctx);
+  fq_nmod_inv(tmp, tmp, fq_ctx);
+  fq_nmod_mul(shift, shift, tmp, fq_ctx);
+
+  fq_nmod_neg(shift, shift, fq_ctx);
+
+
+  vector<fq_nmod_struct*> fq_rhs_shifted;
+  for ( auto c : fq_rhs ) {
+    auto fq_coeff = new fq_nmod_struct;
+    fq_nmod_init(fq_coeff, fq_ctx);
+    fq_nmod_set(fq_coeff, c, fq_ctx);
+    fq_rhs_shifted.push_back(fq_coeff);
+  }
+
+  fmpz_t bin;
+  fmpz_init(bin);
+  fq_nmod_t shift_pw;
+  fq_nmod_init(shift_pw, fq_ctx);
+  fq_nmod_set(shift_pw, shift, fq_ctx);
+  // contribution of shift^dx
+  for ( unsigned int dx=1; dx<=curve.degree(); ++dx ) {
+    // from the term (x + shift)^ox
+    for ( unsigned int ox=curve.degree(); ox>=dx; --ox ) {
+      fmpz_bin_uiui(bin, ox, dx);
+      fq_nmod_set_ui(tmp, fmpz_get_ui(bin) , fq_ctx);
+      fq_nmod_mul(tmp, tmp, shift_pw, fq_ctx);
+      fq_nmod_mul(tmp, tmp, fq_rhs[ox], fq_ctx);
+      fq_nmod_add(fq_rhs_shifted[ox-dx], fq_rhs_shifted[ox-dx], tmp, fq_ctx);
+    }
+
+    if ( dx!=curve.degree() )
+      fq_nmod_mul(shift_pw, shift_pw, shift, fq_ctx);
+  }
+
+
+  vector<int> rhs_shifted;
+  rhs_shifted.reserve(curve.degree()+1);
+  for ( auto c : fq_rhs_shifted )
+    rhs_shifted.push_back(base_field_table->generator_power(c));
+
+
+  for ( auto c : fq_rhs ) {
+    fq_nmod_clear(c, fq_ctx);
+    delete c;
+  }
+  fq_nmod_clear(shift, fq_ctx);
+  fq_nmod_clear(tmp, fq_ctx);
+  fmpz_clear(bin);
+  fq_nmod_clear(shift_pw, fq_ctx);
+
+
+  // multiplicative reduction via rescaling of x and y
+  const auto & support = Curve::_support(base_field_table, rhs_shifted);
+
+  // first normalize the difference between the second and third nonvanishing coefficient
+  // by means of x -> (b*x)
+  if ( support.size() > 2 ) {
+    unsigned int snd_dx = *(support.crbegin()+1);
+    unsigned int trd_dx = *(support.crbegin()+2);
+    int snd_coeff = rhs_shifted[snd_dx];
+    int trd_coeff = rhs_shifted[trd_dx];
+
+
+    int reduce_diff = base_field_table->reduce_index(
+          base_field_table->power_coset_representative(snd_dx-trd_dx, trd_coeff-snd_coeff)
+        - (trd_coeff-snd_coeff) );
+    for ( auto ix : support )
+      rhs_shifted[ix] = base_field_table->reduce_index(rhs_shifted[ix] + ix*reduce_diff);
+  }
+
+
+  // second normalize by means of y -> (b*y)^2
+  unsigned int reduction_ix;
+  if ( support.size() <= 2 )
+    reduction_ix = support.front(); 
+  else
+    reduction_ix = *(support.crbegin()+1);
+
+  int reduce_diff =
+        base_field_table->power_coset_representative(2, rhs_shifted[reduction_ix])
+      - rhs_shifted[reduction_ix];
+
+  for ( auto ix : support )
+    rhs_shifted[ix] = base_field_table->reduce_index(rhs_shifted[ix] + reduce_diff);
+
+
+  return Curve(base_field_table, rhs_shifted);
+}
+
+// bool
+// CurveIterator::
+// is_minimal_in_isomorphism_class(
+//     const Curve & curve
+//     )
+// {
+//   if ( !CurveIterator::is_partially_reduced(curve) )
+//     return false;
+// 
+//   for ( unsigned int ix=1; ix<curve.prime_power(); ++ix )
+//     if ( curve > CurveIterator::partially_reduce(CurveIterator::z_shifted_curve(curve, ix)) )
+//       return false;
+// 
+//   return true;
+// }

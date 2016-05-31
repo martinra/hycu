@@ -29,6 +29,7 @@
 #include <tuple>
 
 #include "block_iterator.hh"
+#include "curve.hh"
 #include "fq_element_table.hh"
 
 
@@ -50,6 +51,9 @@ class CurveIterator
     BlockIterator inline as_block_enumerator() { return this->enumerator_it->as_block(); };
 
     static unsigned int multiplicity(const Curve & curve);
+    static bool is_reduced(const Curve & curve);
+    static Curve reduce(const Curve & curve);
+    // static bool is_minimal_in_isomorphism_class(const Curve & curve);
 
   private:
     unsigned int prime;

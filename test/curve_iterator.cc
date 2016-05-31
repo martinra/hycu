@@ -24,11 +24,13 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
+#include <set>
 #include <tuple>
 
-#include <curve_iterator.hh>
-#include <fq_element_table.hh>
-#include <iterator_messaging.hh>
+#include "curve.hh"
+#include "curve_iterator.hh"
+#include "fq_element_table.hh"
+#include "iterator_messaging.hh"
 
 
 using namespace std;
@@ -104,3 +106,59 @@ BOOST_AUTO_TEST_CASE( enumerate_f3_g0 )
     message_positions("genus 1 degree 1 curves / F_3: ", positions_deg1);
 }
 
+BOOST_AUTO_TEST_CASE( is_reduced_f5_g1 )
+{
+  unsigned int prime = 5;
+  unsigned int genus = 1;
+  auto table = make_shared<FqElementTable>(prime,1);
+
+
+  set<vector<int>> curves_itered;
+  for ( CurveIterator iter(*table,genus,1); !iter.is_end(); iter.step() ) {
+    Curve curve(table, iter.as_position());
+    curves_itered.insert(curve.rhs_coeff_exponents());
+    curves_itered.insert(CurveIterator::reduce(curve.twist()).rhs_coeff_exponents());
+  }
+
+  vuu_block lower_degree_blocks;
+  for ( size_t ix=0; ix < 2*genus + 1; ++ix )
+    lower_degree_blocks.push_back(table->block_complete());
+  lower_degree_blocks.push_back(table->block_non_zero());
+  BlockIterator lower_degree_block_iter(lower_degree_blocks);
+
+  vuu_block higher_degree_blocks;
+  for ( size_t ix=0; ix < 2*genus + 2; ++ix )
+    higher_degree_blocks.push_back(table->block_complete());
+  higher_degree_blocks.push_back(table->block_non_zero());
+  BlockIterator higher_degree_block_iter(higher_degree_blocks);
+
+
+  set<vector<int>> curves_reduced;
+  for ( ; !lower_degree_block_iter.is_end(); lower_degree_block_iter.step() ) {
+    auto poly_coeff_exponents = lower_degree_block_iter.as_position();
+    if ( CurveIterator::is_reduced(Curve(table, poly_coeff_exponents)) )
+      curves_reduced.insert(poly_coeff_exponents);
+  }
+  for ( ; !higher_degree_block_iter.is_end(); higher_degree_block_iter.step() ) {
+    auto poly_coeff_exponents = higher_degree_block_iter.as_position();
+    if ( CurveIterator::is_reduced(Curve(table, poly_coeff_exponents)) )
+      curves_reduced.insert(poly_coeff_exponents);
+  }
+
+
+  if ( curves_itered != curves_reduced ) {
+    vector<vector<int>> curves_diff;
+
+    for ( const auto & v : curves_reduced )
+      if ( curves_itered.count(v) == 0 )
+       curves_diff.push_back(v);
+
+    curves_diff.push_back(vector<int>{-1});
+
+    for ( const auto & v : curves_itered )
+      if ( curves_reduced.count(v) == 0 )
+       curves_diff.push_back(v);
+
+    message_positions( "reduced genus 1 curves / F_5: ", curves_diff );
+  }
+}
