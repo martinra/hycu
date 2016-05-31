@@ -79,6 +79,10 @@ class FqElementTable
       return a >=0 && a < n_gcd(n, this->prime_power_pred);
     };
 
+    inline int power_coset_representative(unsigned int n, int a) const
+    {
+      return a % n_gcd(n, this->prime_power_pred);
+    };
 
     unsigned int inline reduce_index(unsigned int ix) const
     {
