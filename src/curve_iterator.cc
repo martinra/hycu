@@ -287,32 +287,36 @@ reduce(
   return Curve(base_field_table, rhs_shifted);
 }
 
-// bool
-// CurveIterator::
-// is_minimal_in_isomorphism_class(
-//     const Curve & curve
-//     )
-// {
-//   if ( !CurveIterator::is_partially_reduced(curve) )
-//     return false;
-// 
-//   for ( unsigned int ix=0; ix<curve.prime_power()-1; ++ix )
-//     if ( curve > CurveIterator::reduce(CurveIterator::z_shifted_curve(curve, ix)) )
-//       return false;
-// 
-//   return true;
-// }
-// 
-// Curve
-// CurveIterator::
-// z_shift(
-//     const Curve * curve,
-//     unsigned int generator_power
-//     )
-// {
-//  
-// 
-// }
+bool
+CurveIterator::
+is_minimal_in_isomorphism_class(
+    const Curve & curve
+    )
+{
+  if ( !CurveIterator::is_partially_reduced(curve) )
+    return false;
+
+  for ( unsigned int ix=0; ix<curve.prime_power()-1; ++ix )
+    if ( curve > CurveIterator::reduce(CurveIterator::z_shift(curve, ix)) )
+      return false;
+
+  return true;
+}
+
+Curve
+CurveIterator::
+z_shift(
+    const Curve * curve,
+    unsigned int generator_power
+    )
+{
+  auto base_field_table = curve.base_field_table;
+
+  return Curve( base_field_table,
+                CurveIterator::_shift_fq_polynomial(
+                  curve.rhs_coefficients(),
+                  base_field_table()->at(generator_power) ) );
+}
 
 vector<fq_nmod_struct*>
 CurveIterator::

@@ -173,6 +173,28 @@ convert_poly_coeff_exponents(
   return converted;
 }
 
+bool
+operator<=(
+    const Curve & left,
+    const Curve & right
+    )
+{
+  if ( *left.table != *right.table )
+    return *left.table <= *right.table;
+
+  return left.poly_coeff_exponents <= right.poly_coeff_exponents;
+}
+
+bool
+operator==(
+    const Curve & left,
+    const Curve & right
+    )
+{
+  return    *left.table == *right.table
+         && left.poly_coeff_exponents == right.poly_coeff_exponents;
+}
+
 Curve
 Curve::
 twist()
