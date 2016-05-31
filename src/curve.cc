@@ -173,28 +173,6 @@ convert_poly_coeff_exponents(
   return converted;
 }
 
-bool
-operator<=(
-    const Curve & left,
-    const Curve & right
-    )
-{
-  if ( *left.table != *right.table )
-    return *left.table <= *right.table;
-
-  return left.poly_coeff_exponents <= right.poly_coeff_exponents;
-}
-
-bool
-operator==(
-    const Curve & left,
-    const Curve & right
-    )
-{
-  return    *left.table == *right.table
-         && left.poly_coeff_exponents == right.poly_coeff_exponents;
-}
-
 Curve
 Curve::
 twist()
@@ -211,7 +189,7 @@ twist()
       twisted_poly_coeff_exponents.push_back(coeff);
     else
       twisted_poly_coeff_exponents.push_back(
-          this->table->reduce_index(coeff + nonsquare) );
+          this->table->reduce_generator_exponent(coeff + nonsquare) );
   }
 
   return Curve(this->table, twisted_poly_coeff_exponents);

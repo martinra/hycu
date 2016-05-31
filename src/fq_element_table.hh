@@ -45,51 +45,135 @@ class FqElementTable
     FqElementTable( unsigned int prime, unsigned int prime_exponent );
     ~FqElementTable();
 
-    bool inline is_prime_field() const { return this->prime_exponent == 1; };
+    inline
+    bool
+    is_prime_field()
+      const
+    {
+      return this->prime_exponent == 1;
+    };
 
 
-    inline unsigned int at_nmod(int ix) const
+    inline
+    unsigned int
+    at_nmod(
+        int ix
+        ) const
     {
       return nmod_poly_get_coeff_ui(this->fq_elements.at(ix), 0);
     };
-    inline const fq_nmod_struct* at(int ix) const { return this->fq_elements[ix]; };
-    inline const fq_nmod_struct* operator[](int ix) const { return this->fq_elements[ix]; };
 
-    inline unsigned int generator_power(unsigned int a) const
+    inline
+    const fq_nmod_struct*
+    at(
+        int ix
+        ) const
+    {
+      return this->fq_elements[ix];
+    };
+
+    inline
+    const fq_nmod_struct*
+    operator[](
+        int ix
+        ) const
+    {
+      return this->fq_elements[ix];
+    };
+
+    inline
+    unsigned int
+    generator_power(
+        unsigned int a
+        ) const
     {
       return this->fq_generator_powers[a];
     };
-    inline unsigned int generator_power(const fq_nmod_struct * a) const
+
+    inline
+    unsigned int
+    generator_power(
+        const fq_nmod_struct * a
+        ) const
     {
       return this->fq_generator_powers[FqElementTable::fq_as_index(a)];
     };
 
 
-    int inline zero_index() const { return this->prime_power_pred; };
-    inline tuple<int,int> block_non_zero() const { return make_tuple(0, (int)this->prime_power_pred); };
-    inline tuple<int,int> block_complete() const { return make_tuple(0, (int)this->prime_power); };
+    inline
+    int
+    zero_index()
+      const
+    {
+      return this->prime_power_pred;
+    };
+
+    inline
+    tuple<int,int>
+    block_non_zero()
+      const
+    {
+      return make_tuple(0, (int)this->prime_power_pred);
+    };
+
+    inline
+    tuple<int,int>
+    block_complete()
+      const
+    {
+      return make_tuple(0, (int)this->prime_power);
+    };
+
     vector<int> power_coset_representatives(unsigned int n) const;
 
-    inline bool is_zero(int a) const
+
+    inline
+    bool
+    is_zero(
+        int a
+        ) const
     {
       return a == this->prime_power_pred;
     };
-    inline bool is_power_coset_representative(unsigned int n, int a) const
+
+    inline
+    bool
+    is_power_coset_representative(
+        unsigned int n,
+        int a
+        ) const
     {
       return a >=0 && a < n_gcd(n, this->prime_power_pred);
     };
 
-    inline int power_coset_representative(unsigned int n, int a) const
+
+    inline
+    int
+    power_coset_representative(
+        unsigned int n,
+        int a
+        ) const
     {
       return a % n_gcd(n, this->prime_power_pred);
     };
 
-    unsigned int inline reduce_index(unsigned int ix) const
+
+    inline
+    unsigned int
+    reduce_generator_exponent(
+        unsigned int ix
+        ) const
     {
       return ix % this->prime_power_pred;
     };
 
-    static inline unsigned int fq_as_index(const fq_nmod_struct * a)
+
+    static
+    inline
+    unsigned int
+    fq_as_index(
+        const fq_nmod_struct * a
+        )
     {
       unsigned int ax = 0;
       for ( int dx=a->length-1; dx>=0; --dx ) {
@@ -98,6 +182,79 @@ class FqElementTable
       }
     return ax;
     };
+
+
+    friend
+    inline
+    bool
+    operator==(
+        const FqElementTable & left,
+        const FqElementTable & right
+        )
+    {
+      return    left.prime == right.prime
+             && left.prime_exponent == right.prime_exponent;
+    };
+
+    friend
+    inline
+    bool
+    operator!=(
+        const FqElementTable & left,
+        const FqElementTable & right
+        )
+    {
+      return !(left == right);
+    };
+
+    friend
+    inline
+    bool
+    operator<=(
+        const FqElementTable & left,
+        const FqElementTable & right
+        )
+    {
+      return    left.prime < right.prime
+             || (    left.prime == right.prime
+                  && left.prime_exponent <= right.prime_exponent );
+    };
+
+    friend
+    inline
+    bool
+    operator>=(
+        const FqElementTable & left,
+        const FqElementTable & right
+        )
+    {
+      return    left.prime > right.prime
+             || (    left.prime == right.prime
+                  && left.prime_exponent >= right.prime_exponent );
+    };
+
+    friend
+    inline
+    bool
+    operator<(
+        const FqElementTable & left,
+        const FqElementTable & right
+        )
+    {
+      return !(left >= right);
+    };
+
+    friend
+    inline
+    bool
+    operator>(
+        const FqElementTable & left,
+        const FqElementTable & right
+        )
+    {
+      return !(left <= right);
+    };
+
 
     friend Curve;
     friend class CurveIterator;

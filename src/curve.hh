@@ -115,6 +115,58 @@ class Curve
 
     vector<int> ramification_type() const;
 
+
+    friend
+    inline
+    bool
+    operator==(
+        const Curve & left,
+        const Curve & right
+        )
+    {
+      return    *left.table == *right.table
+             && left.poly_coeff_exponents == right.poly_coeff_exponents;
+    };
+
+    friend
+    inline
+    bool
+    operator!=(
+        const Curve & left,
+        const Curve & right
+        )
+    {
+      return !(left == right);
+    };
+
+    friend
+    inline
+    bool
+    operator<=(
+        const Curve & left,
+        const Curve & right
+        )
+    {
+      if ( *left.table != *right.table )
+        return *left.table <= *right.table;
+    
+      return left.poly_coeff_exponents <= right.poly_coeff_exponents;
+    };
+
+    friend
+    inline
+    bool
+    operator>=(
+        const Curve & left,
+        const Curve & right
+        )
+    {
+      if ( *left.table != *right.table )
+        return *left.table >= *right.table;
+    
+      return left.poly_coeff_exponents >= right.poly_coeff_exponents;
+    };
+    
     friend
     inline
     bool
@@ -123,11 +175,21 @@ class Curve
         const Curve & right
         )
     {
-      if ( *left.table != *right.table )
-        return *left.table < *right.table;
-
-      return left.poly_coeff_exponents < right.poly_coeff_exponents;
+      return !(left >= right);
     };
+
+    friend
+    inline
+    bool
+    operator>(
+        const Curve & left,
+        const Curve & right
+        )
+    {
+      return !(left <= right);
+    };
+
+
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 
   protected:

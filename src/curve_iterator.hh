@@ -53,10 +53,14 @@ class CurveIterator
     vector<tuple<int,int>> inline as_block() { return this->enumerator_it->as_block(); };
     BlockIterator inline as_block_enumerator() { return this->enumerator_it->as_block(); };
 
+
     static unsigned int multiplicity(const Curve & curve);
+
     static bool is_reduced(const Curve & curve);
     static Curve reduce(const Curve & curve);
-    // static bool is_minimal_in_isomorphism_class(const Curve & curve);
+
+    static bool is_minimal_in_isomorphism_class(const Curve & curve);
+
 
   private:
     unsigned int prime;
@@ -64,6 +68,7 @@ class CurveIterator
     vector<BlockIterator> enumerators;
     vector<BlockIterator>::iterator enumerator_it;
 
+    static Curve z_shift(const Curve & curve, unsigned int generator_power);
     static vector<fq_nmod_struct*> _shift_fq_polynomial(const vector<fq_nmod_struct*> & fq_poly, const fq_nmod_t shift, const fq_nmod_ctx_t fq_ctx);
 };
 

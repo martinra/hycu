@@ -78,7 +78,7 @@ CurveIterator(
           for ( size_t sx=0; sx<sets[ix].size(); ++sx ) {
             coset_product.clear();
             for ( int b : cosets )
-              coset_product.insert(table.reduce_index(sets[ix][sx]+b));
+              coset_product.insert(table.reduce_generator_exponent(sets[ix][sx]+b));
             coset_products[sx] = vector<int>(coset_product.cbegin(), coset_product.cend());
           }
           dependent_sets[jx] = make_tuple(ix, coset_products);
@@ -261,11 +261,11 @@ reduce(
     int trd_coeff = rhs_shifted[trd_dx];
 
 
-    int reduce_diff = base_field_table->reduce_index(
+    int reduce_diff = base_field_table->reduce_generator_exponent(
           base_field_table->power_coset_representative(snd_dx-trd_dx, trd_coeff-snd_coeff)
         - (trd_coeff-snd_coeff) );
     for ( auto ix : support )
-      rhs_shifted[ix] = base_field_table->reduce_index(rhs_shifted[ix] + ix*reduce_diff);
+      rhs_shifted[ix] = base_field_table->reduce_generator_exponent(rhs_shifted[ix] + ix*reduce_diff);
   }
 
 
@@ -281,7 +281,7 @@ reduce(
       - rhs_shifted[reduction_ix];
 
   for ( auto ix : support )
-    rhs_shifted[ix] = base_field_table->reduce_index(rhs_shifted[ix] + reduce_diff);
+    rhs_shifted[ix] = base_field_table->reduce_generator_exponent(rhs_shifted[ix] + reduce_diff);
 
 
   return Curve(base_field_table, rhs_shifted);
@@ -293,7 +293,7 @@ is_minimal_in_isomorphism_class(
     const Curve & curve
     )
 {
-  if ( !CurveIterator::is_partially_reduced(curve) )
+  if ( !CurveIterator::is_reduced(curve) )
     return false;
 
   for ( unsigned int ix=0; ix<curve.prime_power()-1; ++ix )
@@ -306,16 +306,17 @@ is_minimal_in_isomorphism_class(
 Curve
 CurveIterator::
 z_shift(
-    const Curve * curve,
+    const Curve & curve,
     unsigned int generator_power
     )
 {
-  auto base_field_table = curve.base_field_table;
+  auto base_field_table = curve.base_field_table();
 
   return Curve( base_field_table,
                 CurveIterator::_shift_fq_polynomial(
                   curve.rhs_coefficients(),
-                  base_field_table()->at(generator_power) ) );
+                  base_field_table->at(generator_power),
+                  base_field_table->fq_ctx ) );
 }
 
 vector<fq_nmod_struct*>
