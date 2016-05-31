@@ -131,21 +131,23 @@ is_end()
 unsigned int
 CurveIterator::
 multiplicity(
-    unsigned int prime,
-    unsigned int prime_power,
-    vector<unsigned int> coeff_support
+    const Curve & curve
     )
 {
+  unsigned int prime = curve.prime();
+  unsigned int prime_power = curve.prime_power();
   unsigned int prime_power_pred = prime_power - 1;
+  unsigned int degree = curve.degree();
 
-  unsigned int degree = coeff_support.back();
   if ( prime <= degree || prime <= 3 ) {
-    cerr << "Curve::stabilizer_order_rhs_U: "
-         << "stabilizer implemented only if prime is larger than rhs degree and larger than 3" << endl;
+    cerr << "CurveIterator::multiplicity: "
+         << "curve iterator implemented only if prime is larger than rhs degree and larger than 3" << endl;
     throw;
   }
 
-  if ( coeff_support.size() <= 2 )
+
+  const auto & support = curve.rhs_support();
+  if ( support.size() <= 2 )
     // the orbit of a_n x^n consists of a_n b_2^2 (x+b_1)^n
     return prime_power * prime_power_pred / 2;
   else {
