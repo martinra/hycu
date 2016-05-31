@@ -217,14 +217,7 @@ reduce(
   // we could use FLINT for this, but composition of polynomials hangs
   auto fq_ctx = base_field_table->fq_ctx;
 
-  vector<fq_nmod_struct*> fq_rhs;
-  fq_rhs.reserve(curve.degree()+1);
-  for ( int e : curve.rhs_coeff_exponents() ) {
-    auto fq_coeff = new fq_nmod_struct;
-    fq_nmod_init(fq_coeff, fq_ctx);
-    fq_nmod_set(fq_coeff, base_field_table->at(e), fq_ctx);
-    fq_rhs.push_back(fq_coeff);
-  } 
+  vector<fq_nmod_struct*> fq_rhs = curve.rhs_coefficients();
 
   fq_nmod_t shift;
   fq_nmod_init(shift, fq_ctx);
@@ -245,23 +238,15 @@ reduce(
 
   fq_nmod_neg(shift, shift, fq_ctx);
 
-  auto fq_rhs_shifted = CurveIterator::_shift_fq_polynomial(fq_rhs, shift, fq_ctx);
-
-  vector<int> rhs_shifted;
-  rhs_shifted.reserve(curve.degree()+1);
-  for ( auto c : fq_rhs_shifted )
-    rhs_shifted.push_back(base_field_table->generator_power(c));
-
+  auto rhs_shifted = Curve( base_field_table,
+                            CurveIterator::_shift_fq_polynomial(fq_rhs, shift, fq_ctx) )
+                       .rhs_coeff_exponents();
 
   for ( auto c : fq_rhs ) {
     fq_nmod_clear(c, fq_ctx);
     delete c;
   }
   fq_nmod_clear(shift, fq_ctx);
-  for ( auto c : fq_rhs_shifted ) {
-    fq_nmod_clear(c, fq_ctx);
-    delete c;
-  }
 
 
   // multiplicative reduction via rescaling of x and y
@@ -311,11 +296,22 @@ reduce(
 //   if ( !CurveIterator::is_partially_reduced(curve) )
 //     return false;
 // 
-//   for ( unsigned int ix=1; ix<curve.prime_power(); ++ix )
-//     if ( curve > CurveIterator::partially_reduce(CurveIterator::z_shifted_curve(curve, ix)) )
+//   for ( unsigned int ix=0; ix<curve.prime_power()-1; ++ix )
+//     if ( curve > CurveIterator::reduce(CurveIterator::z_shifted_curve(curve, ix)) )
 //       return false;
 // 
 //   return true;
+// }
+// 
+// Curve
+// CurveIterator::
+// z_shift(
+//     const Curve * curve,
+//     unsigned int generator_power
+//     )
+// {
+//  
+// 
 // }
 
 vector<fq_nmod_struct*>

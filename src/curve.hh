@@ -38,6 +38,7 @@
 
 
 using std::map;
+using std::move;
 using std::shared_ptr;
 using std::vector;
 using std::tuple;
@@ -46,7 +47,13 @@ using std::tuple;
 class Curve
 {
   public:
-    Curve(shared_ptr<FqElementTable> table, const vector<int> poly_coeff_exponents);
+    Curve(shared_ptr<FqElementTable> table, const vector<int> & poly_coeff_exponents) :
+      table( table ), poly_coeff_exponents ( poly_coeff_exponents ) {};
+    Curve(shared_ptr<FqElementTable> table, vector<int> && poly_coeff_exponents) :
+      table( table ), poly_coeff_exponents ( move(poly_coeff_exponents) ) {};
+    Curve(shared_ptr<FqElementTable> table, const vector<fq_nmod_struct*> & poly_coefficients);
+    Curve(shared_ptr<FqElementTable> table, vector<fq_nmod_struct*> && poly_coefficients);
+
 
     inline const shared_ptr<FqElementTable> base_field_table() const
     {
@@ -58,11 +65,28 @@ class Curve
 
     int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
     int genus() const;
+
     inline vector<int> rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
+    vector<fq_nmod_struct*> rhs_coefficients() const
+    {
+      vector<fq_nmod_struct*> fq_rhs;
+      fq_rhs.reserve(this->degree()+1);
+
+      for ( int e : this->rhs_coeff_exponents() ) {
+        auto fq_coeff = new fq_nmod_struct;
+        fq_nmod_init(fq_coeff, this->table->fq_ctx);
+        fq_nmod_set(fq_coeff, this->table->at(e), this->table->fq_ctx);
+        fq_rhs.push_back(fq_coeff);
+      } 
+
+      return fq_rhs;
+    };
+
     inline vector<unsigned int> rhs_support() const
     {
       return Curve::_support(this->table, this->poly_coeff_exponents);
     }
+
     static vector<unsigned int> _support(shared_ptr<FqElementTable> table, vector<int> poly_coeff_exponents);
 
     bool has_squarefree_rhs();

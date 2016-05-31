@@ -66,14 +66,32 @@ operator<<(
 Curve::
 Curve(
     shared_ptr<FqElementTable> table,
-    const vector<int> poly_coeff_exponents
+    const vector<fq_nmod_struct*> & poly_coefficients
     ) :
     table( table )
 {
-  this->poly_coeff_exponents = move(poly_coeff_exponents);
+  this->poly_coeff_exponents.reserve(poly_coefficients.size());
+  for ( auto c : poly_coefficients )
+    this->poly_coeff_exponents.push_back(table->generator_power(c));
+}
 
-  while ( this->poly_coeff_exponents.back() == this->table->zero_index() )
-    this->poly_coeff_exponents.pop_back();
+Curve::
+Curve(
+    shared_ptr<FqElementTable> table,
+    vector<fq_nmod_struct*> && poly_coefficients
+    ) :
+    table( table )
+{
+  auto coefficients = move(poly_coefficients);
+
+  this->poly_coeff_exponents.reserve(poly_coefficients.size());
+  for ( auto c : coefficients )
+    this->poly_coeff_exponents.push_back(table->generator_power(c));
+
+  for ( auto c : coefficients ) {
+    fq_nmod_clear(c, this->table->fq_ctx);
+    delete c;
+  }
 }
 
 int
