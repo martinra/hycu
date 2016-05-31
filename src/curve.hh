@@ -48,9 +48,9 @@ class Curve
   public:
     Curve(shared_ptr<FqElementTable> table, const vector<int> poly_coeff_exponents);
 
-    inline const FqElementTable & base_field_table() const
+    inline const shared_ptr<FqElementTable> base_field_table() const
     {
-      return *(this->table);
+      return this->table;
     };
     unsigned int inline prime() const { return this->table->prime; };
     unsigned int inline prime_exponent() const { return this->table->prime_exponent; };
