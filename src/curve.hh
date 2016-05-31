@@ -71,6 +71,10 @@ class Curve
 
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
+
+    Curve twist() const;
+
+
     void count(ReductionTable & table);
     void inline count(const shared_ptr<ReductionTable> table)
     {

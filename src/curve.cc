@@ -155,6 +155,28 @@ convert_poly_coeff_exponents(
   return converted;
 }
 
+Curve
+Curve::
+twist()
+  const
+{
+  // here we use that p != 2
+  unsigned int nonsquare = this->table->power_coset_representatives(2)[1];
+
+  vector<int> twisted_poly_coeff_exponents;
+  twisted_poly_coeff_exponents.reserve(this->degree()+1);
+
+  for ( int coeff : this->poly_coeff_exponents ) {
+    if ( this->table->is_zero(coeff) )
+      twisted_poly_coeff_exponents.push_back(coeff);
+    else
+      twisted_poly_coeff_exponents.push_back(
+          this->table->reduce_index(coeff + nonsquare) );
+  }
+
+  return Curve(this->table, twisted_poly_coeff_exponents);
+}
+
 void
 Curve::
 count(
