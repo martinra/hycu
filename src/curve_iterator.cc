@@ -27,8 +27,6 @@
 #include "curve_iterator.hh"
 
 #include "flint/fmpz.h"
-#include "flint/fq_nmod.h"
-#include "flint/fq_nmod_poly.h"
 
 
 using namespace std;
@@ -247,35 +245,7 @@ reduce(
 
   fq_nmod_neg(shift, shift, fq_ctx);
 
-
-  vector<fq_nmod_struct*> fq_rhs_shifted;
-  for ( auto c : fq_rhs ) {
-    auto fq_coeff = new fq_nmod_struct;
-    fq_nmod_init(fq_coeff, fq_ctx);
-    fq_nmod_set(fq_coeff, c, fq_ctx);
-    fq_rhs_shifted.push_back(fq_coeff);
-  }
-
-  fmpz_t bin;
-  fmpz_init(bin);
-  fq_nmod_t shift_pw;
-  fq_nmod_init(shift_pw, fq_ctx);
-  fq_nmod_set(shift_pw, shift, fq_ctx);
-  // contribution of shift^dx
-  for ( unsigned int dx=1; dx<=curve.degree(); ++dx ) {
-    // from the term (x + shift)^ox
-    for ( unsigned int ox=curve.degree(); ox>=dx; --ox ) {
-      fmpz_bin_uiui(bin, ox, dx);
-      fq_nmod_set_ui(tmp, fmpz_get_ui(bin) , fq_ctx);
-      fq_nmod_mul(tmp, tmp, shift_pw, fq_ctx);
-      fq_nmod_mul(tmp, tmp, fq_rhs[ox], fq_ctx);
-      fq_nmod_add(fq_rhs_shifted[ox-dx], fq_rhs_shifted[ox-dx], tmp, fq_ctx);
-    }
-
-    if ( dx!=curve.degree() )
-      fq_nmod_mul(shift_pw, shift_pw, shift, fq_ctx);
-  }
-
+  auto fq_rhs_shifted = CurveIterator::_shift_fq_polynomial(fq_rhs, shift, fq_ctx);
 
   vector<int> rhs_shifted;
   rhs_shifted.reserve(curve.degree()+1);
@@ -288,9 +258,10 @@ reduce(
     delete c;
   }
   fq_nmod_clear(shift, fq_ctx);
-  fq_nmod_clear(tmp, fq_ctx);
-  fmpz_clear(bin);
-  fq_nmod_clear(shift_pw, fq_ctx);
+  for ( auto c : fq_rhs_shifted ) {
+    fq_nmod_clear(c, fq_ctx);
+    delete c;
+  }
 
 
   // multiplicative reduction via rescaling of x and y
@@ -346,3 +317,55 @@ reduce(
 // 
 //   return true;
 // }
+
+vector<fq_nmod_struct*>
+CurveIterator::
+_shift_fq_polynomial(
+  const vector<fq_nmod_struct*> & fq_poly,
+  const fq_nmod_t shift,
+  const fq_nmod_ctx_t fq_ctx
+  )
+{
+  fmpz_t binomial;
+  fmpz_init(binomial);
+
+  fq_nmod_t shift_pw;
+  fq_nmod_init(shift_pw, fq_ctx);
+  fq_nmod_set(shift_pw, shift, fq_ctx);
+
+  fq_nmod_t tmp;
+  fq_nmod_init(tmp, fq_ctx);
+
+
+  // contribution of shift^0
+  vector<fq_nmod_struct*> fq_poly_shifted;
+  fq_poly_shifted.reserve(fq_poly.size());
+  for ( auto c : fq_poly ) {
+    auto fq_coeff = new fq_nmod_struct;
+    fq_nmod_init(fq_coeff, fq_ctx);
+    fq_nmod_set(fq_coeff, c, fq_ctx);
+    fq_poly_shifted.push_back(fq_coeff);
+  }
+
+  // contribution of shift^dx
+  for ( unsigned int dx=1; dx<fq_poly.size(); ++dx ) {
+    // from the term (x + shift)^ox
+    for ( unsigned int ox=fq_poly.size()-1; ox>=dx; --ox ) {
+      fmpz_bin_uiui(binomial, ox, dx);
+      fq_nmod_set_ui(tmp, fmpz_get_ui(binomial) , fq_ctx);
+      fq_nmod_mul(tmp, tmp, shift_pw, fq_ctx);
+      fq_nmod_mul(tmp, tmp, fq_poly[ox], fq_ctx);
+      fq_nmod_add(fq_poly_shifted[ox-dx], fq_poly_shifted[ox-dx], tmp, fq_ctx);
+    }
+
+    fq_nmod_mul(shift_pw, shift_pw, shift, fq_ctx);
+  }
+
+
+  fmpz_clear(binomial);
+  fq_nmod_clear(shift_pw, fq_ctx);
+  fq_nmod_clear(tmp, fq_ctx);
+
+
+  return fq_poly_shifted;
+}

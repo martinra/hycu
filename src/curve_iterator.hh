@@ -28,6 +28,9 @@
 #include <vector>
 #include <tuple>
 
+#include "flint/fq_nmod.h"
+
+
 #include "block_iterator.hh"
 #include "curve.hh"
 #include "fq_element_table.hh"
@@ -60,6 +63,8 @@ class CurveIterator
 
     vector<BlockIterator> enumerators;
     vector<BlockIterator>::iterator enumerator_it;
+
+    static vector<fq_nmod_struct*> _shift_fq_polynomial(const vector<fq_nmod_struct*> & fq_poly, const fq_nmod_t shift, const fq_nmod_ctx_t fq_ctx);
 };
 
 #endif
