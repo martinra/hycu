@@ -68,10 +68,7 @@ class IsomorphismClass
     ValueType value;
 
   private:
-    IsomorphismClass(unsigned int prime_power_pred, set<vector<int>> representatives) :
-      prime_power_pred ( prime_power_pred ), value ( representatives ) {};
-  
-    unsigned int prime_power_pred;
+    const Curve & curve;
 };
 
 

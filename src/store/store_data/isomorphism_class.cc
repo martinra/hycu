@@ -32,39 +32,25 @@ IsomorphismClass::
 IsomorphismClass(
     const Curve & curve
     ) :
-    prime_power_pred ( curve.prime_power() - 1 )
+    curve ( curve )
 {
   // this is not implemented for the twists
-  if ( prime_power_pred == 1 ) throw;
+  if ( curve.prime_power() == 2 ) throw;
 
-  // fixme: decide whether the curve represents a minimal curve in its isomorphism class
-  // by checking the reductions of all rhs(x,z+ax) and deciding on the minimal one
-  throw;
+  if ( CurveIterator::is_minimal_in_isomorphism_class(curve) )
+    this->value.representatives.insert(curve.rhs_coeff_exponents());
 }
 
 const IsomorphismClass
 IsomorphismClass::
 twist()
 {
-  set<vector<int>> twisted_representatives;
-  vector<int> twisted_poly_coeff_exponents;
-
-  auto zero_index = this->prime_power_pred;
-  // here we use that p != 2
-  constexpr unsigned int nonsquare = 1;
-
-  for ( const auto & poly_coeff_exponents : this->value.representatives ) {
-    twisted_poly_coeff_exponents.reserve(poly_coeff_exponents.size());
-    for ( int coeff : poly_coeff_exponents ) {
-      if ( coeff == zero_index )
-        twisted_poly_coeff_exponents.push_back(coeff);
-      else
-        twisted_poly_coeff_exponents.push_back((coeff + nonsquare) % prime_power_pred);
-    }
-    twisted_representatives.insert(twisted_poly_coeff_exponents);
+  if ( this->value.representatives.size() > 1 ) {
+    cerr << "values of IsomorphismClass stores must have at most one representative" << endl;
+    throw;
   }
 
-  return IsomorphismClass(prime_power_pred, twisted_representatives);
+  return IsomorphismClass(curve.twist());
 }
 
 ostream &
