@@ -26,9 +26,9 @@
 #include "test_store.hh"
 #include "worker_pool/standalone.hh"
 
-#include "reference_store_q5_g1.hh"
-#include "reference_store_q7_g1.hh"
-#include "reference_store_q7_g2.hh"
+#include "reference_store_ec_q5_g1.hh"
+#include "reference_store_ec_q7_g1.hh"
+#include "reference_store_ec_q7_g2.hh"
 
 
 using namespace std;

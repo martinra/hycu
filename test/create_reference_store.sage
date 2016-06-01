@@ -1,9 +1,9 @@
-def write_reference_store(prime, genus):
+def write_reference_store_ec(prime, genus):
   curve_count = count_curves(prime, genus)
 
   code = """
-#ifndef _H_TEST_STORE_REFERENCE_Q{prime_power}_G{genus}
-#define _H_TEST_STORE_REFERENCE_Q{prime_power}_G{genus}
+#ifndef _H_TEST_REFERENCE_STORE_EC_Q{prime_power}_G{genus}
+#define _H_TEST_REFERENCE_STORE_EC_Q{prime_power}_G{genus}
 
 
 template <>
@@ -49,7 +49,7 @@ create_reference_store<{prime_power},{genus},
 #endif
 """
 
-  with file("reference_store_q{}_g{}.hh".format(prime,genus), 'w') as output:
+  with file("reference_store_ec_q{}_g{}.hh".format(prime,genus), 'w') as output:
     output.write(code.format(prime_power = prime, genus = genus))
 
 
