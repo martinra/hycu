@@ -25,9 +25,11 @@
 #include <sstream>
 #include <string>
 
+#include "store/curve_data/discriminant.hh"
 #include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store/store.hh"
-#include "store/store_data.hh"
+#include "store/store_data/count.hh"
+#include "store/store_data/isomorphism_class.hh"
 
 
 using namespace std;
@@ -181,13 +183,13 @@ extract_store(
 
 
 template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>;
-template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>;
+template class Store<HyCu::CurveData::Discriminant, HyCu::StoreData::IsomorphismClass>;
 
 typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count> StoreEC;
-typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative> StoreER;
+typedef Store<HyCu::CurveData::Discriminant, HyCu::StoreData::IsomorphismClass> StoreDI;
 
 template ostream & operator<<(ostream & stream, const StoreEC & store);
-template ostream & operator<<(ostream & stream, const StoreER & store);
+template ostream & operator<<(ostream & stream, const StoreDI & store);
 
 template istream & operator>>(istream & stream, StoreEC & store);
-template istream & operator>>(istream & stream, StoreER & store);
+template istream & operator>>(istream & stream, StoreDI & store);

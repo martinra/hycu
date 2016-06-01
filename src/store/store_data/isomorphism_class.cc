@@ -21,15 +21,15 @@
 ===============================================================================*/
 
 #include "curve.hh"
-#include "store/store_data.hh"
+#include "store/store_data/isomorphism_class.hh"
 
 
 using namespace HyCu::StoreData;
 using namespace std;
 
 
-Representative::
-Representative(
+IsomorphismClass::
+IsomorphismClass(
     const Curve & curve
     ) :
     prime_power_pred ( curve.prime_power() - 1 )
@@ -42,8 +42,8 @@ Representative(
   throw;
 }
 
-const Representative
-Representative::
+const IsomorphismClass
+IsomorphismClass::
 twist()
 {
   set<vector<int>> twisted_representatives;
@@ -64,14 +64,14 @@ twist()
     twisted_representatives.insert(twisted_poly_coeff_exponents);
   }
 
-  return Representative(prime_power_pred, twisted_representatives);
+  return IsomorphismClass(prime_power_pred, twisted_representatives);
 }
 
 ostream &
 HyCu::StoreData::
 operator<<(
     ostream & stream,
-    const Representative::ValueType & value
+    const IsomorphismClass::ValueType & value
     )
 {
   bool start = true;
@@ -80,14 +80,14 @@ operator<<(
       stream << ";";
     else
       start = false;
-    Representative::ValueType::insert_representative(stream, representative);
+    IsomorphismClass::ValueType::insert_representative(stream, representative);
   }
 
   return stream;
 }
 
 ostream &
-Representative::ValueType::
+IsomorphismClass::ValueType::
 insert_representative(
     ostream & stream,
     const vector<int> & representative
@@ -106,7 +106,7 @@ istream &
 HyCu::StoreData::
 operator>>(
     istream & stream,
-    Representative::ValueType & value
+    IsomorphismClass::ValueType & value
     )
 {
   vector<int> representative;
@@ -114,7 +114,7 @@ operator>>(
 
   value.representatives.clear();
   while ( true ) {
-    Representative::ValueType::extract_representative(stream,representative);
+    IsomorphismClass::ValueType::extract_representative(stream,representative);
     value.representatives.insert(representative);
   
     delimiter = stream.peek();
@@ -128,7 +128,7 @@ operator>>(
 }
 
 istream &
-Representative::ValueType::
+IsomorphismClass::ValueType::
 extract_representative(
     istream & stream,
     vector<int> & representative

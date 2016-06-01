@@ -26,9 +26,11 @@
 
 #include <memory>
 
+#include "store/curve_data/discriminant.hh"
 #include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store.hh"
-#include "store/store_data.hh"
+#include "store/store_data/count.hh"
+#include "store/store_data/isomorphism_class.hh"
 
 
 using std::shared_ptr;
@@ -55,7 +57,7 @@ class StoreFactory :
 
 
 // todo: choose more descriptive names
-enum StoreType { EC, ER };
+enum StoreType { EC, DI };
 
 inline
 const shared_ptr<StoreFactoryInterface>
@@ -71,10 +73,10 @@ create_store_factory(
                      >() );
       break;
 
-    case StoreType::ER:
+    case StoreType::DI:
       return dynamic_pointer_cast<StoreFactoryInterface>(
-          make_shared< StoreFactory<Store<HyCu::CurveData::ExplicitRamificationHasseWeil,
-                                          HyCu::StoreData::Representative>>
+          make_shared< StoreFactory<Store<HyCu::CurveData::Discriminant,
+                                          HyCu::StoreData::IsomorphismClass>>
                      >() );
       break;
 

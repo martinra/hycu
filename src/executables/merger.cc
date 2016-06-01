@@ -29,7 +29,8 @@
 
 #include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store/store.hh"
-#include "store/store_data.hh"
+#include "store/store_data/count.hh"
+#include "store/store_data/isomorphism_class.hh"
 
 
 namespace filesys = boost::filesystem;
@@ -55,7 +56,7 @@ main(
   visible_options.add_options()
     ( "help,h", "show help message" )
     ( "store-type", value<string>(),
-      "the type of the store; c: Count, r: Representative" )
+      "the type of the store; c: Count, i: Isomorphism Class" )
     ( "input-path", value<string>(),
       "path to the input folder" )
     ( "output-file", value<string>(),
@@ -115,8 +116,8 @@ main(
   if ( store_type == "c" )
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
       (input_files, output_file);
-  else if ( store_type == "r" )
-    merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>>
+  else if ( store_type == "i" )
+    merge<Store<HyCu::CurveData::Discriminant, HyCu::StoreData::IsomorphimClass>>
       (input_files, output_file);
   else {
       cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;

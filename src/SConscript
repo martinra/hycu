@@ -37,7 +37,7 @@ sources_store = [
     "store/curve_data/discriminant.cc"
   , "store/curve_data/explicit_ramification_hasse_weil.cc"
   , "store/store.cc"
-  , "store/store_data.cc"
+  , "store/store_data/isomorphism_class.cc"
   ]
 objs_store = [ env.Object(s) for s in sources_store ]
 Export("objs_store")

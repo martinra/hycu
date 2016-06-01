@@ -62,6 +62,16 @@ class Discriminant
 
     struct ValueType
     {
+      unsigned int discriminant;
+
+
+      inline
+      ValueType(
+          ) :
+        discriminant ( 0 )
+      {
+      };
+
       inline
       ValueType(
           unsigned int discriminant
@@ -70,14 +80,15 @@ class Discriminant
       {
       };
 
-
       explicit inline ValueType( const Discriminant & data ) :
         ValueType ( data.value.discriminant ) {};
-
-      unsigned int discriminant;
+      explicit inline ValueType( const Discriminant && data ) :
+        ValueType ( data.value.discriminant ) {};
     };
 
     Discriminant twist();
+
+    inline ValueType as_value() { return ValueType( *this ); };
 
   private:
     Discriminant(
