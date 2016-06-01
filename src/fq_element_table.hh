@@ -124,6 +124,7 @@ class FqElementTable
       return make_tuple(0, (int)this->prime_power);
     };
 
+    // we assume that the 0-th element represents the trivial coset
     vector<int> power_coset_representatives(unsigned int n) const;
 
 

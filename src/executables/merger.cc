@@ -27,7 +27,7 @@
 #include <iostream>
 #include <vector>
 
-#include "store/curve_data.hh"
+#include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store/store.hh"
 #include "store/store_data.hh"
 

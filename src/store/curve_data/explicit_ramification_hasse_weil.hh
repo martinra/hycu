@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 
-#ifndef _H_STORE_CURVE_DATA
-#define _H_STORE_CURVE_DATA
+#ifndef _H_STORE_CURVE_DATA_EXPLICT_RAMIFICATION_HASSE_WEIL
+#define _H_STORE_CURVE_DATA_EXPLICT_RAMIFICATION_HASSE_WEIL
 
 #include <vector>
 #include <iostream>

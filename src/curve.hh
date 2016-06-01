@@ -95,6 +95,7 @@ class Curve
 
     vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
+    unsigned int discriminant() const;
 
     Curve twist() const;
 

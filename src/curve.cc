@@ -26,6 +26,7 @@
 #include <flint/fq_nmod.h>
 #include <flint/fq_nmod_poly.h>
 #include <flint/fmpz.h>
+#include <flint/fmpz_poly.h>
 #include <flint/nmod_poly.h>
 #include <map>
 #include <memory>
@@ -171,6 +172,40 @@ convert_poly_coeff_exponents(
                                               : table.prime_power_pred );
 
   return converted;
+}
+
+unsigned int
+Curve::
+discriminant()
+  const
+{
+  if ( this->prime_exponent() != 1 ) {
+    cerr << "discriminant implemented only over prime fields" << endl;
+    throw;
+  }
+
+  const auto & rhs = this->rhs_coefficients();
+  fmpz_poly_t lifted_rhs;
+  fmpz_poly_init2(lifted_rhs, this->degree()+1);
+  for ( unsigned int dx=0; dx <= this->degree(); ++dx )
+    fmpz_poly_set_coeff_ui(lifted_rhs, dx, nmod_poly_get_coeff_ui(rhs[dx], 0));
+
+  fmpz_t fmpz_discriminant;
+  fmpz_init(fmpz_discriminant);
+  fmpz_poly_discriminant(fmpz_discriminant, lifted_rhs);
+
+  fmpz_t fmpz_p;
+  fmpz_init(fmpz_p);
+  fmpz_set_ui(fmpz_p, this->prime());
+  fmpz_fdiv_r(fmpz_discriminant, fmpz_discriminant, fmpz_p);
+
+  unsigned int discriminant = fmpz_get_ui(fmpz_discriminant);
+
+  fmpz_poly_clear(lifted_rhs);
+  fmpz_clear(fmpz_discriminant);
+  fmpz_clear(fmpz_p);
+
+  return discriminant;
 }
 
 Curve
