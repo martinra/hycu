@@ -25,11 +25,7 @@
 #include <sstream>
 #include <string>
 
-#include "store/curve_data/discriminant.hh"
-#include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store/store.hh"
-#include "store/store_data/count.hh"
-#include "store/store_data/isomorphism_class.hh"
 #include "store/store_factory.hh"
 
 

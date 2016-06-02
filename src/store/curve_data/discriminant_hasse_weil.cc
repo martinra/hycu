@@ -21,15 +21,15 @@
 ===============================================================================*/
 
 
-#include "store/curve_data/discriminant.hh"
+#include "store/curve_data/discriminant_hasse_weil.hh"
 
 
 using namespace std;
 using namespace HyCu::CurveData;
 
 
-Discriminant
-Discriminant::
+DiscriminantHasseWeil
+DiscriminantHasseWeil::
 twist()
 {
   unsigned int nonsquare_generator_power =
@@ -38,14 +38,14 @@ twist()
      this->base_field_table->reduce_generator_exponent(
        (2*this->degree-2) * nonsquare_generator_power ) );
 
-  return Discriminant(base_field_table, this->degree, this->prime, nonsquare_power * this->value.discriminant % this->prime );
+  return DiscriminantHasseWeil(base_field_table, this->degree, this->prime, nonsquare_power * this->value.discriminant % this->prime );
 }
 
 ostream &
 HyCu::CurveData::
 operator<<(
     ostream & stream,
-    const Discriminant::ValueType & value
+    const DiscriminantHasseWeil::ValueType & value
     )
 {
   stream << value.discriminant;
@@ -57,7 +57,7 @@ istream &
 HyCu::CurveData::
 operator>>(
     istream & stream,
-    Discriminant::ValueType & value
+    DiscriminantHasseWeil::ValueType & value
     )
 {
   stream >> value.discriminant;

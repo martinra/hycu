@@ -26,7 +26,7 @@
 
 #include <memory>
 
-#include "store/curve_data/discriminant.hh"
+#include "store/curve_data/discriminant_hasse_weil.hh"
 #include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store.hh"
 #include "store/store_data/count.hh"
@@ -75,13 +75,13 @@ struct StoreTypeResolver<RHC>
 };
 
 
-template class Store<HyCu::CurveData::Discriminant, HyCu::StoreData::IsomorphismClass>;
+template class Store<HyCu::CurveData::DiscriminantHasseWeil, HyCu::StoreData::IsomorphismClass>;
 
 template<>
 struct StoreTypeResolver<DHI>
 {
   typedef
-    Store<HyCu::CurveData::Discriminant, HyCu::StoreData::IsomorphismClass>
+    Store<HyCu::CurveData::DiscriminantHasseWeil, HyCu::StoreData::IsomorphismClass>
     type;
 };
 

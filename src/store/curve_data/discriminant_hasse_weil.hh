@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 
-#ifndef _H_STORE_CURVE_DATA_DISCRIMINANT
-#define _H_STORE_CURVE_DATA_DISCRIMINANT
+#ifndef _H_STORE_CURVE_DATA_DISCRIMINANT_HASSE_WEIL
+#define _H_STORE_CURVE_DATA_DISCRIMINANT_HASSE_WEIL
 
 #include <vector>
 #include <iostream>
@@ -44,17 +44,17 @@ namespace HyCu
 namespace CurveData
 {
 
-class Discriminant
+class DiscriminantHasseWeil
 {
   public:
-    Discriminant(const Curve & curve) :
+    DiscriminantHasseWeil(const Curve & curve) :
       base_field_table ( curve.base_field_table() ),
       degree ( curve.degree() ),
       prime ( curve.prime() ),
       value( curve.discriminant() )
     {
       if ( curve.prime_exponent() != 1 ) {
-        cerr << "HyCu::CurveData::Discriminant: implemented only for curves over prime fields" << endl;
+        cerr << "HyCu::CurveData::DiscriminantHasseWeil: implemented only for curves over prime fields" << endl;
         throw;
       }
     };
@@ -80,18 +80,18 @@ class Discriminant
       {
       };
 
-      explicit inline ValueType( const Discriminant & data ) :
+      explicit inline ValueType( const DiscriminantHasseWeil & data ) :
         ValueType ( data.value.discriminant ) {};
-      explicit inline ValueType( const Discriminant && data ) :
+      explicit inline ValueType( const DiscriminantHasseWeil && data ) :
         ValueType ( data.value.discriminant ) {};
     };
 
-    Discriminant twist();
+    DiscriminantHasseWeil twist();
 
     inline ValueType as_value() { return ValueType( *this ); };
 
   private:
-    Discriminant(
+    DiscriminantHasseWeil(
         const shared_ptr<FqElementTable> base_field_table,
         unsigned int degree,
         unsigned int prime,
@@ -115,15 +115,15 @@ class Discriminant
 inline
 bool
 operator==(
-    const Discriminant::ValueType & lhs,
-    const Discriminant::ValueType & rhs
+    const DiscriminantHasseWeil::ValueType & lhs,
+    const DiscriminantHasseWeil::ValueType & rhs
     )
 {
   return lhs.discriminant == rhs.discriminant;
 };
 
-ostream & operator<<(ostream & stream, const Discriminant::ValueType & value);
-istream & operator>>(istream & stream, Discriminant::ValueType & value);
+ostream & operator<<(ostream & stream, const DiscriminantHasseWeil::ValueType & value);
+istream & operator>>(istream & stream, DiscriminantHasseWeil::ValueType & value);
 
 }
 }
@@ -135,13 +135,13 @@ namespace std
 
 
   template<> struct
-  less<Discriminant::ValueType>
+  less<DiscriminantHasseWeil::ValueType>
   {
     inline
     bool
     operator()(
-        const Discriminant::ValueType & lhs,
-        const Discriminant::ValueType & rhs
+        const DiscriminantHasseWeil::ValueType & lhs,
+        const DiscriminantHasseWeil::ValueType & rhs
         ) const
     {
       return lhs.discriminant < rhs.discriminant;
