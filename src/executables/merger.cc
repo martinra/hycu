@@ -32,6 +32,7 @@
 #include "store/store.hh"
 #include "store/store_data/count.hh"
 #include "store/store_data/isomorphism_class.hh"
+#include "store/store_factory.hh"
 
 
 namespace filesys = boost::filesystem;
@@ -115,13 +116,9 @@ main(
 
   string store_type = options_map["store-type"].as<string>();
   if ( store_type == "rhc" )
-    merge<Store< HyCu::CurveData::ExplicitRamificationHasseWeil,
-                 HyCu::StoreData::Count >>
-      (input_files, output_file);
+    merge<StoreTypeResolver<RHC>::type> (input_files, output_file);
   else if ( store_type == "dhi" )
-    merge<Store< HyCu::CurveData::Discriminant,
-                 HyCu::StoreData::IsomorphismClass >>
-      (input_files, output_file);
+    merge<StoreTypeResolver<DHI>::type> (input_files, output_file);
   else {
       cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
       exit(1);
