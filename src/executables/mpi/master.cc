@@ -107,13 +107,13 @@ main_master(
 
   StoreType store_type;
   if ( !config_yaml["StoreType"] )
-    store_type = StoreType::EC;
+    store_type = StoreType::RHC;
   else {
     auto store_type_str = config_yaml["StoreType"].as<string>();
-    if ( store_type_str == "EC" )
-      store_type = StoreType::EC;
-    else if ( store_type_str == "ER" )
-      store_type = StoreType::ER;
+    if ( store_type_str == "RHC" )
+      store_type = StoreType::RHC;
+    else if ( store_type_str == "DHI" )
+      store_type = StoreType::DHI;
     else {
       cerr << "Invalid store type given" << endl;
       exit(1);

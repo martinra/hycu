@@ -57,7 +57,7 @@ class StoreFactory :
 
 
 // todo: choose more descriptive names
-enum StoreType { EC, DI };
+enum StoreType { RHC, DHI };
 
 inline
 const shared_ptr<StoreFactoryInterface>
@@ -66,14 +66,14 @@ create_store_factory(
     )
 {
   switch ( store_type ) {
-    case StoreType::EC:
+    case StoreType::RHC:
       return dynamic_pointer_cast<StoreFactoryInterface>(
           make_shared< StoreFactory<Store<HyCu::CurveData::ExplicitRamificationHasseWeil,
                                           HyCu::StoreData::Count>>
                      >() );
       break;
 
-    case StoreType::DI:
+    case StoreType::DHI:
       return dynamic_pointer_cast<StoreFactoryInterface>(
           make_shared< StoreFactory<Store<HyCu::CurveData::Discriminant,
                                           HyCu::StoreData::IsomorphismClass>>

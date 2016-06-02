@@ -27,6 +27,7 @@
 #include <iostream>
 #include <vector>
 
+#include "store/curve_data/discriminant.hh"
 #include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store/store.hh"
 #include "store/store_data/count.hh"
@@ -56,7 +57,7 @@ main(
   visible_options.add_options()
     ( "help,h", "show help message" )
     ( "store-type", value<string>(),
-      "the type of the store; c: Count, i: Isomorphism Class" )
+      "the type of the store;\n  rhc: ramification,hasse-weil;Count\n  dhi: discrimianant,hasse-weil;isomorphism-class" )
     ( "input-path", value<string>(),
       "path to the input folder" )
     ( "output-file", value<string>(),
@@ -113,11 +114,13 @@ main(
   filesys::path output_file(options_map["output-file"].as<string>());
 
   string store_type = options_map["store-type"].as<string>();
-  if ( store_type == "c" )
-    merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
+  if ( store_type == "rhc" )
+    merge<Store< HyCu::CurveData::ExplicitRamificationHasseWeil,
+                 HyCu::StoreData::Count >>
       (input_files, output_file);
-  else if ( store_type == "i" )
-    merge<Store<HyCu::CurveData::Discriminant, HyCu::StoreData::IsomorphimClass>>
+  else if ( store_type == "dhi" )
+    merge<Store< HyCu::CurveData::Discriminant,
+                 HyCu::StoreData::IsomorphismClass >>
       (input_files, output_file);
   else {
       cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
