@@ -49,12 +49,14 @@ namespace CurveData
 class ExplicitRamificationHasseWeil
 {
   public:
-    ExplicitRamificationHasseWeil(const Curve & curve) :
+    ExplicitRamificationHasseWeil(
+        const Curve & curve
+        ) :
       ExplicitRamificationHasseWeil(
           curve.ramification_type(),
           curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) )
     {
-      // todo: we use this asumption in the implementation of twist. Check the general formulas.
+      // we use this asumption in the implementation of twist. Check the general formulas.
       if ( curve.prime_exponent() != 1 ) {
         cerr << "ExplicitRamificationHasseWeil: only implemented for prime_exponent 1" << endl;
         throw;
@@ -63,32 +65,81 @@ class ExplicitRamificationHasseWeil
     
     ExplicitRamificationHasseWeil twist();
 
+
     struct ValueType
     {
       vector<int> ramification_type;
       vector<int> hasse_weil_offsets;
   
 
-      ValueType() {};
-      ValueType(const vector<int> & ramification_type, const vector<int> & hasse_weil_offsets) :
-        ramification_type ( ramification_type ), hasse_weil_offsets ( hasse_weil_offsets ) {};
-      ValueType(vector<int> && ramification_type, vector<int> && hasse_weil_offsets) :
-        ramification_type ( move(ramification_type) ), hasse_weil_offsets ( move(hasse_weil_offsets) ) {};
+      inline
+      ValueType()
+      {
+      };
 
-      explicit inline ValueType(const ExplicitRamificationHasseWeil & data) :
-        ValueType(data.value.ramification_type, data.value.hasse_weil_offsets) {};
-      explicit inline ValueType(ExplicitRamificationHasseWeil && data) :
-        ValueType(data.value.ramification_type, data.value.hasse_weil_offsets) {};
+      inline
+      ValueType(
+          const vector<int> & ramification_type,
+          const vector<int> & hasse_weil_offsets
+          ) :
+        ramification_type ( ramification_type ),
+        hasse_weil_offsets ( hasse_weil_offsets )
+      {
+      };
 
+      inline
+      ValueType(
+          vector<int> && ramification_type,
+          vector<int> && hasse_weil_offsets
+          ) :
+        ramification_type ( ramification_type ),
+        hasse_weil_offsets ( hasse_weil_offsets )
+      {
+      };
+
+      explicit
+      inline
+      ValueType(
+          const ExplicitRamificationHasseWeil & data
+          ) :
+        ValueType ( data.value.ramification_type, data.value.hasse_weil_offsets )
+      {
+      };
+
+      explicit
+      inline
+      ValueType(
+          ExplicitRamificationHasseWeil && data
+          ) :
+        ValueType ( data.value.ramification_type, data.value.hasse_weil_offsets )
+      {
+      };
     };
 
-    inline ValueType as_value() { return ValueType( *this ); };
+    inline
+    ValueType
+    as_value()
+    {
+      return ValueType( *this );
+    };
 
   private:
-    ExplicitRamificationHasseWeil(const vector<int> & ramification_type, const vector<int> & hasse_weil_offsets) :
-      value ( ValueType(ramification_type, hasse_weil_offsets) ) {};
-    ExplicitRamificationHasseWeil(vector<int> && ramification_type, vector<int> && hasse_weil_offsets) :
-      value( ValueType(ramification_type, hasse_weil_offsets) ) {};
+    ExplicitRamificationHasseWeil(
+        const vector<int> & ramification_type,
+        const vector<int> & hasse_weil_offsets
+        ) :
+      value ( ValueType(ramification_type, hasse_weil_offsets) )
+    {
+    };
+
+    ExplicitRamificationHasseWeil(
+        vector<int> && ramification_type,
+        vector<int> && hasse_weil_offsets
+        ) :
+      value( ValueType(ramification_type, hasse_weil_offsets) )
+    {
+    };
+
 
     ValueType value;
 };
@@ -120,8 +171,17 @@ namespace std
   template<> struct
   less<ExplicitRamificationHasseWeil::ValueType>
   {
-    bool operator()(const ExplicitRamificationHasseWeil::ValueType & lhs,
-                    const ExplicitRamificationHasseWeil::ValueType & rhs) const;
+    inline
+    bool
+    operator()(
+        const ExplicitRamificationHasseWeil::ValueType & lhs,
+        const ExplicitRamificationHasseWeil::ValueType & rhs
+        ) const
+    {
+      return (  lhs.ramification_type < rhs.ramification_type
+             || (  lhs.ramification_type == rhs.ramification_type
+                && lhs.hasse_weil_offsets < rhs.hasse_weil_offsets ) );
+    };
   };
 }
 

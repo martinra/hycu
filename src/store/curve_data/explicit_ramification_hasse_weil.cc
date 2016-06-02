@@ -28,22 +28,6 @@ using namespace std;
 using namespace HyCu::CurveData;
 
 
-bool
-less<ExplicitRamificationHasseWeil::ValueType>::
-operator()(
-    const ExplicitRamificationHasseWeil::ValueType & lhs,
-    const ExplicitRamificationHasseWeil::ValueType & rhs
-    ) const
-{
-  if ( lhs.ramification_type < rhs.ramification_type )
-    return true;
-  else if ( lhs.ramification_type == rhs.ramification_type )
-    if ( lhs.hasse_weil_offsets < rhs.hasse_weil_offsets )
-      return true;
-
-  return false;
-};
-
 ExplicitRamificationHasseWeil
 ExplicitRamificationHasseWeil::
 twist()

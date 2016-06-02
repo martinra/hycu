@@ -51,58 +51,106 @@ class DiscriminantHasseWeil
       base_field_table ( curve.base_field_table() ),
       degree ( curve.degree() ),
       prime ( curve.prime() ),
-      value( curve.discriminant() )
+      value( curve.discriminant(),
+             curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) )
     {
+      // we use this asumption in the implementation of twist. Check the general formulas.
       if ( curve.prime_exponent() != 1 ) {
         cerr << "HyCu::CurveData::DiscriminantHasseWeil: implemented only for curves over prime fields" << endl;
         throw;
       }
     };
 
+    DiscriminantHasseWeil twist();
+
 
     struct ValueType
     {
-      unsigned int discriminant;
+      unsigned int discriminant = 0;
+      vector<int> hasse_weil_offsets;
 
 
       inline
-      ValueType(
-          ) :
-        discriminant ( 0 )
+      ValueType()
       {
       };
 
       inline
       ValueType(
-          unsigned int discriminant
+          unsigned int discriminant,
+          const vector<int> & hasse_weil_offsets
           ) :
-        discriminant ( discriminant )
+        discriminant ( discriminant ),
+        hasse_weil_offsets ( hasse_weil_offsets )
       {
       };
 
-      explicit inline ValueType( const DiscriminantHasseWeil & data ) :
-        ValueType ( data.value.discriminant ) {};
-      explicit inline ValueType( const DiscriminantHasseWeil && data ) :
-        ValueType ( data.value.discriminant ) {};
+      inline
+      ValueType(
+          unsigned int discriminant,
+          vector<int> && hasse_weil_offsets
+          ) :
+        discriminant ( discriminant ),
+        hasse_weil_offsets ( move(hasse_weil_offsets) )
+      {
+      };
+
+
+      explicit
+      inline
+      ValueType(
+          const DiscriminantHasseWeil & data
+          ) :
+        ValueType ( data.value.discriminant, data.value.hasse_weil_offsets )
+      {
+      };
+
+      explicit
+      inline
+      ValueType(
+          const DiscriminantHasseWeil && data
+          ) :
+        ValueType ( data.value.discriminant, data.value.hasse_weil_offsets )
+      {
+      };
     };
 
-    DiscriminantHasseWeil twist();
-
-    inline ValueType as_value() { return ValueType( *this ); };
+    inline
+    ValueType
+    as_value()
+    {
+      return ValueType( *this );
+    };
 
   private:
     DiscriminantHasseWeil(
         const shared_ptr<FqElementTable> base_field_table,
         unsigned int degree,
         unsigned int prime,
-        unsigned int discriminant
+        unsigned int discriminant,
+        const vector<int> & hasse_weil_offsets
         ) :
       base_field_table ( base_field_table ),
       degree ( degree ),
       prime ( prime),
-      value ( discriminant )
+      value ( discriminant, hasse_weil_offsets )
     { 
     };
+
+    DiscriminantHasseWeil(
+        const shared_ptr<FqElementTable> base_field_table,
+        unsigned int degree,
+        unsigned int prime,
+        unsigned int discriminant,
+        vector<int> && hasse_weil_offsets
+        ) :
+      base_field_table ( base_field_table ),
+      degree ( degree ),
+      prime ( prime),
+      value ( discriminant, hasse_weil_offsets )
+    { 
+    };
+
 
     const shared_ptr<FqElementTable> base_field_table;
     const unsigned int degree;
@@ -119,7 +167,8 @@ operator==(
     const DiscriminantHasseWeil::ValueType & rhs
     )
 {
-  return lhs.discriminant == rhs.discriminant;
+  return (  lhs.discriminant == rhs.discriminant
+         && lhs.hasse_weil_offsets == rhs.hasse_weil_offsets );
 };
 
 ostream & operator<<(ostream & stream, const DiscriminantHasseWeil::ValueType & value);
@@ -144,7 +193,9 @@ namespace std
         const DiscriminantHasseWeil::ValueType & rhs
         ) const
     {
-      return lhs.discriminant < rhs.discriminant;
+      return (  lhs.discriminant < rhs.discriminant
+             || (  lhs.discriminant == rhs.discriminant
+                && lhs.hasse_weil_offsets < rhs.hasse_weil_offsets ) );
     };
   };
 }
