@@ -31,6 +31,22 @@ class CurveFq :
   public Curve
 {
   public:
+    inline
+    CurveFq(
+        const Curve & curve
+        ) :
+      Curve ( curve )
+    {
+    };
+
+    inline
+    CurveFq(
+        Curve && curve
+        ) :
+      Curve ( move(curve) )
+    {
+    };
+
     CurveFq(shared_ptr<FqElementTable> table, const vector<fq_nmod_struct*> & poly_coefficients);
     CurveFq(shared_ptr<FqElementTable> table, vector<fq_nmod_struct*> && poly_coefficients);
 
@@ -39,23 +55,16 @@ class CurveFq :
 
     inline
     vector<fq_nmod_struct*>
-    rhs_coefficients(
-        )
+    rhs_coefficients()
+      const
     {
-      this->poly_coefficients = move( ((Curve*)this)->rhs_coefficients() );
+      if ( this->poly_coefficients.empty() )
+        this->poly_coefficients = move( ((Curve*)this)->rhs_coefficients() );
       return vector<fq_nmod_struct*>(this->poly_coefficients);
     };
 
-
-    inline
-    void
-    clear_rhs_coefficients()
-    {
-      poly_coefficients.clear();
-    };
-
   private:
-    vector<fq_nmod_struct*> poly_coefficients; 
+    mutable vector<fq_nmod_struct*> poly_coefficients; 
 };
 
 #endif

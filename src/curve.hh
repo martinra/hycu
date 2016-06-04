@@ -46,6 +46,26 @@ using std::tuple;
 class Curve
 {
   public:
+    inline
+    Curve(
+        const Curve & curve
+        ) :
+      table ( curve.table ),
+      poly_coeff_exponents ( curve.poly_coeff_exponents ),
+      nmb_points ( curve.nmb_points )
+    {
+    };
+
+    inline
+    Curve(
+        Curve && curve
+        ) :
+      table ( move(curve.table) ),
+      poly_coeff_exponents ( move(curve.poly_coeff_exponents) ),
+      nmb_points ( move(curve.nmb_points) )
+    {
+    };
+
     Curve(
         shared_ptr<FqElementTable> table,
         const vector<int> & poly_coeff_exponents
@@ -128,13 +148,12 @@ class Curve
     bool rhs_is_squarefree() const;
 
 
-    inline vector<unsigned int> rhs_support() const;
+    vector<unsigned int> rhs_support() const;
 
 
     unsigned int discriminant() const;
 
 
-    // todo: remove static function
     inline
     Curve
     twist(

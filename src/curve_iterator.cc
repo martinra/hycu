@@ -209,59 +209,57 @@ is_reduced(
 Curve
 CurveIterator::
 reduce(
-    const Curve & curve
+    const CurveFq & curve
     )
 {
   auto base_field_table = curve.base_field_table();
 
 
-  vector<int> rhs_shifted;
-  if ( base_field_table->is_zero(curve.rhs_coeff_exponents()[curve.degree()-1]) ) {
-    rhs_shifted = curve.rhs_coeff_exponents();
-  }
-  else {
-    // additive reduction
-    // we could use FLINT for this, but composition of polynomials hangs
-    auto fq_nmod_ctx = base_field_table->fq_nmod_ctx();
-  
-    vector<fq_nmod_struct*> fq_rhs = curve.rhs_coefficients();
-  
-    fq_nmod_t shift;
-    fq_nmod_init(shift, fq_nmod_ctx);
-    fq_nmod_set(shift, fq_rhs[curve.degree()-1], fq_nmod_ctx);
-  
-    fq_nmod_t tmp;
-    fq_nmod_init(tmp, fq_nmod_ctx);
-  
-    // divide by degree
-    fq_nmod_set_ui(tmp, curve.degree(), fq_nmod_ctx);
-    // cerr << "reduce " << curve << endl;
-    fq_nmod_inv(tmp, tmp, fq_nmod_ctx);
-    // cerr << "first inv done" << endl;
-    fq_nmod_mul(shift, shift, tmp, fq_nmod_ctx);
-  
-    // divide by highest coefficient
-    fq_nmod_set(tmp, fq_rhs.back(), fq_nmod_ctx);
-    // cerr << "second inv" << endl;
-    fq_nmod_inv(tmp, tmp, fq_nmod_ctx);
-    // cerr << "second inv done" << endl;
-    fq_nmod_mul(shift, shift, tmp, fq_nmod_ctx);
-  
-    fq_nmod_neg(shift, shift, fq_nmod_ctx);
-  
+  if ( base_field_table->is_zero(curve.rhs_coeff_exponents()[curve.degree()-1]) )
+    return CurveIterator::reduce_multiplicative(curve);
 
-    rhs_shifted = CurveFq( base_field_table,
-                           CurveIterator::x_shift(base_field_table, fq_rhs, shift) )
-                    .rhs_coeff_exponents();
+
+  fq_nmod_struct * shift = CurveIterator::_reduction_shift(
+      curve.rhs_coefficients(), base_field_table->fq_nmod_ctx() );
+  auto curve_shifted = CurveIterator::x_shift(curve, shift);
+  fq_nmod_clear(shift, base_field_table->fq_nmod_ctx());
+
+  return CurveIterator::reduce_multiplicative(move(curve_shifted));
+}
+
+fq_nmod_struct *
+CurveIterator::
+_reduction_shift(
+    vector<fq_nmod_struct*> && poly,
+    const fq_nmod_ctx_t fq_nmod_ctx
+    )
+{
+  auto shift = new fq_nmod_struct;
+  fq_nmod_init(shift, fq_nmod_ctx);
+  fq_nmod_set(shift, poly[poly.size()-2], fq_nmod_ctx);
   
-    for ( auto c : fq_rhs ) {
-      fq_nmod_clear(c, fq_nmod_ctx);
-      delete c;
-    }
-    fq_nmod_clear(shift, fq_nmod_ctx);
+  fq_nmod_t tmp;
+  fq_nmod_init(tmp, fq_nmod_ctx);
+  
+  // divide by degree
+  fq_nmod_set_ui(tmp, poly.size()-1, fq_nmod_ctx);
+  fq_nmod_inv(tmp, tmp, fq_nmod_ctx);
+  fq_nmod_mul(shift, shift, tmp, fq_nmod_ctx);
+  
+  // divide by highest coefficient
+  fq_nmod_set(tmp, poly.back(), fq_nmod_ctx);
+  fq_nmod_inv(tmp, tmp, fq_nmod_ctx);
+  fq_nmod_mul(shift, shift, tmp, fq_nmod_ctx);
+  
+  fq_nmod_neg(shift, shift, fq_nmod_ctx);
+
+
+  for ( auto c : poly ) {
+    fq_nmod_clear(c, fq_nmod_ctx);
+    delete c;
   }
 
-  return CurveIterator::reduce_multiplicative(Curve(base_field_table, move(rhs_shifted)));
+  return shift;
 }
 
 Curve
@@ -321,7 +319,7 @@ reduce_multiplicative(
 set<vector<int>>
 CurveIterator::
 orbit(
-    const Curve & curve,
+    const CurveFq & curve,
     map<vector<int>, unsigned int> orbits
     )
 {
@@ -331,91 +329,93 @@ orbit(
   const auto base_field_table = curve.base_field_table();
 
   set<vector<int>> new_orbit;
-  vector<tuple<vector<int>,vector<fq_nmod_struct*>>> unexpanded_polys;
-  set<vector<int>> unexpanded_polys_set;
-  unexpanded_polys.push_back(
-      make_tuple( curve.rhs_coeff_exponents(), curve.rhs_coefficients() ) );
-  unexpanded_polys_set.insert(curve.rhs_coeff_exponents());
+  vector<tuple<CurveFq, vector<int>>> unexpanded_curves;
+  set<vector<int>> unexpanded_polys;
+  unexpanded_curves.push_back(
+      make_tuple(curve, curve.rhs_coeff_exponents()) );
+  unexpanded_polys.insert(curve.rhs_coeff_exponents());
 
-  vector<int> poly;
-  vector<fq_nmod_struct*> fq_poly;
+  vector<int> orbit_poly;
   while ( !unexpanded_polys.empty() ) {
-    tie(poly, fq_poly) = unexpanded_polys.back();
-    unexpanded_polys.pop_back();
-    unexpanded_polys_set.erase(poly);
-    new_orbit.insert(move(poly));
+    auto orbit_curve = move( get<0>(unexpanded_curves.back()) );
+    auto orbit_poly = move( get<1>(unexpanded_curves.back()) );
+    unexpanded_curves.pop_back();
+
+    unexpanded_polys.erase(orbit_poly);
+    new_orbit.insert(move(orbit_poly));
 
 
     for ( unsigned int shift=0; shift<curve.prime_power()-1; ++shift ) {
       auto curve_shifted =
-        CurveIterator::reduce_multiplicative( CurveFq(
-            base_field_table,
-            CurveIterator::x_shift(base_field_table, fq_poly, shift) ) );
+        CurveIterator::reduce_multiplicative(
+            CurveIterator::x_shift(orbit_curve, shift) );
       auto poly_shifted = curve_shifted.rhs_coeff_exponents();
-      auto fq_poly_shifted = curve_shifted.rhs_coefficients();
 
       if ( orbits.count(poly_shifted) == 1 )
         return set<vector<int>>();
       if (  new_orbit.count(poly_shifted) == 0
-            && unexpanded_polys_set.count(poly_shifted) == 0 ) {
-        unexpanded_polys_set.insert(poly_shifted);
-        unexpanded_polys.push_back(
-            make_tuple(move(poly_shifted), move(fq_poly_shifted)) );
+            && unexpanded_polys.count(poly_shifted) == 0 ) {
+        unexpanded_curves.push_back(
+            make_tuple(move(curve_shifted), move(poly_shifted)) );
+        unexpanded_polys.insert(poly_shifted);
       }
     }
 
     for ( unsigned int shift=0; shift<curve.prime_power()-1; ++shift ) {
       auto curve_shifted =
-        CurveIterator::reduce_multiplicative( CurveFq(
-            base_field_table,
-            CurveIterator::z_shift(base_field_table, fq_poly, shift) ) );
+        CurveIterator::reduce_multiplicative(
+            CurveIterator::z_shift(orbit_curve, shift) );
       auto poly_shifted = curve_shifted.rhs_coeff_exponents();
-      auto fq_poly_shifted = curve_shifted.rhs_coefficients();
 
       if ( orbits.count(poly_shifted) == 1 )
         return set<vector<int>>();
       if (  new_orbit.count(poly_shifted) == 0
-            && unexpanded_polys_set.count(poly_shifted) == 0 )
-        unexpanded_polys_set.insert(poly_shifted);
-        unexpanded_polys.push_back(
-            make_tuple(move(poly_shifted), move(fq_poly_shifted)) );
+            && unexpanded_polys.count(poly_shifted) == 0 ) {
+        unexpanded_curves.push_back(
+            make_tuple(move(curve_shifted), move(poly_shifted)) );
+        unexpanded_polys.insert(poly_shifted);
+      }
     }
   }
 
   return new_orbit;
 }
 
-vector<fq_nmod_struct*>
+CurveFq
 CurveIterator::
 z_shift(
-    const shared_ptr<FqElementTable> base_field_table,
-    const vector<fq_nmod_struct*> & poly,
+    const CurveFq & curve,
     const fq_nmod_t shift
     )
 {
-  unsigned int size_add = poly.size() & 1 ? 0 : 1;
-  vector<fq_nmod_struct*> poly_reverted(poly.size() + size_add);
+  const auto & base_field_table = curve.base_field_table();
 
-  if ( !(poly.size() & 1) ) {
+  unsigned int size_add = curve.degree() & 1 ? 1 : 0;
+  vector<fq_nmod_struct*> poly_reverted(curve.degree() + 1 + size_add);
+
+  if ( curve.degree() & 1 ) {
     auto a = new fq_nmod_struct;
     fq_nmod_init(a, base_field_table->fq_nmod_ctx());
     poly_reverted[0] = a;
   }
 
-  copy( poly.crbegin(), poly.crend(),
+  copy( curve.rhs_coefficients().crbegin(), curve.rhs_coefficients().crend(),
         poly_reverted.begin() + size_add );
 
   const auto & poly_shifted_reversed =
     CurveIterator::_shift_polynomial(
         poly_reverted, shift, base_field_table->fq_nmod_ctx() );
 
+  vector<fq_nmod_struct*> poly_shifted;
   if ( fq_nmod_is_zero(poly_shifted_reversed[0], base_field_table->fq_nmod_ctx()) )
-    return vector<fq_nmod_struct*>( poly_shifted_reversed.crbegin(),
-                                    poly_shifted_reversed.crbegin()
-                                      + (poly_shifted_reversed.size()-1) );
+    poly_shifted =  vector<fq_nmod_struct*>( poly_shifted_reversed.crbegin(),
+                                             poly_shifted_reversed.crbegin()
+                                               + (poly_shifted_reversed.size()-1) );
   else
-    return vector<fq_nmod_struct*>( poly_shifted_reversed.crbegin(),
-                                    poly_shifted_reversed.crend() );
+    poly_shifted = vector<fq_nmod_struct*>( poly_shifted_reversed.crbegin(),
+                                            poly_shifted_reversed.crend() );
+
+  return CurveFq(base_field_table, move(poly_shifted));
 }
 
 vector<fq_nmod_struct*>

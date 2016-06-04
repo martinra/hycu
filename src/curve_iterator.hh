@@ -60,10 +60,12 @@ class CurveIterator
     static unsigned int multiplicity(const Curve & curve);
 
     static bool is_reduced(const Curve & curve);
-    static Curve reduce(const Curve & curve);
+    static Curve reduce(const CurveFq & curve);
     static Curve reduce_multiplicative(const Curve & curve);
+    static fq_nmod_struct* _reduction_shift(vector<fq_nmod_struct*> && poly, const fq_nmod_ctx_t fq_nmod_ctx);
 
-    static set<vector<int>> orbit(const Curve & curve, map<vector<int>, unsigned int> orbits);
+
+    static set<vector<int>> orbit(const CurveFq & curve, map<vector<int>, unsigned int> orbits);
 
   private:
     unsigned int prime;
@@ -74,94 +76,51 @@ class CurveIterator
 
     static
     inline
-    Curve
+    CurveFq
     x_shift(
-        const Curve & curve,
+        const CurveFq & curve,
         unsigned int generator_power
         )
     {
-      return CurveFq( curve.base_field_table(),
-                      CurveIterator::x_shift(curve.base_field_table(), curve.rhs_coefficients(), generator_power) );
+      return CurveIterator::x_shift(curve, curve.base_field_table()->at(generator_power));
     };
 
     inline
     static
-    Curve
+    CurveFq
     x_shift(
-        const Curve & curve,
+        const CurveFq & curve,
         const fq_nmod_t shift
         )
     {
       return CurveFq( curve.base_field_table(),
-                      CurveIterator::x_shift(curve.base_field_table(), curve.rhs_coefficients(), shift) );
+                      CurveIterator::_shift_polynomial(
+                        curve.rhs_coefficients(),
+                        shift,
+                        curve.base_field_table()->fq_nmod_ctx() ) );
     };
+
+
 
     static
     inline
-    vector<fq_nmod_struct*>
-    x_shift(
-        const shared_ptr<FqElementTable> base_field_table,
-        const vector<fq_nmod_struct*> & poly,
+    CurveFq
+    z_shift(
+        const CurveFq & curve,
         unsigned int generator_power
         )
     {
-      return CurveIterator::x_shift(base_field_table, poly, base_field_table->at(generator_power));
-
+      return CurveIterator::z_shift(curve, curve.base_field_table()->at(generator_power));
     };
 
+    static CurveFq z_shift(const CurveFq & curve, const fq_nmod_t shift);
+
     static
-    inline
     vector<fq_nmod_struct*>
-    x_shift(
-        const shared_ptr<FqElementTable> base_field_table,
-        const vector<fq_nmod_struct*> & poly,
-        const fq_nmod_t shift
-        )
-    {
-      return CurveIterator::_shift_polynomial(poly, shift, base_field_table->fq_nmod_ctx());
-    };
-
-
-    static
-    inline
-    Curve
-    z_shift(
-        const Curve & curve,
-        unsigned int generator_power
-        )
-    {
-      return CurveFq( curve.base_field_table(),
-                    CurveIterator::z_shift(curve.base_field_table(), curve.rhs_coefficients(), generator_power) );
-    };
-
-    inline
-    static
-    Curve
-    z_shift(
-        const Curve & curve,
-        const fq_nmod_t shift
-        )
-    {
-      return CurveFq( curve.base_field_table(),
-                    CurveIterator::z_shift(curve.base_field_table(), curve.rhs_coefficients(), shift) );
-    };
-
-    static
-    inline
-    vector<fq_nmod_struct*>
-    z_shift(
-        const shared_ptr<FqElementTable> base_field_table,
-        const vector<fq_nmod_struct*> & poly,
-        unsigned int generator_power
-        )
-    {
-      return CurveIterator::z_shift(base_field_table, poly, base_field_table->at(generator_power));
-
-    };
-
-    static vector<fq_nmod_struct*> z_shift(const shared_ptr<FqElementTable> base_field_table, const vector<fq_nmod_struct*> & poly, const fq_nmod_t shift);
-
-    static vector<fq_nmod_struct*> _shift_polynomial(const vector<fq_nmod_struct*> & fq_poly, const fq_nmod_t shift, const fq_nmod_ctx_t fq_nmod_ctx);
+    _shift_polynomial(
+        const vector<fq_nmod_struct*> & fq_poly,
+        const fq_nmod_t shift, const fq_nmod_ctx_t fq_nmod_ctx
+        );
 };
 
 #endif
