@@ -61,7 +61,7 @@ class CurveIterator
 
     static bool is_reduced(const Curve & curve);
     static Curve reduce(const CurveFq & curve);
-    static Curve reduce_multiplicative(const Curve & curve);
+    static Curve _reduce_multiplicative(Curve && curve);
     static fq_nmod_struct* _reduction_shift(vector<fq_nmod_struct*> && poly, const fq_nmod_ctx_t fq_nmod_ctx);
 
 
@@ -101,7 +101,6 @@ class CurveIterator
     };
 
 
-
     static
     inline
     CurveFq
@@ -114,6 +113,7 @@ class CurveIterator
     };
 
     static CurveFq z_shift(const CurveFq & curve, const fq_nmod_t shift);
+
 
     static
     vector<fq_nmod_struct*>

@@ -216,7 +216,7 @@ reduce(
 
 
   if ( base_field_table->is_zero(curve.rhs_coeff_exponents()[curve.degree()-1]) )
-    return CurveIterator::reduce_multiplicative(curve);
+    return CurveIterator::_reduce_multiplicative(Curve(curve));
 
 
   fq_nmod_struct * shift = CurveIterator::_reduction_shift(
@@ -224,7 +224,7 @@ reduce(
   auto curve_shifted = CurveIterator::x_shift(curve, shift);
   fq_nmod_clear(shift, base_field_table->fq_nmod_ctx());
 
-  return CurveIterator::reduce_multiplicative(move(curve_shifted));
+  return CurveIterator::_reduce_multiplicative(move(curve_shifted));
 }
 
 fq_nmod_struct *
@@ -264,8 +264,8 @@ _reduction_shift(
 
 Curve
 CurveIterator::
-reduce_multiplicative(
-    const Curve & curve
+_reduce_multiplicative(
+    Curve && curve
     )
 {
   const auto base_field_table = curve.base_field_table();
@@ -347,7 +347,7 @@ orbit(
 
     for ( unsigned int shift=0; shift<curve.prime_power()-1; ++shift ) {
       auto curve_shifted =
-        CurveIterator::reduce_multiplicative(
+        CurveIterator::_reduce_multiplicative(
             CurveIterator::x_shift(orbit_curve, shift) );
       auto poly_shifted = curve_shifted.rhs_coeff_exponents();
 
@@ -363,7 +363,7 @@ orbit(
 
     for ( unsigned int shift=0; shift<curve.prime_power()-1; ++shift ) {
       auto curve_shifted =
-        CurveIterator::reduce_multiplicative(
+        CurveIterator::_reduce_multiplicative(
             CurveIterator::z_shift(orbit_curve, shift) );
       auto poly_shifted = curve_shifted.rhs_coeff_exponents();
 
