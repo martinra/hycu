@@ -249,12 +249,9 @@ reduce(
   
     fq_nmod_neg(shift, shift, fq_ctx);
   
-    if ( print_debug ) {
-      cerr << "intermediate result: " << Curve( base_field_table, CurveIterator::_shift_polynomial(fq_rhs, shift, fq_ctx) ) << endl;
-    }
-  
-    rhs_shifted = Curve( base_field_table,
-                         CurveIterator::x_shift(base_field_table, fq_rhs, shift) )
+
+    rhs_shifted = CurveFq( base_field_table,
+                           CurveIterator::x_shift(base_field_table, fq_rhs, shift) )
                     .rhs_coeff_exponents();
   
     for ( auto c : fq_rhs ) {

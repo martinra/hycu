@@ -41,6 +41,10 @@ insert(
     const Curve & curve
     )
 {
+  // todo: the whole global store must be protected by a mutices
+  throw;
+
+
   HasseWeil key_data(curve);
   auto key = key_data.as_value();
   auto twisted_key = key_data.twist().as_value();

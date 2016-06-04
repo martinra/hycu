@@ -34,6 +34,7 @@
 
 #include "block_iterator.hh"
 #include "curve.hh"
+#include "curve_fq.hh"
 #include "fq_element_table.hh"
 
 
@@ -71,7 +72,7 @@ class CurveIterator
     {
       return CurveIterator::reduce_multiplicative(
           base_field_table,
-          Curve(base_field_table, move(poly_coeff_exponents)).rhs_coeff_exponents() );
+          vector<int>(CurveFq(base_field_table, move(poly_coeff_exponents)).rhs_coeff_exponents()) );
     };
 
     static Curve reduce_multiplicative(shared_ptr<FqElementTable> base_field_table, vector<int> && poly_coeff_exponents);
@@ -93,8 +94,8 @@ class CurveIterator
         unsigned int generator_power
         )
     {
-      return Curve( curve.base_field_table(),
-                    CurveIterator::x_shift(curve.base_field_table(), curve.rhs_coefficients(), generator_power) );
+      return CurveFq( curve.base_field_table(),
+                      CurveIterator::x_shift(curve.base_field_table(), curve.rhs_coefficients(), generator_power) );
     };
 
     inline
@@ -105,8 +106,8 @@ class CurveIterator
         const fq_nmod_t shift
         )
     {
-      return Curve( curve.base_field_table(),
-                    CurveIterator::x_shift(curve.base_field_table(), curve.rhs_coefficients(), shift) );
+      return CurveFq( curve.base_field_table(),
+                      CurveIterator::x_shift(curve.base_field_table(), curve.rhs_coefficients(), shift) );
     };
 
     static
@@ -143,7 +144,7 @@ class CurveIterator
         unsigned int generator_power
         )
     {
-      return Curve( curve.base_field_table(),
+      return CurveFq( curve.base_field_table(),
                     CurveIterator::z_shift(curve.base_field_table(), curve.rhs_coefficients(), generator_power) );
     };
 
@@ -155,7 +156,7 @@ class CurveIterator
         const fq_nmod_t shift
         )
     {
-      return Curve( curve.base_field_table(),
+      return CurveFq( curve.base_field_table(),
                     CurveIterator::z_shift(curve.base_field_table(), curve.rhs_coefficients(), shift) );
     };
 

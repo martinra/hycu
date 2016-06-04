@@ -6,6 +6,7 @@ Import(["env", "env_mpi"])
 sources_curve = [
     "block_iterator.cc"
   , "curve.cc"
+  , "curve_fq.cc"
   , "curve_iterator.cc"
   , "fq_element_table.cc"
   , "reduction_table.cc"

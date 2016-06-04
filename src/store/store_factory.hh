@@ -80,6 +80,7 @@ template class Store<HyCu::CurveData::HasseWeil, HyCu::StoreData::IsomorphismCla
 template<>
 struct StoreTypeResolver<HI>
 {
+  // todo: this must resolve to a global store
   typedef
     Store<HyCu::CurveData::HasseWeil, HyCu::StoreData::IsomorphismClass>
     type;

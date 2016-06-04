@@ -258,6 +258,7 @@ class FqElementTable
 
 
     friend Curve;
+    friend class CurveFq;
     friend class CurveIterator;
     friend ostream& operator<<(ostream & stream, const Curve & curve);
 

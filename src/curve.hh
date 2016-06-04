@@ -46,56 +46,104 @@ using std::tuple;
 class Curve
 {
   public:
-    Curve(shared_ptr<FqElementTable> table, const vector<int> & poly_coeff_exponents) :
-      table( table ), poly_coeff_exponents ( poly_coeff_exponents ) {};
-    Curve(shared_ptr<FqElementTable> table, vector<int> && poly_coeff_exponents) :
-      table( table ), poly_coeff_exponents ( move(poly_coeff_exponents) ) {};
-    Curve(shared_ptr<FqElementTable> table, const vector<fq_nmod_struct*> & poly_coefficients);
-    Curve(shared_ptr<FqElementTable> table, vector<fq_nmod_struct*> && poly_coefficients);
+    Curve(
+        shared_ptr<FqElementTable> table,
+        const vector<int> & poly_coeff_exponents
+        ) :
+      table( table ),
+      poly_coeff_exponents ( poly_coeff_exponents )
+    {
+    };
+
+    Curve(
+        shared_ptr<FqElementTable> table,
+        vector<int> && poly_coeff_exponents
+        ) :
+      table( table ),
+      poly_coeff_exponents ( move(poly_coeff_exponents) )
+    {
+    };
 
 
-    inline const shared_ptr<FqElementTable> base_field_table() const
+    inline
+    const shared_ptr<FqElementTable>
+    base_field_table(
+        ) const
     {
       return this->table;
     };
-    unsigned int inline prime() const { return this->table->prime; };
-    unsigned int inline prime_exponent() const { return this->table->prime_exponent; };
-    unsigned int inline prime_power() const { return this->table->prime_power; };
 
-    int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
-    int genus() const;
-
-    inline vector<int> rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
-    vector<fq_nmod_struct*> rhs_coefficients() const
+    inline
+    unsigned int
+    prime(
+        ) const
     {
-      vector<fq_nmod_struct*> fq_rhs;
-      fq_rhs.reserve(this->degree()+1);
-
-      for ( int e : this->rhs_coeff_exponents() ) {
-        auto fq_coeff = new fq_nmod_struct;
-        fq_nmod_init(fq_coeff, this->table->fq_ctx);
-        fq_nmod_set(fq_coeff, this->table->at(e), this->table->fq_ctx);
-        fq_rhs.push_back(fq_coeff);
-      } 
-
-      return fq_rhs;
+      return this->table->prime;
     };
 
-    inline vector<unsigned int> rhs_support() const
+    inline
+    unsigned int
+    prime_exponent(
+        ) const
+    {
+      return this->table->prime_exponent;
+    };
+
+    inline
+    unsigned int
+    prime_power(
+        ) const
+    {
+      return this->table->prime_power;
+    };
+
+    // todo: this should be unsigned int
+    inline
+    int
+    degree(
+        ) const
+    {
+      return this->poly_coeff_exponents.size() - 1;
+    };
+
+    int genus() const;
+
+
+    inline
+    const vector<int> &
+    rhs_coeff_exponents(
+        ) const
+    {
+      return this->poly_coeff_exponents;
+    };
+
+    vector<int> rhs_coeff_exponents(const ReductionTable & table);
+
+
+    vector<fq_nmod_struct*> rhs_coefficients() const;
+
+    nmod_poly_struct rhs_nmod_polynomial() const;
+    fq_nmod_poly_struct rhs_polynomial() const;
+
+    bool rhs_is_squarefree() const;
+
+
+    // todo: remove independent function and fuse with this one
+    inline
+    vector<unsigned int>
+    rhs_support(
+        ) const
     {
       return Curve::_support(this->table, this->poly_coeff_exponents);
     }
 
     static vector<unsigned int> _support(shared_ptr<FqElementTable> table, vector<int> poly_coeff_exponents);
 
-    bool has_squarefree_rhs() const;
-    nmod_poly_struct rhs_nmod_polynomial() const;
-    fq_nmod_poly_struct rhs_polynomial() const;
-
-    vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
 
     unsigned int discriminant() const;
 
+
+    // todo: remove static function
     inline
     Curve
     twist(
@@ -107,15 +155,35 @@ class Curve
     static vector<int> _twist_rhs(const shared_ptr<FqElementTable> base_field_table, const vector<int> & poly_coeff_exponents);
 
 
-    void count(ReductionTable & table);
-    void inline count(const shared_ptr<ReductionTable> table)
+    inline
+    void
+    count(
+        const shared_ptr<ReductionTable> table
+        )
     {
       this->count(*table);
     };
 
-    bool has_counted(size_t fx) const { return (this->nmb_points.find(fx) != this->nmb_points.end()); };
+    void count(ReductionTable & table);
 
-    const map<unsigned int, tuple<int,int>> & number_of_points() const { return this->nmb_points; };
+    inline
+    bool
+    has_counted(
+        size_t fx
+        ) const
+    {
+      return (this->nmb_points.find(fx) != this->nmb_points.end());
+    };
+
+
+    inline
+    const map<unsigned int, tuple<int,int>> &
+    number_of_points(
+        ) const
+    {
+      return this->nmb_points;
+    };
+
     vector<tuple<int,int>> number_of_points(unsigned int max_prime_exponent) const;
 
     map<unsigned int, int> hasse_weil_offsets() const;
@@ -201,6 +269,14 @@ class Curve
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 
   protected:
+    Curve(
+        shared_ptr<FqElementTable> table
+        ) :
+      table ( table )
+    {
+    };
+
+
     const shared_ptr<FqElementTable> table;
     vector<int> poly_coeff_exponents;
 

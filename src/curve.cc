@@ -64,37 +64,6 @@ operator<<(
   return stream;
 }
 
-Curve::
-Curve(
-    shared_ptr<FqElementTable> table,
-    const vector<fq_nmod_struct*> & poly_coefficients
-    ) :
-    table( table )
-{
-  this->poly_coeff_exponents.reserve(poly_coefficients.size());
-  for ( auto c : poly_coefficients )
-    this->poly_coeff_exponents.push_back(table->generator_power(c));
-}
-
-Curve::
-Curve(
-    shared_ptr<FqElementTable> table,
-    vector<fq_nmod_struct*> && poly_coefficients
-    ) :
-    table( table )
-{
-  auto coefficients = move(poly_coefficients);
-
-  this->poly_coeff_exponents.reserve(poly_coefficients.size());
-  for ( auto c : coefficients )
-    this->poly_coeff_exponents.push_back(table->generator_power(c));
-
-  for ( auto c : coefficients ) {
-    fq_nmod_clear(c, this->table->fq_ctx);
-    delete c;
-  }
-}
-
 int
 Curve::
 genus()
@@ -104,6 +73,24 @@ genus()
     return (this->degree() - 2) / 2;
   else
     return (this->degree() - 1) / 2;
+}
+
+vector<fq_nmod_struct*>
+Curve::
+rhs_coefficients(
+    ) const
+{
+  vector<fq_nmod_struct*> fq_rhs;
+  fq_rhs.reserve(this->degree()+1);
+
+  for ( int e : this->poly_coeff_exponents ) {
+    auto fq_coeff = new fq_nmod_struct;
+    fq_nmod_init(fq_coeff, this->table->fq_ctx);
+    fq_nmod_set(fq_coeff, this->table->at(e), this->table->fq_ctx);
+    fq_rhs.push_back(fq_coeff);
+  } 
+
+  return fq_rhs;
 }
 
 vector<unsigned int>
@@ -124,7 +111,7 @@ _support(
 
 bool
 Curve::
-has_squarefree_rhs()
+rhs_is_squarefree()
   const
 {
   if ( this->table->is_prime_field() ) {
@@ -145,17 +132,17 @@ has_squarefree_rhs()
 
 vector<int>
 Curve::
-convert_poly_coeff_exponents(
+rhs_coeff_exponents(
     const ReductionTable & table
     )
 {
   if ( this->table->prime != table.prime ) {
-    cerr << "Curve.convert_poly_coeff_exponents: Can only convert to same prime" << endl;
+    cerr << "Curve::rhs_coeff_exponents: Can only convert to same prime" << endl;
     throw;
   }
 
   if ( table.prime_exponent % this->table->prime_exponent != 0  ) {
-    cerr << "Curve.convert_poly_coeff_exponents: Can not convert to prime exponent "
+    cerr << "Curve::rhs_coeff_exponents: Can not convert to prime exponent "
          << "that does not divide the one of the curve" << endl;
     throw;
   }
@@ -256,7 +243,7 @@ count(
 
 
   // this also checks that the prime exponent is divisible by the one of the curve
-  const vector<int> poly_coeff_exponents = this->convert_poly_coeff_exponents(reduction_table);
+  const vector<int> poly_coeff_exponents = this->rhs_coeff_exponents(reduction_table);
 
   // ponts x != 0, infty
   if ( reduction_table.is_opencl_enabled() )
