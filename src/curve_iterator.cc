@@ -222,32 +222,32 @@ reduce(
   else {
     // additive reduction
     // we could use FLINT for this, but composition of polynomials hangs
-    auto fq_ctx = base_field_table->fq_ctx;
+    auto fq_nmod_ctx = base_field_table->fq_nmod_ctx();
   
     vector<fq_nmod_struct*> fq_rhs = curve.rhs_coefficients();
   
     fq_nmod_t shift;
-    fq_nmod_init(shift, fq_ctx);
-    fq_nmod_set(shift, fq_rhs[curve.degree()-1], fq_ctx);
+    fq_nmod_init(shift, fq_nmod_ctx);
+    fq_nmod_set(shift, fq_rhs[curve.degree()-1], fq_nmod_ctx);
   
     fq_nmod_t tmp;
-    fq_nmod_init(tmp, fq_ctx);
+    fq_nmod_init(tmp, fq_nmod_ctx);
   
     // divide by degree
-    fq_nmod_set_ui(tmp, curve.degree(), fq_ctx);
+    fq_nmod_set_ui(tmp, curve.degree(), fq_nmod_ctx);
     // cerr << "reduce " << curve << endl;
-    fq_nmod_inv(tmp, tmp, fq_ctx);
+    fq_nmod_inv(tmp, tmp, fq_nmod_ctx);
     // cerr << "first inv done" << endl;
-    fq_nmod_mul(shift, shift, tmp, fq_ctx);
+    fq_nmod_mul(shift, shift, tmp, fq_nmod_ctx);
   
     // divide by highest coefficient
-    fq_nmod_set(tmp, fq_rhs.back(), fq_ctx);
+    fq_nmod_set(tmp, fq_rhs.back(), fq_nmod_ctx);
     // cerr << "second inv" << endl;
-    fq_nmod_inv(tmp, tmp, fq_ctx);
+    fq_nmod_inv(tmp, tmp, fq_nmod_ctx);
     // cerr << "second inv done" << endl;
-    fq_nmod_mul(shift, shift, tmp, fq_ctx);
+    fq_nmod_mul(shift, shift, tmp, fq_nmod_ctx);
   
-    fq_nmod_neg(shift, shift, fq_ctx);
+    fq_nmod_neg(shift, shift, fq_nmod_ctx);
   
 
     rhs_shifted = CurveFq( base_field_table,
@@ -255,10 +255,10 @@ reduce(
                     .rhs_coeff_exponents();
   
     for ( auto c : fq_rhs ) {
-      fq_nmod_clear(c, fq_ctx);
+      fq_nmod_clear(c, fq_nmod_ctx);
       delete c;
     }
-    fq_nmod_clear(shift, fq_ctx);
+    fq_nmod_clear(shift, fq_nmod_ctx);
   }
 
   return CurveIterator::reduce_multiplicative(base_field_table, move(rhs_shifted));
@@ -398,7 +398,7 @@ z_shift(
 
   if ( !(poly.size() & 1) ) {
     auto a = new fq_nmod_struct;
-    fq_nmod_init(a, base_field_table->fq_ctx);
+    fq_nmod_init(a, base_field_table->fq_nmod_ctx());
     poly_reverted[0] = a;
   }
 
@@ -407,9 +407,9 @@ z_shift(
 
   const auto & poly_shifted_reversed =
     CurveIterator::_shift_polynomial(
-        poly_reverted, shift, base_field_table->fq_ctx );
+        poly_reverted, shift, base_field_table->fq_nmod_ctx() );
 
-  if ( fq_nmod_is_zero(poly_shifted_reversed[0], base_field_table->fq_ctx) )
+  if ( fq_nmod_is_zero(poly_shifted_reversed[0], base_field_table->fq_nmod_ctx()) )
     return vector<fq_nmod_struct*>( poly_shifted_reversed.crbegin(),
                                     poly_shifted_reversed.crbegin()
                                       + (poly_shifted_reversed.size()-1) );
@@ -423,15 +423,15 @@ CurveIterator::
 _shift_polynomial(
   const vector<fq_nmod_struct*> & fq_poly,
   const fq_nmod_t shift,
-  const fq_nmod_ctx_t fq_ctx
+  const fq_nmod_ctx_t fq_nmod_ctx
   )
 {
   char * shift_str;
   fq_nmod_t shift_c;
-  fq_nmod_init(shift_c, fq_ctx);
-  fq_nmod_set(shift_c, shift, fq_ctx);
-  fq_nmod_reduce(shift_c, fq_ctx);
-  shift_str = fq_nmod_get_str_pretty(shift_c, fq_ctx);
+  fq_nmod_init(shift_c, fq_nmod_ctx);
+  fq_nmod_set(shift_c, shift, fq_nmod_ctx);
+  fq_nmod_reduce(shift_c, fq_nmod_ctx);
+  shift_str = fq_nmod_get_str_pretty(shift_c, fq_nmod_ctx);
   // cerr << "shift: " << string(shift_str) << endl;
   flint_free(shift_str);
 
@@ -439,11 +439,11 @@ _shift_polynomial(
   fmpz_init(binomial);
 
   fq_nmod_t shift_pw;
-  fq_nmod_init(shift_pw, fq_ctx);
-  fq_nmod_set(shift_pw, shift, fq_ctx);
+  fq_nmod_init(shift_pw, fq_nmod_ctx);
+  fq_nmod_set(shift_pw, shift, fq_nmod_ctx);
 
   fq_nmod_t tmp;
-  fq_nmod_init(tmp, fq_ctx);
+  fq_nmod_init(tmp, fq_nmod_ctx);
 
 
   // contribution of shift^0
@@ -451,8 +451,8 @@ _shift_polynomial(
   fq_poly_shifted.reserve(fq_poly.size());
   for ( auto c : fq_poly ) {
     auto fq_coeff = new fq_nmod_struct;
-    fq_nmod_init(fq_coeff, fq_ctx);
-    fq_nmod_set(fq_coeff, c, fq_ctx);
+    fq_nmod_init(fq_coeff, fq_nmod_ctx);
+    fq_nmod_set(fq_coeff, c, fq_nmod_ctx);
     fq_poly_shifted.push_back(fq_coeff);
   }
 
@@ -461,19 +461,19 @@ _shift_polynomial(
     // from the term (x + shift)^ox
     for ( unsigned int ox=fq_poly.size()-1; ox>=dx; --ox ) {
       fmpz_bin_uiui(binomial, ox, dx);
-      fq_nmod_set_ui(tmp, fmpz_get_ui(binomial) , fq_ctx);
-      fq_nmod_mul(tmp, tmp, shift_pw, fq_ctx);
-      fq_nmod_mul(tmp, tmp, fq_poly[ox], fq_ctx);
-      fq_nmod_add(fq_poly_shifted[ox-dx], fq_poly_shifted[ox-dx], tmp, fq_ctx);
+      fq_nmod_set_ui(tmp, fmpz_get_ui(binomial) , fq_nmod_ctx);
+      fq_nmod_mul(tmp, tmp, shift_pw, fq_nmod_ctx);
+      fq_nmod_mul(tmp, tmp, fq_poly[ox], fq_nmod_ctx);
+      fq_nmod_add(fq_poly_shifted[ox-dx], fq_poly_shifted[ox-dx], tmp, fq_nmod_ctx);
     }
 
-    fq_nmod_mul(shift_pw, shift_pw, shift, fq_ctx);
+    fq_nmod_mul(shift_pw, shift_pw, shift, fq_nmod_ctx);
   }
 
 
   fmpz_clear(binomial);
-  fq_nmod_clear(shift_pw, fq_ctx);
-  fq_nmod_clear(tmp, fq_ctx);
+  fq_nmod_clear(shift_pw, fq_nmod_ctx);
+  fq_nmod_clear(tmp, fq_nmod_ctx);
 
 
   return fq_poly_shifted;

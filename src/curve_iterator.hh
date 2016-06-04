@@ -132,7 +132,7 @@ class CurveIterator
         const fq_nmod_t shift
         )
     {
-      return CurveIterator::_shift_polynomial(poly, shift, base_field_table->fq_ctx);
+      return CurveIterator::_shift_polynomial(poly, shift, base_field_table->fq_nmod_ctx());
     };
 
 
@@ -175,7 +175,7 @@ class CurveIterator
 
     static vector<fq_nmod_struct*> z_shift(const shared_ptr<FqElementTable> base_field_table, const vector<fq_nmod_struct*> & poly, const fq_nmod_t shift);
 
-    static vector<fq_nmod_struct*> _shift_polynomial(const vector<fq_nmod_struct*> & fq_poly, const fq_nmod_t shift, const fq_nmod_ctx_t fq_ctx);
+    static vector<fq_nmod_struct*> _shift_polynomial(const vector<fq_nmod_struct*> & fq_poly, const fq_nmod_t shift, const fq_nmod_ctx_t fq_nmod_ctx);
 };
 
 #endif

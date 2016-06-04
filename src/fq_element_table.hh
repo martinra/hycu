@@ -262,14 +262,23 @@ class FqElementTable
     friend class CurveIterator;
     friend ostream& operator<<(ostream & stream, const Curve & curve);
 
-  protected:
+
+    inline
+    const fq_nmod_ctx_struct *
+    fq_nmod_ctx(
+        ) const
+    {
+      return this->_fq_nmod_ctx;
+    };
+
     const unsigned int prime;
     const unsigned int prime_exponent;
-    unsigned int prime_power;
-    unsigned int prime_power_pred;
+    const unsigned int prime_power;
+    const unsigned int prime_power_pred;
 
   private:
-    fq_nmod_ctx_t fq_ctx;
+    fq_nmod_ctx_t _fq_nmod_ctx;
+
     vector<unsigned int> fq_generator_powers;
     vector<fq_nmod_struct*> fq_elements;
 };

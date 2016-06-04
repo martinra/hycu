@@ -35,30 +35,30 @@ FqElementTable(
     unsigned int prime_exponent
     ) :
   prime( prime ),
-  prime_exponent( prime_exponent )
+  prime_exponent( prime_exponent ),
+  prime_power ( pow(prime, prime_exponent) ),
+  prime_power_pred ( prime_power - 1 )
 {
-  this->prime_power = pow(prime, prime_exponent);
-  this->prime_power_pred = this->prime_power - 1;
-
   this->fq_generator_powers.resize(this->prime_power);
   this->fq_elements.reserve(this->prime_power);
 
 
   fmpz_t prime_fmpz;
   fmpz_init_set_ui(prime_fmpz, prime);
-  fq_nmod_ctx_init(this->fq_ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
+  fq_nmod_ctx_init(this->_fq_nmod_ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
   fmpz_clear(prime_fmpz);
+  const auto fq_ctx = this->_fq_nmod_ctx;
 
   fq_nmod_t gen;
-  fq_nmod_init(gen, this->fq_ctx);
-  fq_nmod_gen(gen, this->fq_ctx);
+  fq_nmod_init(gen, fq_ctx);
+  fq_nmod_gen(gen, fq_ctx);
 
   fq_nmod_t genp;
-  fq_nmod_init(genp, this->fq_ctx);
+  fq_nmod_init(genp, fq_ctx);
 
   fq_nmod_t a;
-  fq_nmod_init(a, this->fq_ctx);
-  fq_nmod_one(a, this->fq_ctx);
+  fq_nmod_init(a, fq_ctx);
+  fq_nmod_one(a, fq_ctx);
 
   fq_nmod_struct * b;
 
@@ -67,37 +67,37 @@ FqElementTable(
     this->fq_generator_powers[FqElementTable::fq_as_index(a)] = ix;
 
     b = new fq_nmod_struct;
-    fq_nmod_init(b, this->fq_ctx);
-    fq_nmod_set(b, a, this->fq_ctx);
-    fq_nmod_reduce(b, this->fq_ctx);
+    fq_nmod_init(b, fq_ctx);
+    fq_nmod_set(b, a, fq_ctx);
+    fq_nmod_reduce(b, fq_ctx);
     this->fq_elements.push_back(b);
 
-    fq_nmod_mul(a, a, gen, this->fq_ctx);
+    fq_nmod_mul(a, a, gen, fq_ctx);
   }
 
   { // the case of b == 0
     this->fq_generator_powers[0] = this->prime_power_pred;
 
     b = new fq_nmod_struct;
-    fq_nmod_init(b, this->fq_ctx);
-    fq_nmod_zero(b, this->fq_ctx);
-    fq_nmod_reduce(b, this->fq_ctx);
+    fq_nmod_init(b, fq_ctx);
+    fq_nmod_zero(b, fq_ctx);
+    fq_nmod_reduce(b, fq_ctx);
     this->fq_elements.push_back(b);
   }
 
 
-  fq_nmod_clear(gen, this->fq_ctx);
-  fq_nmod_clear(genp, this->fq_ctx);
-  fq_nmod_clear(a, this->fq_ctx);
+  fq_nmod_clear(gen, fq_ctx);
+  fq_nmod_clear(genp, fq_ctx);
+  fq_nmod_clear(a, fq_ctx);
 }
 
 FqElementTable::
 ~FqElementTable()
 {
   for ( auto fq : this->fq_elements )
-    fq_nmod_clear(fq, this->fq_ctx);
+    fq_nmod_clear(fq, this->_fq_nmod_ctx);
 
-  fq_nmod_ctx_clear(this->fq_ctx);
+  fq_nmod_ctx_clear(this->_fq_nmod_ctx);
 }
 
 

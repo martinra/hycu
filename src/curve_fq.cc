@@ -58,5 +58,5 @@ CurveFq::
 ~CurveFq()
 {
   for ( auto c : this->poly_coefficients )
-    fq_nmod_clear(c, this->table->fq_ctx);
+    fq_nmod_clear(c, this->table->fq_nmod_ctx());
 }
