@@ -128,16 +128,7 @@ class Curve
     bool rhs_is_squarefree() const;
 
 
-    // todo: remove independent function and fuse with this one
-    inline
-    vector<unsigned int>
-    rhs_support(
-        ) const
-    {
-      return Curve::_support(this->table, this->poly_coeff_exponents);
-    }
-
-    static vector<unsigned int> _support(shared_ptr<FqElementTable> table, vector<int> poly_coeff_exponents);
+    inline vector<unsigned int> rhs_support() const;
 
 
     unsigned int discriminant() const;
