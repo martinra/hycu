@@ -261,18 +261,18 @@ reduce(
     fq_nmod_clear(shift, fq_nmod_ctx);
   }
 
-  return CurveIterator::reduce_multiplicative(base_field_table, move(rhs_shifted));
+  return CurveIterator::reduce_multiplicative(Curve(base_field_table, move(rhs_shifted)));
 }
 
 Curve
 CurveIterator::
 reduce_multiplicative(
-    shared_ptr<FqElementTable> base_field_table,
-    vector<int> && poly_coeff_exponents
+    const Curve & curve
     )
 {
-  // multiplicative reduction via rescaling of x and y
-  const auto & support = Curve::_support(base_field_table, poly_coeff_exponents);
+  const auto base_field_table = curve.base_field_table();
+  auto poly_coeff_exponents = curve.rhs_coeff_exponents();
+  const auto & support = curve.rhs_support();
 
   // first normalize the difference between the second and third nonvanishing coefficient
   // by means of x -> (b*x)
@@ -348,9 +348,9 @@ orbit(
 
     for ( unsigned int shift=0; shift<curve.prime_power()-1; ++shift ) {
       auto curve_shifted =
-        CurveIterator::reduce_multiplicative(
+        CurveIterator::reduce_multiplicative( CurveFq(
             base_field_table,
-            CurveIterator::x_shift(base_field_table, fq_poly, shift) );
+            CurveIterator::x_shift(base_field_table, fq_poly, shift) ) );
       auto poly_shifted = curve_shifted.rhs_coeff_exponents();
       auto fq_poly_shifted = curve_shifted.rhs_coefficients();
 
@@ -366,9 +366,9 @@ orbit(
 
     for ( unsigned int shift=0; shift<curve.prime_power()-1; ++shift ) {
       auto curve_shifted =
-        CurveIterator::reduce_multiplicative(
+        CurveIterator::reduce_multiplicative( CurveFq(
             base_field_table,
-            CurveIterator::z_shift(base_field_table, fq_poly, shift) );
+            CurveIterator::z_shift(base_field_table, fq_poly, shift) ) );
       auto poly_shifted = curve_shifted.rhs_coeff_exponents();
       auto fq_poly_shifted = curve_shifted.rhs_coefficients();
 

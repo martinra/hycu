@@ -61,21 +61,7 @@ class CurveIterator
 
     static bool is_reduced(const Curve & curve);
     static Curve reduce(const Curve & curve);
-
-    static
-    inline
-    Curve
-    reduce_multiplicative(
-        shared_ptr<FqElementTable> base_field_table,
-        vector<fq_nmod_struct*> && poly_coeff_exponents
-        )
-    {
-      return CurveIterator::reduce_multiplicative(
-          base_field_table,
-          vector<int>(CurveFq(base_field_table, move(poly_coeff_exponents)).rhs_coeff_exponents()) );
-    };
-
-    static Curve reduce_multiplicative(shared_ptr<FqElementTable> base_field_table, vector<int> && poly_coeff_exponents);
+    static Curve reduce_multiplicative(const Curve & curve);
 
     static set<vector<int>> orbit(const Curve & curve, map<vector<int>, unsigned int> orbits);
 
