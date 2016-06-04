@@ -111,8 +111,8 @@ main(
     auto store_type_str = config_yaml["StoreType"].as<string>();
     if ( store_type_str == "RHC" )
       store_type = StoreType::RHC;
-    else if ( store_type_str == "DHI" )
-      store_type = StoreType::DHI;
+    else if ( store_type_str == "HI" )
+      store_type = StoreType::HI;
     else {
       cerr << "Invalid store type in configuration file" << endl;
       exit(1);

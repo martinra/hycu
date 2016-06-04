@@ -31,7 +31,6 @@
 #include <flint/fq_nmod_poly.h>
 #include <flint/nmod_poly.h>
 
-#include "curve_iterator.hh"
 #include "fq_element_table.hh"
 #include "opencl/interface.hh"
 #include "reduction_table.hh"
@@ -89,7 +88,7 @@ class Curve
 
     static vector<unsigned int> _support(shared_ptr<FqElementTable> table, vector<int> poly_coeff_exponents);
 
-    bool has_squarefree_rhs();
+    bool has_squarefree_rhs() const;
     nmod_poly_struct rhs_nmod_polynomial() const;
     fq_nmod_poly_struct rhs_polynomial() const;
 
@@ -97,7 +96,15 @@ class Curve
 
     unsigned int discriminant() const;
 
-    Curve twist() const;
+    inline
+    Curve
+    twist(
+        ) const
+    {
+      return Curve(this->table, Curve::_twist_rhs(this->table, this->poly_coeff_exponents));
+    };
+
+    static vector<int> _twist_rhs(const shared_ptr<FqElementTable> base_field_table, const vector<int> & poly_coeff_exponents);
 
 
     void count(ReductionTable & table);

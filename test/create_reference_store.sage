@@ -55,31 +55,38 @@ create_reference_store<{prime_power},{genus},
   with file("reference_store_rhc_q{}_g{}.hh".format(prime,genus), 'w') as output:
     output.write(code.format(prime_power = prime, genus = genus))
 
+## h -4 classes given by program
+## 0,4,4,4,3
+## 1,4,4,4,2
+## 3,0,0,4,3
+## 4,0,0,4,2
+## 4,0,4,3
+## 4,1,4,2
 
-def write_reference_store_dhi(prime, genus):
-  discriminant_isogeny_isomorphism_classes = curves_discriminant_isogeny_isomorphism_classes(prime, genus)
+def write_reference_store_hi(prime, genus):
+  isogeny_isomorphism_classes = curves_isogeny_isomorphism_classes(prime, genus)
 
   code = """
-#ifndef _H_TEST_REFERENCE_STORE_DHI_Q{prime_power}_G{genus}
-#define _H_TEST_REFERENCE_STORE_DHI_Q{prime_power}_G{genus}
+#ifndef _H_TEST_REFERENCE_STORE_HI_Q{prime_power}_G{genus}
+#define _H_TEST_REFERENCE_STORE_HI_Q{prime_power}_G{genus}
 
 
 template <>
 TestStore<{prime_power}, {genus},
-          HyCu::CurveData::DiscrimiantHasseWeil,
+          HyCu::CurveData::HasseWeil,
           HyCu::StoreData::IsomorphismClass>
 create_reference_store<{prime_power}, {genus},
-                       HyCu::CurveData::DiscrimiantHasseWeil,
+                       HyCu::CurveData::HasseWeil,
                        HyCu::StoreData::IsomorphismClass>()
 {{
-  map<typename HyCu::CurveData::DiscrimiantHasseWeil::ValueType,
-      typename HyCu::StoreData::Count::IsomorphismClass>
+  map<typename HyCu::CurveData::HasseWeil::ValueType,
+      typename HyCu::StoreData::IsomorphismClass::ValueType>
     store;
 
 """
     
-  for ((discriminant,hasse_weil_offsets), isomorphism_classes) in \
-        sorted(discriminant_isogeny_isomorphism_classes.items()):
+  for (hasse_weil_offsets, isomorphism_classes) in \
+        sorted(isogeny_isomorphism_classes.items()):
 
     isomorphism_classes_code = \
         "vector<vector<int>>{{\n" \
@@ -88,33 +95,32 @@ create_reference_store<{prime_power}, {genus},
       + "\n      }}"
 
     code += """
-  store[{{{{ {discriminant}, vector<int>{{{{ {hasse_weil_offsets} }}}} }}}}]
+store[{{{{ vector<int>{{{{ {hasse_weil_offsets} }}}} }}}}]
     = {{{{ {isomorphism_classes_code} }}}};""" \
-      .format( discriminant = discriminant
-             , hasse_weil_offsets = ','.join(map(str, hasse_weil_offsets))
+      .format( hasse_weil_offsets = ','.join(map(str, hasse_weil_offsets))
              , isomorphism_classes_code = isomorphism_classes_code
              )
 
   code += """
 
   return TestStore<{prime_power}, {genus},
-                   HyCu::CurveData::DiscrimiantHasseWeil,
+                   HyCu::CurveData::HasseWeil,
                    HyCu::StoreData::IsomorphismClass>
              (store);
 }}
 
 template
 TestStore<{prime_power}, {genus},
-          HyCu::CurveData::DiscrimiantHasseWeil,
+          HyCu::CurveData::HasseWeil,
           HyCu::StoreData::IsomorphismClass>
 create_reference_store<{prime_power},{genus},
-                        HyCu::CurveData::DiscrimiantHasseWeil,
+                        HyCu::CurveData::HasseWeil,
                         HyCu::StoreData::IsomorphismClass>();
 
 #endif
 """
 
-  with file("reference_store_dhi_q{}_g{}.hh".format(prime,genus), 'w') as output:
+  with file("reference_store_hi_q{}_g{}.hh".format(prime,genus), 'w') as output:
     output.write(code.format(prime_power = prime, genus = genus))
 
 def curves_ramification_isogeny_count(prime, genus):
@@ -139,7 +145,7 @@ def curves_ramification_isogeny_count(prime, genus):
 
   return curve_count
 
-def curves_discriminant_isogeny_isomorphism_classes(prime, genus):
+def curves_isogeny_isomorphism_classes(prime, genus):
   isomorphism_classes = {}
 
   Ks = [GF(prime**n, 'a') for n in range(1,genus+1)]
@@ -148,10 +154,13 @@ def curves_discriminant_isogeny_isomorphism_classes(prime, genus):
   Rz.<x,z> = K[]
 
 
-  x_scale = lambda poly: poly.subs(x=K.multiplicative_generator()*x)
-  x_shift = lambda poly: poly.subs(x=x+K.gen())
-  y_scale = lambda poly: K.multiplicative_generator()**2 * poly
-  z_shift = lambda poly: poly.parent()( poly.homogenize(Rz.gen(1)).subs(z=1+K.gen()) )
+  x_scale = lambda poly, e: poly.subs(x=K.multiplicative_generator()**e*x)
+  x_shift = lambda poly, e: poly.subs(x=x+e*K.gen())
+  y_scale = lambda poly, e: K.multiplicative_generator()**(2*e) * poly
+  z_shift = lambda poly, e: poly.parent()( poly.homogenize(Rz.gen(1)).subs(z=1+e*K.gen()*x) )
+
+  generator_power_dict = dict( (K.multiplicative_generator()**n,n) for n in range(prime-1) )
+  generator_power_dict[K(0)] = prime-1
 
   for coeffs in itertools.chain( xmrange((2*genus+2)*[prime]),
                                  xmrange((2*genus+3)*[prime]) ):
@@ -163,20 +172,27 @@ def curves_discriminant_isogeny_isomorphism_classes(prime, genus):
     except ArithmeticError:
       continue
 
-    key = (poly.discriminant(),hasse_weil_offsets)
+
+    tmp = [generator_power_dict[c] for c in poly.coefficients(sparse=False)]
+
+    key = hasse_weil_offsets
     if key not in isomorphism_classes:
       isomorphism_classes[key] = [set([poly])]
     else:
-      x_scaled = x_scale(poly)
-      x_shifted = z_shift(poly)
-      y_scaled = y_scale(poly)
-      z_shifted = z_shift(poly)
+      poly_transformations = set([
+          x_scale(poly,1), x_scale(poly,-1)
+        , x_shift(poly,1), x_shift(poly,-1)
+        , y_scale(poly,1), y_scale(poly,-1)
+        , z_shift(poly,1), z_shift(poly,-1)
+        ])
 
       isomorphic_indices = []
       for (ix,ic) in enumerate(isomorphism_classes[key]):
-        if (    x_scaled in ic or x_shifted in ic
-             or y_scaled in ic or z_shifted in ic ):
+        if not ic.isdisjoint(poly_transformations):
           isomorphic_indices.append(ix)
+      if tmp == [ 0,1,1,4,2 ]:
+        print poly
+        print isomorphic_indices
 
       ic = set([poly])
       for ix in reversed(isomorphic_indices):
@@ -186,14 +202,18 @@ def curves_discriminant_isogeny_isomorphism_classes(prime, genus):
       isomorphism_classes[key].append(ic)
 
 
-  generator_power_dict = dict( (K.multiplicative_generator()**n,n) for n in range(prime-1) )
-  generator_power_dict[0] = prime-1
-
   for key in isomorphism_classes.keys():
+    for ic in isomorphism_classes[key]:
+      ic_gen_pw = sorted([ ([ generator_power_dict[c]
+                             for c in p.coefficients(sparse=False) ], ix)
+                           for (ix,p) in enumerate(isomorphism_classes[key][-1]) if is_reduced(p) ])
+      if [ 0,1,1,4,2 ] in [p for (p,_) in ic_gen_pw]:
+        print ic_gen_pw
+
     isomorphism_classes[key] = sorted(
       [ sorted([ [ generator_power_dict[c]
                    for c in p.coefficients(sparse=False) ]
-                 for p in ic ])[0]
+                 for p in ic if is_reduced(p) ])[0]
         for ic in isomorphism_classes[key] ])
 
   return isomorphism_classes
@@ -222,3 +242,17 @@ def ramification_isogeny_rhs(rhs, Ks):
   hasse_weil_offsets = tuple(hasse_weil_offsets)
 
   return (ramification_type,hasse_weil_offsets)
+
+def is_reduced(rhs):
+  if rhs[rhs.degree()-1] != 0:
+    return False
+
+  K = rhs.base_ring()
+  g = K.multiplicative_generator()
+  support = sorted(rhs.exponents())
+  if len(support) <= 2:
+    return rhs[support[0]] in [g**0, g**1]
+  else:
+    return rhs[support[-2]] in [g**0, g**1] \
+      and  rhs[support[-3]]/rhs[support[-2]] \
+             in [g**n for n in range(support[-2]-support[-3])]

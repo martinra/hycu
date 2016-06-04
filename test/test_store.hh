@@ -26,9 +26,7 @@
 
 #include <mutex>
 
-#include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store/store.hh"
-#include "store/store_data/count.hh"
 
 
 using std::mutex;
@@ -53,7 +51,12 @@ class TestStore :
       return store;
     };
 
-    bool was_saved(const ConfigNode & config, const vuu_block & block) final
+    bool
+    was_saved(
+        const ConfigNode & config,
+        const vuu_block & block
+        ) const
+          final
     {
       return false;
     };

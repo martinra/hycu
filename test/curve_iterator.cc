@@ -159,6 +159,41 @@ BOOST_AUTO_TEST_CASE( is_reduced_f5_g1 )
       if ( curves_reduced.count(v) == 0 )
        curves_diff.push_back(v);
 
-    message_positions( "reduced genus 1 curves / F_5: ", curves_diff );
+    message_positions( "(un)reduced genus 1 curves / F_5: ", curves_diff );
   }
 }
+
+BOOST_AUTO_TEST_CASE( reduce_f5_g1 )
+{
+  unsigned int prime = 5;
+  unsigned int genus = 1;
+  auto table = make_shared<FqElementTable>(prime,1);
+
+
+  vuu_block lower_degree_blocks;
+  for ( size_t ix=0; ix < 2*genus + 1; ++ix )
+    lower_degree_blocks.push_back(table->block_complete());
+  lower_degree_blocks.push_back(table->block_non_zero());
+  BlockIterator lower_degree_block_iter(lower_degree_blocks);
+
+  vuu_block higher_degree_blocks;
+  for ( size_t ix=0; ix < 2*genus + 2; ++ix )
+    higher_degree_blocks.push_back(table->block_complete());
+  higher_degree_blocks.push_back(table->block_non_zero());
+  BlockIterator higher_degree_block_iter(higher_degree_blocks);
+
+
+  for ( ; !lower_degree_block_iter.is_end(); lower_degree_block_iter.step() )
+    if ( !CurveIterator::is_reduced(
+            CurveIterator::reduce(
+              Curve(table, lower_degree_block_iter.as_position()) ) ) )
+      message_positions( "unreduced genus 1 curve / F_5: ",
+                         vector<vector<int>>{ lower_degree_block_iter.as_position() } );
+  for ( ; !higher_degree_block_iter.is_end(); higher_degree_block_iter.step() )
+    if ( !CurveIterator::is_reduced(
+            CurveIterator::reduce(
+              Curve(table, higher_degree_block_iter.as_position()) ) ) )
+      message_positions( "unreduced genus 1 curve / F_5: ",
+                         vector<vector<int>>{ higher_degree_block_iter.as_position() } );
+}
+

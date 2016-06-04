@@ -23,18 +23,26 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "store/curve_data/explicit_ramification_hasse_weil.hh"
+#include "store/curve_data/hasse_weil.hh"
+#include "store/store_data/count.hh"
+#include "store/store_data/isomorphism_class.hh"
 #include "test_store.hh"
 #include "worker_pool/standalone.hh"
+
 
 #include "reference_store_rhc_q5_g1.hh"
 #include "reference_store_rhc_q7_g1.hh"
 #include "reference_store_rhc_q7_g2.hh"
 
+#include "reference_store_hi_q5_g1.hh"
+// #include "reference_store_dhi_q7_g1.hh"
+
 
 using namespace std;
 
 
-BOOST_AUTO_TEST_CASE( threaded_q5_g1 )
+BOOST_AUTO_TEST_CASE( threaded_rhc_q5_g1 )
 {
   auto worker_pool = make_shared<StandaloneWorkerPool>(
          dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
@@ -66,7 +74,7 @@ BOOST_AUTO_TEST_CASE( threaded_q5_g1 )
   }
 }
 
-BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
+BOOST_AUTO_TEST_CASE( threaded_rhc_q7_g1 )
 {
   auto worker_pool = make_shared<StandaloneWorkerPool>(
          dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
@@ -98,7 +106,7 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
   }
 }
 
-BOOST_AUTO_TEST_CASE( threaded_q7_g2 )
+BOOST_AUTO_TEST_CASE( threaded_rhc_q7_g2 )
 {
   auto worker_pool = make_shared<StandaloneWorkerPool>(
          dynamic_pointer_cast<StoreFactoryInterface>( make_shared<
@@ -128,4 +136,45 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g2 )
      
     BOOST_FAIL( message.str() );
   }
+}
+
+BOOST_AUTO_TEST_CASE( threaded_hi_q5_g1 )
+{
+  typedef HyCu::CurveData::HasseWeil CurveDataType;
+  typedef HyCu::StoreData::IsomorphismClass StoreDataType;
+  typedef TestStore<5,1,CurveDataType,StoreDataType> TestStoreType;
+
+  auto worker_pool = make_shared<StandaloneWorkerPool>(
+         dynamic_pointer_cast<StoreFactoryInterface>(
+           make_shared< StoreFactory<TestStoreType> >() ) );
+
+  ConfigNode node;
+  node.prime = 5;
+  node.prime_exponent = 1;
+  node.genus = 1;
+  node.package_size = 30;
+
+  worker_pool->set_config(node);
+  FqElementTable enumeration_table(node.prime, node.prime_exponent);
+  CurveIterator iter(enumeration_table, node.genus, node.package_size);
+  for (; !iter.is_end(); iter.step() )
+    worker_pool->assign(iter.as_block());
+
+  worker_pool.reset();
+  auto computed_store = TestStoreType::from_global_store();
+  auto reference_store = create_reference_store<5,1,CurveDataType,StoreDataType>();
+
+  if ( computed_store != reference_store ) {
+    stringstream message;
+    message << "threaded computation of genus 1 curves / F_5:" << endl << computed_store;
+     
+    BOOST_FAIL( message.str() );
+  }
+
+// reduction of { 0,0,4,1 } to { 0,0,0,4,2 }
+// 2*x**3*z + x*z**3 + z**4
+// via 
+// 4*x**4 + x**2*z**2 + xz**3 + z**4
+//
+// via p.subs(z=z+4*x).subs(x=x+z/2/3).subs(x=-x) * -1
 }

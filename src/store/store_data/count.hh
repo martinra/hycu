@@ -28,6 +28,8 @@
 #include <iostream>
 #include <set>
 
+#include "curve_iterator.hh"
+
 
 using std::istream;
 using std::ostream;
@@ -43,61 +45,106 @@ namespace StoreData
 class Count
 {
   public:
-    inline Count(const Curve & curve)
+    inline
+    Count(
+        const Curve & curve
+        )
     {
       this->value.counter = CurveIterator::multiplicity(curve);
     };
     
-    inline const Count twist() { return *this; };
-
-    inline bool operator==(const Count & rhs) const
+    inline
+    const Count
+    twist()
     {
-      return this->value.counter == rhs.value.counter;
+      return *this;
     };
 
     struct ValueType
     {
       unsigned int counter;
 
-      ValueType() : counter ( 0 ) {};
-      ValueType(unsigned int counter) : counter ( counter ) {};
 
-      ValueType(const Count & count) : counter ( count.value.counter ) {};
-      ValueType(Count && count) : counter ( count.value.counter ) {};
+      ValueType(
+          ) :
+        counter ( 0 )
+      {
+      };
+
+      ValueType(
+          unsigned int counter
+          ) :
+        counter ( counter )
+      {
+      };
+
+      ValueType(
+          const Count & count
+          ) :
+        counter ( count.value.counter )
+      {
+      };
+
+      ValueType(
+          Count && count
+          ) :
+        counter ( count.value.counter )
+      {
+      };
     };
 
     friend void operator+=(ValueType & lhs, const Count & rhs);
 
   protected:
     ValueType value;
-
-  private:
-    Count(unsigned int counter) : value ( counter ) {};
 };
 
 
-inline bool operator==(const Count::ValueType & lhs, const Count::ValueType & rhs)
+inline
+bool
+operator==(
+    const Count::ValueType & lhs,
+    const Count::ValueType & rhs
+    )
 {
   return lhs.counter == rhs.counter;
 };
 
-inline void operator+=(Count::ValueType & lhs, const Count::ValueType & rhs)
+inline
+void
+operator+=(
+    Count::ValueType & lhs,
+    const Count::ValueType & rhs
+    )
 {
   lhs.counter += rhs.counter;
 };
 
-inline void operator+=(Count::ValueType & lhs, const Count & rhs)
+inline
+void
+operator+=(
+    Count::ValueType & lhs,
+    const Count & rhs
+    )
 {
   lhs.counter += rhs.value.counter;
 };
 
 
-inline ostream & operator<<(ostream & stream, const Count::ValueType & value)
+inline
+ostream & operator<<(
+    ostream & stream,
+    const Count::ValueType & value
+    )
 {
   return stream << value.counter;
 };
 
-inline istream & operator>>(istream & stream, Count::ValueType & value)
+inline
+istream & operator>>(
+    istream & stream,
+    Count::ValueType & value
+    )
 {
   return stream >> value.counter;
 };

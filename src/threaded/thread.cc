@@ -88,9 +88,10 @@ main_thread(
     if ( !store->was_saved(*config,block) ) {
       for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
         Curve curve(fq_table, iter.as_position());
+        if ( store->was_inserted(curve) ) continue;
         if ( !curve.has_squarefree_rhs() ) continue;
         for ( auto table : reduction_tables ) curve.count(table);
-        store->register_curve(curve);
+        store->insert(curve);
       }
 
       store->save(*config, block);

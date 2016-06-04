@@ -54,7 +54,7 @@ main(
   visible_options.add_options()
     ( "help,h", "show help message" )
     ( "store-type", value<string>(),
-      "the type of the store;\n  rhc: ramification,hasse-weil;Count\n  dhi: discrimianant,hasse-weil;isomorphism-class" )
+      "the type of the store;\n  rhc: ramification,hasse-weil;Count\n  hi: hasse-weil;isomorphism-class" )
     ( "input-path", value<string>(),
       "path to the input folder" )
     ( "output-file", value<string>(),
@@ -113,8 +113,8 @@ main(
   string store_type = options_map["store-type"].as<string>();
   if ( store_type == "rhc" )
     merge<StoreTypeResolver<RHC>::type> (input_files, output_file);
-  else if ( store_type == "dhi" )
-    merge<StoreTypeResolver<DHI>::type> (input_files, output_file);
+  else if ( store_type == "hi" )
+    merge<StoreTypeResolver<HI>::type> (input_files, output_file);
   else {
       cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
       exit(1);

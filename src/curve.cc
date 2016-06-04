@@ -125,6 +125,7 @@ _support(
 bool
 Curve::
 has_squarefree_rhs()
+  const
 {
   if ( this->table->is_prime_field() ) {
     auto poly = this->rhs_nmod_polynomial();
@@ -208,26 +209,28 @@ discriminant()
   return discriminant;
 }
 
-Curve
+vector<int>
 Curve::
-twist()
-  const
+_twist_rhs(
+   const shared_ptr<FqElementTable> base_field_table,
+   const vector<int> & poly_coeff_exponents
+   )
 {
   // here we use that p != 2
-  unsigned int nonsquare = this->table->power_coset_representatives(2)[1];
+  unsigned int nonsquare = base_field_table->power_coset_representatives(2)[1];
 
   vector<int> twisted_poly_coeff_exponents;
-  twisted_poly_coeff_exponents.reserve(this->degree()+1);
+  twisted_poly_coeff_exponents.reserve(poly_coeff_exponents.size());
 
-  for ( int coeff : this->poly_coeff_exponents ) {
-    if ( this->table->is_zero(coeff) )
+  for ( int coeff : poly_coeff_exponents ) {
+    if ( base_field_table->is_zero(coeff) )
       twisted_poly_coeff_exponents.push_back(coeff);
     else
       twisted_poly_coeff_exponents.push_back(
-          this->table->reduce_generator_exponent(coeff + nonsquare) );
+          base_field_table->reduce_generator_exponent(coeff + nonsquare) );
   }
 
-  return Curve(this->table, twisted_poly_coeff_exponents);
+  return twisted_poly_coeff_exponents;
 }
 
 void
@@ -426,7 +429,7 @@ hasse_weil_offsets(
   for ( size_t fx=prime_exponent;
         fx<=max_prime_exponent;
         fx+=prime_exponent )
-    offsets.push_back(offset_map[fx]);
+    offsets.push_back(offset_map.at(fx));
 
   return offsets;
 }

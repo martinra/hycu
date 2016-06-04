@@ -21,52 +21,53 @@
 ===============================================================================*/
 
 
-#ifndef _H_STORE_STORE
-#define _H_STORE_STORE
+#ifndef _H_STORE_STORE_INTERFACE
+#define _H_STORE_STORE_INTERFACE
 
-#include <string>
-#include <vector>
 
 #include "block_iterator.hh"
 #include "config/config_node.hh"
 #include "curve.hh"
-#include "store/store_interface.hh"
 
 
 using std::istream;
 using std::ostream;
-using std::string;
-using std::vector;
 
 
-template<class CurveData, class StoreData>
-class Store :
-  public StoreInterface
+class StoreInterface
 {
   public:
-    inline
-    bool
-    was_inserted(
-        const Curve & curve
-        ) const
-          final
-    {
-      return false;
-    };
+    virtual bool was_inserted(const Curve & curve) const = 0;
+    virtual void insert(const Curve & curve) = 0;
+    virtual bool was_saved(const ConfigNode & config, const vuu_block & block) const = 0;
+    virtual void save(const ConfigNode & config, const vuu_block & block) = 0;
 
-    void insert(const Curve & curve) final;
-
-    bool was_saved(const ConfigNode & config, const vuu_block & block) const;
-    void save(const ConfigNode & config, const vuu_block & block);
-
-  protected:
-    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
+    friend ostream & operator<<(ostream & stream, const StoreInterface & store);
+    friend istream & operator>>(istream & stream, StoreInterface & store);
 
   private:
-    ostream & insert_store(ostream & stream) const final;
-    istream & extract_store(istream & stream) final;
+    virtual ostream & insert_store(ostream & stream) const = 0;
+    virtual istream & extract_store(istream & stream) = 0; 
+};
 
-    string output_file_name(const ConfigNode & config, const vuu_block & block) const;
+inline
+ostream &
+operator<<(
+    ostream & stream,
+    const StoreInterface & store
+    )
+{
+  return store.insert_store(stream);
+};
+
+inline
+istream &
+operator>>(
+    istream & stream,
+    StoreInterface & store
+    )
+{
+  return store.extract_store(stream);
 };
 
 #endif

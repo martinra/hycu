@@ -25,7 +25,7 @@
 #include <sstream>
 #include <string>
 
-#include "store/store.hh"
+#include "store/store_isomorphism_class.hh"
 #include "store/store_factory.hh"
 
 
@@ -34,17 +34,14 @@ using boost::filesystem::is_regular_file;
 using boost::filesystem::path;
 
 
-template<
-  class CurveData,
-  class StoreData
-  >
+
 void
-Store<CurveData, StoreData>::
+StoreHasseWeilIsomorphismClass::
 insert(
     const Curve & curve
     )
 {
-  CurveData key_data(curve);
+  HasseWeil key_data(curve);
   auto key = key_data.as_value();
   auto twisted_key = key_data.twist().as_value();
   StoreData data(curve);

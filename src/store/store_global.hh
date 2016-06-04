@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 
-#ifndef _H_STORE_STORE
-#define _H_STORE_STORE
+#ifndef _H_STORE_STORE_GLOBAL
+#define _H_STORE_STORE_GLOBAL
 
 #include <string>
 #include <vector>
@@ -30,17 +30,11 @@
 #include "block_iterator.hh"
 #include "config/config_node.hh"
 #include "curve.hh"
-#include "store/store_interface.hh"
-
-
-using std::istream;
-using std::ostream;
-using std::string;
-using std::vector;
+#include "store/store.hh"
 
 
 template<class CurveData, class StoreData>
-class Store :
+class StoreGlobal :
   public StoreInterface
 {
   public:
@@ -48,25 +42,30 @@ class Store :
     bool
     was_inserted(
         const Curve & curve
-        ) const
-          final
+        ) final
     {
-      return false;
-    };
+      shared_lock store_lock(store_mutex);
 
+      return    CurveData::was_inserted(this->store, curve)
+             || StoreData::was_inserted(this->store, curve);
+    };
+     
     void insert(const Curve & curve) final;
 
     bool was_saved(const ConfigNode & config, const vuu_block & block) const;
     void save(const ConfigNode & config, const vuu_block & block);
 
   protected:
-    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
+    static mutex store_mutex;
+    static map< typename CurveData::ValueType,
+                HyCu::StoreData::IsomorphismClass::ValueType >
+                  store;
 
   private:
     ostream & insert_store(ostream & stream) const final;
     istream & extract_store(istream & stream) final;
 
-    string output_file_name(const ConfigNode & config, const vuu_block & block) const;
+    string output_file_name(const ConfigNode & config, const vuu_block & block);
 };
 
 #endif

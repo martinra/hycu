@@ -21,6 +21,7 @@
 ===============================================================================*/
 
 #include "curve.hh"
+#include "curve_iterator.hh"
 #include "store/store_data/isomorphism_class.hh"
 
 
@@ -32,25 +33,37 @@ IsomorphismClass::
 IsomorphismClass(
     const Curve & curve
     ) :
-    curve ( curve )
+    base_field_table ( curve.base_field_table() )
 {
-  // this is not implemented for the twists
-  if ( curve.prime_power() == 2 ) throw;
+  const auto & orbit = CurveIterator::orbit(curve, this->value.orbits);
 
-  if ( CurveIterator::is_minimal_in_isomorphism_class(curve) )
-    this->value.representatives.insert(curve.rhs_coeff_exponents());
+  this->value.representatives.push_back(*orbit.cbegin());
+  for ( const auto & poly : orbit )
+    this->value.orbits[poly] = 0;
 }
 
 const IsomorphismClass
 IsomorphismClass::
 twist()
 {
-  if ( this->value.representatives.size() > 1 ) {
-    cerr << "values of IsomorphismClass stores must have at most one representative" << endl;
-    throw;
+  vector<set<vector<int>>>
+    twisted_orbit_sets(this->value.representatives.size());
+
+  for ( const auto & orbit_poly : this->value.orbits )
+    twisted_orbit_sets[orbit_poly.second].emplace(
+      Curve::_twist_rhs(this->base_field_table, orbit_poly.first) );
+
+  map<vector<int>, unsigned int> twisted_orbits;
+  vector<vector<int>> twisted_representatives;
+  for ( unsigned int ix=0; ix<twisted_orbit_sets.size(); ++ix ) {
+    const auto & twisted_orbit = twisted_orbit_sets[ix];
+    twisted_representatives.push_back(*twisted_orbit.cbegin());
+    for ( const auto & poly : twisted_orbit )
+      twisted_orbits[poly] = ix; 
   }
 
-  return IsomorphismClass(curve.twist());
+  return IsomorphismClass( move(twisted_orbits),
+                           move(twisted_representatives) );
 }
 
 ostream &
@@ -61,12 +74,12 @@ operator<<(
     )
 {
   bool start = true;
-  for ( const auto & representative : value.representatives ) {
+  for ( const auto & representative: value.representatives) {
     if ( !start )
       stream << ";";
     else
       start = false;
-    IsomorphismClass::ValueType::insert_representative(stream, representative);
+    IsomorphismClass::ValueType::insert_polynomial(stream, representative);
   }
 
   return stream;
@@ -74,15 +87,15 @@ operator<<(
 
 ostream &
 IsomorphismClass::ValueType::
-insert_representative(
+insert_polynomial(
     ostream & stream,
-    const vector<int> & representative
+    const vector<int> & polynomial
     )
 {
-  if ( !representative.empty() ) {
-    stream << representative.front();
-    for ( size_t ix=0; ix<representative.size(); ++ix )
-      stream << "," << representative[ix];
+  if ( !polynomial.empty() ) {
+    stream << polynomial.front();
+    for ( size_t ix=1; ix<polynomial.size(); ++ix )
+      stream << "," << polynomial[ix];
   }
 
   return stream;
@@ -98,10 +111,11 @@ operator>>(
   vector<int> representative;
   char delimiter;
 
+  value.orbits.clear();
   value.representatives.clear();
   while ( true ) {
-    IsomorphismClass::ValueType::extract_representative(stream,representative);
-    value.representatives.insert(representative);
+    IsomorphismClass::ValueType::extract_polynomial(stream,representative);
+    value.representatives.push_back(representative);
   
     delimiter = stream.peek();
     if ( delimiter == ';' ) {
@@ -115,18 +129,18 @@ operator>>(
 
 istream &
 IsomorphismClass::ValueType::
-extract_representative(
+extract_polynomial(
     istream & stream,
-    vector<int> & representative
+    vector<int> & polynomial 
     )
 {
   int read_int;
   char delimiter;
   
-  representative.clear();
+  polynomial.clear();
   while ( true ) {
     stream >> read_int;
-    representative.push_back(read_int);
+    polynomial.push_back(read_int);
   
     delimiter = stream.peek();
     if ( delimiter == ',' ) {

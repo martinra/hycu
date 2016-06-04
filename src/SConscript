@@ -34,8 +34,8 @@ Export("objs_config")
 
 
 sources_store = [
-    "store/curve_data/discriminant_hasse_weil.cc"
-  , "store/curve_data/explicit_ramification_hasse_weil.cc"
+    "store/curve_data/explicit_ramification_hasse_weil.cc"
+  , "store/curve_data/hasse_weil.cc"
   , "store/store.cc"
   , "store/store_data/isomorphism_class.cc"
   ]

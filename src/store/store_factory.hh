@@ -26,7 +26,7 @@
 
 #include <memory>
 
-#include "store/curve_data/discriminant_hasse_weil.hh"
+#include "store/curve_data/hasse_weil.hh"
 #include "store/curve_data/explicit_ramification_hasse_weil.hh"
 #include "store.hh"
 #include "store/store_data/count.hh"
@@ -56,7 +56,7 @@ class StoreFactory :
 };
 
 
-enum StoreType { RHC, DHI };
+enum StoreType { RHC, HI };
 
 template <StoreType type>
 struct StoreTypeResolver
@@ -75,13 +75,13 @@ struct StoreTypeResolver<RHC>
 };
 
 
-template class Store<HyCu::CurveData::DiscriminantHasseWeil, HyCu::StoreData::IsomorphismClass>;
+template class Store<HyCu::CurveData::HasseWeil, HyCu::StoreData::IsomorphismClass>;
 
 template<>
-struct StoreTypeResolver<DHI>
+struct StoreTypeResolver<HI>
 {
   typedef
-    Store<HyCu::CurveData::DiscriminantHasseWeil, HyCu::StoreData::IsomorphismClass>
+    Store<HyCu::CurveData::HasseWeil, HyCu::StoreData::IsomorphismClass>
     type;
 };
 
@@ -98,9 +98,9 @@ create_store_factory(
           make_shared< StoreFactory<typename StoreTypeResolver<RHC>::type> >() );
       break;
 
-    case StoreType::DHI:
+    case StoreType::HI:
       return dynamic_pointer_cast<StoreFactoryInterface>(
-          make_shared< StoreFactory<typename StoreTypeResolver<RHC>::type> >() );
+          make_shared< StoreFactory<typename StoreTypeResolver<HI>::type> >() );
       break;
 
     default:
