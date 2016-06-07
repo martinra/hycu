@@ -1,10 +1,11 @@
 HyCu (pronounce like Haiku)
+===
 
 Hyperelliptic curve counter implements counts points of hyperelliptic curves over finite fields.
 
 
 INSTALL INSTRUCTIONS
-===
+---
 
 HyCu is built using scons, and provides four targets: single, threaded, mpi, and merger.
 
@@ -20,8 +21,8 @@ scons threaded CXX="g++ -std=c++11" prefix=$PREFIX
 
 Scons caches configuration variables, so you do not have to pass them again when you rebuild.
 
-Available build options
----
+### Available build options
+
 
 - prefix: Installation, header, and library prefix.
 - CXX: E.g "g++ -std=c++11" of "clang++ -std=c++11".
@@ -45,10 +46,9 @@ Available build options
 
 
 USAGE
-===
-
-Single
 ---
+
+### Single
 
 We assume that HyCu is install in one of the PATHs.
 
@@ -61,8 +61,7 @@ If HyCu was compiled with OpenCL support, you can use it by passing the flag ope
 hycu-single --opencl --time 3001 7 531 63 3 152 476 1002
 ~~~
 
-Threaded and MPI
----
+### Threaded and MPI
 
 Threaded and MPI execution of HyCu is a two-step process. We generate unmerged data files in a result directory and then generate a single result file by
 ~~~
@@ -82,8 +81,7 @@ mpirun -n 2 --map-by ppr:1:node hycu-mpi -n 16 config.yaml results/
 
 Skipping the number of threads lets HyCu use all available cores.
 
-Configuration file
----
+### Configuration file
 
 The config file is a YAML file. Its first entry may be
 ~~~yaml
@@ -108,8 +106,7 @@ Moduli:
 ~~~
 Fields here should be most self-explanatory. The prime and prime exponent give the size of the base field. Currently, prime exponent 1 is the only one that is tested. Package size is a technical parameter, which should not be chosen too small. A reasonable size for many cases would be q^2 or q^3, where q is the base field size.
 
-Store type EC
----
+### Store type EC
 
 The results are stored as a text file with each line of the form:
 ~~~
