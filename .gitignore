@@ -2,9 +2,6 @@ build/
 build_test/
 build_debug/
 bin/
-code_jonas/
-test_data/
-test_data_jonas/
 *.*.swp
 .sconsign.dblite
 config.log
