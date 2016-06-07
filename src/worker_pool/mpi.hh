@@ -31,7 +31,6 @@
 #include <set>
 
 #include "threaded/thread_pool.hh"
-#include "store/store.hh"
 #include "store/store_factory.hh"
 
 
@@ -70,9 +69,6 @@ class MPIWorkerPool
 
     deque<u_process_id> cpu_idle_queue;
     deque<u_process_id> opencl_idle_queue;
-
-    shared_ptr<StoreInterface> store;
-    ConfigNode store_config;
 
     map<u_process_id, set<vuu_block>> assigned_blocks;
 };
