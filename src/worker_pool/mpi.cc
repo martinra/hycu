@@ -49,7 +49,9 @@ MPIWorkerPool(
 {
   MPIWorkerPool::broadcast_initialization(mpi_world, store_type, nmb_working_threads);
 
-  this->master_thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
+  auto store_factory = create_store_factory(store_type);
+  this->store = store_factory->create();
+  this->master_thread_pool = make_shared<ThreadPool>(store_factory);
   this->master_thread_pool->spark_threads(nmb_working_threads);
 }
 
@@ -81,6 +83,8 @@ set_config(
     const ConfigNode & config
     )
 {
+  this->store_config = ConfigNode(config);
+
   this->wait_for_assigned_blocks();
   this->master_thread_pool->update_config(config);
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix )
@@ -93,6 +97,9 @@ assign(
     vuu_block block
     )
 {
+  if ( this->store->was_saved(store_config, block) )
+    return;
+
   if ( this->opencl_idle_queue.empty() )
     this->fill_idle_queues();
 
