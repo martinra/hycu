@@ -36,6 +36,7 @@ StandaloneWorkerPool(
     unsigned int nmb_working_threads
     )
 {
+  this->store = store_factory->create();
   this->master_thread_pool = make_shared<ThreadPool>(store_factory);
   this->master_thread_pool->spark_threads(nmb_working_threads);
 }
@@ -54,6 +55,8 @@ set_config(
     const ConfigNode & config
     )
 {
+  this->store_config = ConfigNode(config);
+
   this->wait_for_assigned_blocks();
   this->master_thread_pool->update_config(config);
 }
@@ -64,6 +67,9 @@ assign(
     vuu_block block
     )
 {
+  if ( this->store->was_saved(store_config, block) )
+    return;
+
   if ( this->nmb_opencl_idle == 0 )
     this->fill_idle_queues();
 
