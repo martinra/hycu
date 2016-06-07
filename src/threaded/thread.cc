@@ -20,6 +20,9 @@
 
 ===============================================================================*/
 
+#include <fstream>
+
+
 #include "threaded/thread.hh"
 #include "threaded/thread_pool.hh"
 
@@ -46,6 +49,9 @@ shutdown()
   this->main_cond_var.notify_all();
   this->main_std_thread.join();
 }
+
+// debug:
+mutex protocol_mutex;
 
 void
 Thread::
@@ -86,14 +92,48 @@ main_thread(
 
     auto store = store_factory->create();
     if ( !store->was_saved(*config,block) ) {
+      unsigned int curve_count = 0;
       for ( BlockIterator iter(block); !iter.is_end(); iter.step() ) {
         Curve curve(fq_table, iter.as_position());
         if ( !curve.has_squarefree_rhs() ) continue;
         for ( auto table : reduction_tables ) curve.count(table);
         store->register_curve(curve);
+
+        if ( ++curve_count >= 1000 ) {
+          unique_lock<mutex> protocol_lock(protocol_mutex);
+
+          fstream protocol( "/c3se/users/raum/Hebbe/hycu_run/protocol",
+                            fstream::out | fstream::app );
+          protocol << "enumerated 500 curves in: ";
+          for ( auto b : block )
+            protocol << get<0>(b) << "," << get<1>(b);
+          protocol << endl;
+
+          curve_count = 0;
+        }
       }
 
       store->save(*config, block);
+      
+
+      unique_lock<mutex> protocol_lock(protocol_mutex);
+
+      fstream protocol( "/c3se/users/raum/Hebbe/hycu_run/protocol",
+                        fstream::out | fstream::app );
+      protocol << "stored: ";
+      for ( auto b : block )
+        protocol << get<0>(b) << "," << get<1>(b);
+      protocol << endl;
+    }
+    else {
+      unique_lock<mutex> protocol_lock(protocol_mutex);
+
+      fstream protocol( "/c3se/users/raum/Hebbe/hycu_run/protocol",
+                        fstream::out | fstream::app );
+      protocol << "ignored: ";
+      for ( auto b : block )
+        protocol << get<0>(b) << "," << get<1>(b);
+      protocol << endl;
     }
 
 
