@@ -26,9 +26,10 @@
 #include <algorithm>
 #include <tuple>
 
-#include <curve_iterator.hh>
-#include <fq_element_table.hh>
-#include <iterator_messaging.hh>
+#include "curve.hh"
+#include "curve_iterator.hh"
+#include "fq_element_table.hh"
+#include "iterator_messaging.hh"
 
 
 using namespace std;
@@ -104,3 +105,54 @@ BOOST_AUTO_TEST_CASE( enumerate_f3_g0 )
     message_positions("genus 1 degree 1 curves / F_3: ", positions_deg1);
 }
 
+BOOST_AUTO_TEST_CASE( blocks_f71_g2 )
+{
+  unsigned int prime = 71;
+
+  auto table = make_shared<FqElementTable>(prime, 1);
+  CurveIterator iter(*table, 2, 2500);
+
+  fmpz_t total_nmb;
+  fmpz_init(total_nmb);
+  fmpz_zero(total_nmb);
+
+  for (; !iter.is_end(); iter.step() ) {
+    BlockIterator block_iter(iter.as_block());
+    for (; !block_iter.is_end(); block_iter.step() ) {
+      Curve curve(table, block_iter.as_position());
+      if ( !curve.has_squarefree_rhs() ) continue;
+      fmpz_add_ui(total_nmb, total_nmb, CurveIterator::multiplicity(prime, prime, curve.rhs_support()));
+      // twist
+      fmpz_add_ui(total_nmb, total_nmb, CurveIterator::multiplicity(prime, prime, curve.rhs_support()));
+    }
+  }
+
+  fmpz_t total_nmb_cmp;
+  fmpz_init(total_nmb_cmp);
+  fmpz_zero(total_nmb_cmp);
+
+  fmpz_t tmp;
+  fmpz_init(tmp);
+
+  fmpz_set_ui(tmp, prime);
+  fmpz_pow_ui(tmp, tmp, 7);
+  fmpz_add(total_nmb_cmp, total_nmb_cmp, tmp);
+
+  fmpz_set_ui(tmp, prime);
+  fmpz_pow_ui(tmp, tmp, 4);
+  fmpz_add(total_nmb_cmp, total_nmb_cmp, tmp);
+
+  fmpz_set_ui(tmp, prime);
+  fmpz_pow_ui(tmp, tmp, 6);
+  fmpz_sub(total_nmb_cmp, total_nmb_cmp, tmp);
+
+  fmpz_set_ui(tmp, prime);
+  fmpz_pow_ui(tmp, tmp, 5);
+  fmpz_sub(total_nmb_cmp, total_nmb_cmp, tmp);
+
+  BOOST_CHECK( fmpz_equal(total_nmb, total_nmb_cmp) == 1 );
+
+  fmpz_clear(total_nmb);
+  fmpz_clear(total_nmb_cmp);
+  fmpz_clear(tmp);
+}

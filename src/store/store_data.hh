@@ -59,10 +59,10 @@ class Count
 
     struct ValueType
     {
-      unsigned int counter;
+      unsigned long int counter;
 
       ValueType() : counter ( 0 ) {};
-      ValueType(unsigned int counter) : counter ( counter ) {};
+      ValueType(unsigned long int counter) : counter ( counter ) {};
 
       ValueType(const Count & count) : counter ( count.value.counter ) {};
       ValueType(Count && count) : counter ( count.value.counter ) {};
@@ -74,7 +74,7 @@ class Count
     ValueType value;
 
   private:
-    Count(unsigned int counter) : value ( counter ) {};
+    Count(unsigned long int counter) : value ( counter ) {};
 };
 
 
