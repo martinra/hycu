@@ -104,54 +104,6 @@ inline istream & operator>>(istream & stream, Count::ValueType & value)
   return stream >> value.counter;
 };
 
-
-
-class Representative
-{
-  public:
-    Representative(const Curve & curve);
-    
-    const Representative twist();
-
-    struct ValueType
-    {
-      set<vector<int>> representatives;
-
-      ValueType() {};
-      ValueType(const set<vector<int>> & representatives) : representatives ( representatives ) {};
-      ValueType(set<vector<int>> && representatives) : representatives ( move(representatives) ) {};
-
-      ValueType(const Representative & data) : representatives ( data.value.representatives ) {};
-      ValueType(Representative && data) : representatives ( data.value.representatives ) {};
-
-      static ostream & insert_representative(ostream & stream, const vector<int> & representative);
-      static istream & extract_representative(istream & stream, vector<int> & representative);
-    };
-
-    friend void operator+=(ValueType & lhs, const Representative & rhs);
-
-  protected:
-    ValueType value;
-
-  private:
-    Representative(unsigned int prime_power_pred, set<vector<int>> representatives) :
-      prime_power_pred ( prime_power_pred ), value ( representatives ) {};
-  
-    unsigned int prime_power_pred;
-};
-
-
-inline void operator+=(Representative::ValueType & lhs, const Representative::ValueType & rhs)
-{
-  lhs.representatives.insert(rhs.representatives.begin(), rhs.representatives.end());
-};
-
-inline void operator+=(Representative::ValueType & lhs, const Representative & rhs) { lhs += rhs.value; };
-
-
-ostream & operator<<(ostream & stream, const Representative::ValueType & value);
-istream & operator>>(istream & stream, Representative::ValueType & value);
-
 }
 }
 

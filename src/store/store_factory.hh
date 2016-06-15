@@ -55,7 +55,7 @@ class StoreFactory :
 
 
 // todo: choose more descriptive names
-enum StoreType { EC, ER };
+enum StoreType { EC };
 
 inline
 const shared_ptr<StoreFactoryInterface>
@@ -68,13 +68,6 @@ create_store_factory(
       return dynamic_pointer_cast<StoreFactoryInterface>(
           make_shared< StoreFactory<Store<HyCu::CurveData::ExplicitRamificationHasseWeil,
                                           HyCu::StoreData::Count>>
-                     >() );
-      break;
-
-    case StoreType::ER:
-      return dynamic_pointer_cast<StoreFactoryInterface>(
-          make_shared< StoreFactory<Store<HyCu::CurveData::ExplicitRamificationHasseWeil,
-                                          HyCu::StoreData::Representative>>
                      >() );
       break;
 

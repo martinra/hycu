@@ -112,8 +112,6 @@ main_master(
     auto store_type_str = config_yaml["StoreType"].as<string>();
     if ( store_type_str == "EC" )
       store_type = StoreType::EC;
-    else if ( store_type_str == "ER" )
-      store_type = StoreType::ER;
     else {
       cerr << "Invalid store type given" << endl;
       exit(1);

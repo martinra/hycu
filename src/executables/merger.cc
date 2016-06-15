@@ -55,7 +55,7 @@ main(
   visible_options.add_options()
     ( "help,h", "show help message" )
     ( "store-type", value<string>(),
-      "the type of the store; c: Count, r: Representative" )
+      "the type of the store; c: Count" )
     ( "input-path", value<string>(),
       "path to the input folder" )
     ( "output-file", value<string>(),
@@ -114,9 +114,6 @@ main(
   string store_type = options_map["store-type"].as<string>();
   if ( store_type == "c" )
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
-      (input_files, output_file);
-  else if ( store_type == "r" )
-    merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>>
       (input_files, output_file);
   else {
       cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;

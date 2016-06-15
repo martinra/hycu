@@ -181,13 +181,9 @@ extract_store(
 
 
 template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>;
-template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative>;
 
 typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count> StoreEC;
-typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Representative> StoreER;
 
 template ostream & operator<<(ostream & stream, const StoreEC & store);
-template ostream & operator<<(ostream & stream, const StoreER & store);
 
 template istream & operator>>(istream & stream, StoreEC & store);
-template istream & operator>>(istream & stream, StoreER & store);
