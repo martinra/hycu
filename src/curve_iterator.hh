@@ -47,7 +47,8 @@ class CurveIterator
 
     vector<int> inline as_position() { return this->enumerator_it->as_position(); };
     vector<tuple<int,int>> inline as_block() { return this->enumerator_it->as_block(); };
-    BlockIterator inline as_block_enumerator() { return this->enumerator_it->as_block(); };
+
+    BlockIterator inline as_block_enumerator() { return this->enumerator_it->as_block_enumerator(); };
 
     static unsigned int multiplicity(unsigned int prime, unsigned int prime_power, vector<unsigned int> coeff_support);
 
