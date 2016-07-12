@@ -25,6 +25,7 @@
 #define _H_STORE_STORE_DATA
 
 
+#include "flint/fmpz.h"
 #include <iostream>
 #include <set>
 
@@ -43,11 +44,12 @@ namespace StoreData
 class Count
 {
   public:
-    inline Count(const Curve & curve)
+    inline Count(const Curve & curve) :
+      value (
+          CurveIterator::multiplicity( curve.prime(),
+                                       curve.prime_power(),
+                                       curve.rhs_support() ) )
     {
-      this->value.counter =
-        CurveIterator::multiplicity( curve.prime(), curve.prime_power(),
-                                     curve.rhs_support() );
     };
     
     inline const Count twist() { return *this; };
@@ -59,13 +61,45 @@ class Count
 
     struct ValueType
     {
-      unsigned long int counter;
+      fmpz_t counter;
 
-      ValueType() : counter ( 0 ) {};
-      ValueType(unsigned long int counter) : counter ( counter ) {};
+      ValueType() :
+        ValueType ( (unsigned long int)0 )
+      {
+      };
 
-      ValueType(const Count & count) : counter ( count.value.counter ) {};
-      ValueType(Count && count) : counter ( count.value.counter ) {};
+      ValueType(unsigned long int counter)
+      {
+        fmpz_init(this->counter);
+        fmpz_set_ui(this->counter, counter);
+      };
+
+      ValueType(const fmpz * counter)
+      {
+        fmpz_init(this->counter);
+        fmpz_set(this->counter, counter);
+      };
+
+      ValueType(fmpz * && counter)
+      {
+        fmpz_init(this->counter);
+        fmpz_set(this->counter, counter);
+        fmpz_clear(counter);
+        delete counter;
+      };
+
+      ValueType(const Count & count)
+      {
+        fmpz_init(this->counter);
+        fmpz_set(this->counter, count.value.counter);
+      };
+
+      ValueType(const string & str);
+
+      ~ValueType()
+      {
+        fmpz_clear(this->counter);
+      };
     };
 
     friend void operator+=(ValueType & lhs, const Count & rhs);
@@ -75,33 +109,34 @@ class Count
 
   private:
     Count(unsigned long int counter) : value ( counter ) {};
+    Count(const fmpz * counter) : value ( counter ) {};
+    Count(fmpz * && counter) : value ( counter ) {};
 };
 
 
 inline bool operator==(const Count::ValueType & lhs, const Count::ValueType & rhs)
 {
-  return lhs.counter == rhs.counter;
+  return fmpz_equal(lhs.counter, rhs.counter) == 1;
 };
 
 inline void operator+=(Count::ValueType & lhs, const Count::ValueType & rhs)
 {
-  lhs.counter += rhs.counter;
+  fmpz_add(lhs.counter, lhs.counter, rhs.counter);
 };
 
 inline void operator+=(Count::ValueType & lhs, const Count & rhs)
 {
-  lhs.counter += rhs.value.counter;
+  fmpz_add(lhs.counter, lhs.counter, rhs.value.counter);
 };
 
 
 inline ostream & operator<<(ostream & stream, const Count::ValueType & value)
 {
-  return stream << value.counter;
-};
+  char * c_str = fmpz_get_str(NULL, 10, value.counter);
+  stream << string(c_str);
+  flint_free(c_str);
 
-inline istream & operator>>(istream & stream, Count::ValueType & value)
-{
-  return stream >> value.counter;
+  return stream;
 };
 
 }

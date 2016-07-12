@@ -86,22 +86,19 @@ operator<<(
   return stream;
 }
 
-istream &
-HyCu::CurveData::
-operator>>(
-    istream & stream,
-    ExplicitRamificationHasseWeil::ValueType & value
+HyCu::CurveData::ExplicitRamificationHasseWeil::ValueType::
+ValueType(
+    const string & str
     )
 {
+  stringstream stream(str);
+
   int read_int;
   char delimiter;
   
-  value.ramification_type.clear();
-  value.hasse_weil_offsets.clear();
-
   while ( true ) {
     stream >> read_int;
-    value.ramification_type.push_back(read_int);
+    this->ramification_type.push_back(read_int);
   
     delimiter = stream.peek();
     if ( delimiter == ',' ) {
@@ -113,12 +110,12 @@ operator>>(
       break;
     }
     else
-      return stream;
+      return;
   }
 
   while ( true ) {
     stream >> read_int;
-    value.hasse_weil_offsets.push_back(read_int);
+    this->hasse_weil_offsets.push_back(read_int);
   
     delimiter = stream.peek();
     if ( delimiter == ',' ) {
@@ -126,6 +123,6 @@ operator>>(
       continue;
     }
     else
-      return stream;
+      return;
   }
 }

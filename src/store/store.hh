@@ -45,41 +45,28 @@ class StoreInterface
     virtual bool was_saved(const ConfigNode & config, const vuu_block & block) = 0;
     virtual void save(const ConfigNode & config, const vuu_block & block) = 0;
 
-    friend ostream & operator<<(ostream & stream, const StoreInterface & store);
-    friend istream & operator>>(istream & stream, StoreInterface & store);
+    friend
+    inline
+    ostream &
+    operator<<(
+        ostream & stream,
+        const StoreInterface & store
+        )
+    {
+      return store.insert(stream);
+    };
+
+    virtual void extract(istream & stream) = 0;
 
   private:
-    virtual ostream & insert_store(ostream & stream) const = 0;
-    virtual istream & extract_store(istream & stream) = 0; 
+    virtual ostream & insert(ostream & stream) const = 0;
 };
 
-inline
-ostream &
-operator<<(
-    ostream & stream,
-    const StoreInterface & store
-    )
-{
-  return store.insert_store(stream);
-};
-
-inline
-istream &
-operator>>(
-    istream & stream,
-    StoreInterface & store
-    )
-{
-  return store.extract_store(stream);
-};
 
 template<class CurveData, class StoreData> class Store;
 
 template<class CurveData, class StoreData>
 ostream & operator<<(ostream & stream, const Store<CurveData,StoreData> & store);
-
-template<class CurveData, class StoreData>
-istream & operator>>(istream & stream, Store<CurveData,StoreData> & store);
 
 
 template<class CurveData, class StoreData>
@@ -92,14 +79,13 @@ class Store :
     void save(const ConfigNode & config, const vuu_block & block);
 
     friend ostream & operator<< <> (ostream & stream, const Store<CurveData,StoreData> & store);
-    friend istream & operator>> <> (istream & stream, Store<CurveData,StoreData> & store);
+    void extract(istream & stream) final;
 
   protected:
     map<typename CurveData::ValueType, typename StoreData::ValueType> store;
 
   private:
-    ostream & insert_store(ostream & stream) const final;
-    istream & extract_store(istream & stream) final;
+    ostream & insert(ostream & stream) const final;
 
 
     string output_file_name(const ConfigNode & config, const vuu_block & block);
@@ -113,18 +99,7 @@ operator<<(
     const Store<CurveData,StoreData> & store
     )
 {
-  return store.insert_store(stream);
+  return store.insert(stream);
 };
-
-template<class CurveData, class StoreData>
-inline
-istream &
-operator>>(
-    istream & stream,
-    Store<CurveData,StoreData> & store
-    )
-{
-  return store.extract_store(stream);
-}
 
 #endif

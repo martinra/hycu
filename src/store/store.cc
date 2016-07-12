@@ -123,7 +123,7 @@ template<
   >
 ostream &
 Store<CurveData, StoreData>::
-insert_store(
+insert(
     ostream & stream
     )
   const
@@ -138,45 +138,33 @@ template<
   class CurveData,
   class StoreData
   >
-istream &
+void
 Store<CurveData, StoreData>::
-extract_store(
+extract(
     istream & stream
     )
 {
   char delimiter;
 
-  typename CurveData::ValueType curve_value;
-  typename StoreData::ValueType store_value;
+  string line, curve_str, store_str;
 
   stream.peek();
   while ( !stream.eof() ) {
-    stream >> curve_value;
-    delimiter = stream.peek();
-    if ( delimiter != ':' ) {
-      cerr << "operator>> Store: cannot extract: character after curve value is " << delimiter << endl;
-      throw;
-    }
-    stream.ignore(1);
+    getline(stream, line);
+    stringstream line_stream(line);
 
-    stream >> store_value;
-    delimiter = stream.peek();
-    if ( delimiter != '\n' ) {
-      cerr << "operator>> Store: cannot extract: character after store value is " << delimiter <<  endl;
-      throw;
-    }
-    stream.ignore(1);
+    getline(line_stream, curve_str, ':');
+    getline(line_stream, store_str);
+
+    typename CurveData::ValueType curve_value(curve_str);
+    typename StoreData::ValueType store_value(store_str);
 
     auto store_it = this->store.find(curve_value);
     if ( store_it == this->store.end() )
       this->store[curve_value] = store_value;
     else
       this->store[curve_value] += store_value;
-
-    stream.peek();
   }
-
-  return stream;
 }
 
 
@@ -185,5 +173,3 @@ template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::Store
 typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count> StoreEC;
 
 template ostream & operator<<(ostream & stream, const StoreEC & store);
-
-template istream & operator>>(istream & stream, StoreEC & store);

@@ -28,3 +28,11 @@ using namespace HyCu::StoreData;
 using namespace std;
 
 
+HyCu::StoreData::Count::ValueType::
+ValueType(
+    const string & str
+    )
+{
+  fmpz_init(this->counter);
+  fmpz_set_str(this->counter, str.c_str(), 10);
+};

@@ -80,6 +80,7 @@ class ExplicitRamificationHasseWeil
       explicit inline ValueType(ExplicitRamificationHasseWeil && data) :
         ValueType(data.value.ramification_type, data.value.hasse_weil_offsets) {};
 
+      explicit ValueType(const string & str);
     };
 
     inline ValueType as_value() { return ValueType( *this ); };
@@ -106,7 +107,6 @@ operator==(
 };
 
 ostream & operator<<(ostream & stream, const ExplicitRamificationHasseWeil::ValueType & value);
-istream & operator>>(istream & stream, ExplicitRamificationHasseWeil::ValueType & value);
 
 }
 }
