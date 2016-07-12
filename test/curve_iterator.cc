@@ -105,9 +105,9 @@ BOOST_AUTO_TEST_CASE( enumerate_f3_g0 )
     message_positions("genus 1 degree 1 curves / F_3: ", positions_deg1);
 }
 
-BOOST_AUTO_TEST_CASE( blocks_f71_g2 )
+BOOST_AUTO_TEST_CASE( blocks_f13_g2 )
 {
-  unsigned int prime = 71;
+  unsigned int prime = 13;
 
   auto table = make_shared<FqElementTable>(prime, 1);
   CurveIterator iter(*table, 2, 2500);
