@@ -24,8 +24,9 @@
 #ifndef _H_STORE_CURVE_DATA
 #define _H_STORE_CURVE_DATA
 
-#include <vector>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "curve.hh"
 
@@ -35,6 +36,7 @@ using std::endl;
 using std::istream;
 using std::move;
 using std::ostream;
+using std::string;
 using std::vector;
 
 
