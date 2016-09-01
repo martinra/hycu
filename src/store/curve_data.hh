@@ -24,8 +24,8 @@
 #ifndef _H_STORE_CURVE_DATA
 #define _H_STORE_CURVE_DATA
 
+#include <string>
 #include <vector>
-#include <iostream>
 
 #include "curve.hh"
 
