@@ -28,12 +28,14 @@
 #include "flint/fmpz.h"
 #include <iostream>
 #include <set>
+#include <string>
 
 
 using std::istream;
 using std::ostream;
 using std::move;
 using std::set;
+using std::string;
 
 
 namespace HyCu
