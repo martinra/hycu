@@ -43,16 +43,18 @@ MPIWorkerPool::
 MPIWorkerPool(
     shared_ptr<mpi::communicator> mpi_world,
     StoreType store_type,
-    unsigned int nmb_working_threads
+    unsigned int nmb_working_threads,
+    unsigned int nmb_threads_per_gpu
     ) :
   mpi_world ( mpi_world )
 {
-  MPIWorkerPool::broadcast_initialization(mpi_world, store_type, nmb_working_threads);
+  MPIWorkerPool::broadcast_initialization( mpi_world,
+      store_type, nmb_working_threads, nmb_threads_per_gpu );
 
   auto store_factory = create_store_factory(store_type);
   this->store = store_factory->create();
   this->master_thread_pool = make_shared<ThreadPool>(store_factory);
-  this->master_thread_pool->spark_threads(nmb_working_threads);
+  this->master_thread_pool->spark_threads(nmb_working_threads, nmb_threads_per_gpu);
 }
 
 MPIWorkerPool::
@@ -70,11 +72,13 @@ MPIWorkerPool::
 broadcast_initialization(
     shared_ptr<mpi::communicator> mpi_world,
     StoreType & store_type,
-    unsigned int & nmb_working_threads
+    unsigned int & nmb_working_threads,
+    unsigned int & nmb_threads_per_gpu
     )
 {
   mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::master_process_id);
   mpi::broadcast(*mpi_world, nmb_working_threads, MPIWorkerPool::master_process_id);
+  mpi::broadcast(*mpi_world, nmb_threads_per_gpu, MPIWorkerPool::master_process_id);
 }
 
 void

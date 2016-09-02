@@ -60,7 +60,9 @@ main_master(
     ( "output-path", value<string>(),
       "path to the output root" )
     ( "nmb-threads,n", value<unsigned int>()->default_value(0),
-      "number of working threads per process" );
+      "number of working threads per process" )
+    ( "nmb-threads-per-gpu,g", value<unsigned int>()->default_value(1),
+      "number of threads assigned per GPU" );
 
   positional_options.add("config-file", 1)
                     .add("output-path", 1);
@@ -127,8 +129,10 @@ main_master(
       config.emplace_back(node.as<ConfigNode>());
 
 
-  MPIWorkerPool
-    worker_pool( mpi_world, store_type, options_map["nmb-threads"].as<unsigned int>() );
+  MPIWorkerPool worker_pool(
+      mpi_world, store_type,
+      options_map["nmb-threads"].as<unsigned int>(),
+      options_map["nmb-threads-per-gpu"].as<unsigned int>() );
 
   for ( auto & node : config ) {
     node.prepend_output_path(canonical(output_path,current_path()));

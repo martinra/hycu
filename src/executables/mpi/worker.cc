@@ -39,10 +39,12 @@ main_worker(
 {
   StoreType store_type;
   unsigned int nmb_working_threads;
-  MPIWorkerPool::broadcast_initialization(mpi_world, store_type, nmb_working_threads);
+  unsigned int nmb_threads_per_gpu;
+  MPIWorkerPool::broadcast_initialization( mpi_world,
+      store_type, nmb_working_threads, nmb_threads_per_gpu );
 
   auto thread_pool = make_shared<ThreadPool>(create_store_factory(store_type));
-  thread_pool->spark_threads(nmb_working_threads);
+  thread_pool->spark_threads(nmb_working_threads, nmb_threads_per_gpu);
 
 
   while ( true ) {
