@@ -47,7 +47,7 @@ class ThreadPool :
     ThreadPool(const shared_ptr<StoreFactoryInterface> store_factory) :
       store_factory ( store_factory ) {};
 
-    void spark_threads(unsigned int nmb_working_threads = 0);
+    void spark_threads(unsigned int nmb_working_threads = 0, unsigned int nmb_threads_per_gpu = 0 );
     void shutdown_threads();
 
     void update_config(const ConfigNode & config);

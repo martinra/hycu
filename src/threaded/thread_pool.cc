@@ -34,7 +34,8 @@ using namespace std;
 void
 ThreadPool::
 spark_threads(
-    unsigned int nmb_working_threads
+    unsigned int nmb_working_threads,
+    unsigned int nmb_threads_per_gpu
     )
 {
   if ( !this->threads.empty() ) {
@@ -48,9 +49,10 @@ spark_threads(
 
 #ifdef WITH_OPENCL
   for ( const auto & device : OpenCLInterface::devices() )
-    this->threads.push_back(
-        make_shared<Thread>( shared_from_this(), this->store_factory,
-                             make_shared<OpenCLInterface>(device) ));
+    for ( unsigned int ix = 0; ix < nmb_threads_per_gpu; ++ix )
+      this->threads.push_back(
+          make_shared<Thread>( shared_from_this(), this->store_factory,
+                               make_shared<OpenCLInterface>(device) ));
 #endif
 
   // each GPU thread accounts for about 1/8 core
