@@ -41,13 +41,13 @@ class StandaloneWorkerPool
   public:
     StandaloneWorkerPool(
         shared_ptr<StoreFactoryInterface> store_factory,
-        unsigned int nmb_working_threads = 0,
-        unsigned int nmb_threads_per_gpu =0
+        int nmb_working_threads = -1,
+        unsigned int nmb_threads_per_gpu = 0
         );
     StandaloneWorkerPool(
         StoreType store_type,
-        unsigned int nmb_working_threads = 0,
-        unsigned int nmb_threads_per_gpu =0
+        int nmb_working_threads = -1,
+        unsigned int nmb_threads_per_gpu = 0
         ) :
       StandaloneWorkerPool ( create_store_factory(store_type), nmb_working_threads, nmb_threads_per_gpu ) {};
 

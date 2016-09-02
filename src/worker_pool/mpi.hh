@@ -51,7 +51,7 @@ class MPIWorkerPool
     MPIWorkerPool(
         shared_ptr<mpi::communicator> mpi_world,
         StoreType store_type,
-        unsigned int nmb_working_threads,
+        int nmb_working_threads = -1,
         unsigned int nmb_threads_per_gpu = 0
         );
     ~MPIWorkerPool();
@@ -60,7 +60,7 @@ class MPIWorkerPool
    broadcast_initialization(
        shared_ptr<mpi::communicator> mpi_world,
        StoreType & store_type,
-       unsigned int & nmb_working_threads,
+       int & nmb_working_threads,
        unsigned int & nmb_threads_per_gpu
        );
 

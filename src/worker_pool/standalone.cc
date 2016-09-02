@@ -33,7 +33,7 @@ using namespace std;
 StandaloneWorkerPool::
 StandaloneWorkerPool(
     shared_ptr<StoreFactoryInterface> store_factory,
-    unsigned int nmb_working_threads,
+    int nmb_working_threads,
     unsigned int nmb_threads_per_gpu
     )
 {

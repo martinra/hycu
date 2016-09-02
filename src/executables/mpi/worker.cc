@@ -38,7 +38,7 @@ main_worker(
     )
 {
   StoreType store_type;
-  unsigned int nmb_working_threads;
+  int nmb_working_threads;
   unsigned int nmb_threads_per_gpu;
   MPIWorkerPool::broadcast_initialization( mpi_world,
       store_type, nmb_working_threads, nmb_threads_per_gpu );

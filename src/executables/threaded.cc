@@ -58,7 +58,7 @@ main(
       "path to configuration file" )
     ( "output-path", value<string>(),
       "path to the output root" )
-    ( "nmb-threads,n", value<unsigned int>()->default_value(0),
+    ( "nmb-threads,n", value<int>()->default_value(-1),
       "number of working threads" )
     ( "nmb-threads-per-gpu,g", value<unsigned int>()->default_value(1),
       "number of threads assigned per GPU" );
@@ -130,7 +130,7 @@ main(
 
   StandaloneWorkerPool
     worker_pool( store_type,
-        options_map["nmb-threads"].as<unsigned int>(),
+        options_map["nmb-threads"].as<int>(),
         options_map["nmb-threads-per-gpu"].as<unsigned int>() );
 
   for ( auto & node : config ) {

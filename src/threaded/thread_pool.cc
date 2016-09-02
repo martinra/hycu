@@ -34,7 +34,7 @@ using namespace std;
 void
 ThreadPool::
 spark_threads(
-    unsigned int nmb_working_threads,
+    int nmb_working_threads,
     unsigned int nmb_threads_per_gpu
     )
 {
@@ -44,7 +44,7 @@ spark_threads(
   }
 
 
-  if ( nmb_working_threads == 0 )
+  if ( nmb_working_threads < 0 )
     nmb_working_threads = thread::hardware_concurrency();
 
 #ifdef WITH_OPENCL
