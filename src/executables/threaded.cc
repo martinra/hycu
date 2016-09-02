@@ -60,7 +60,7 @@ main(
       "path to the output root" )
     ( "nmb-threads,n", value<unsigned int>()->default_value(0),
       "number of working threads" )
-    ( "nmb-threads-per-gpu,ngpu", value<unsigned int>()->default_value(1),
+    ( "nmb-threads-per-gpu,g", value<unsigned int>()->default_value(1),
       "number of threads assigned per GPU" );
 
   positional_options.add("config-file", 1)
