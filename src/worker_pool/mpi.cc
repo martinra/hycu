@@ -1,4 +1,3 @@
-/*============================================================================
 
     (C) 2016 Martin Westerholt-Raum
 
@@ -25,6 +24,7 @@
 #include <vector>
 #include <tuple>
 
+#include "store/global_store.hh"
 #include "utils/serialization_tuple.hh"
 #include "worker_pool/mpi.hh"
 
@@ -52,7 +52,6 @@ MPIWorkerPool(
       store_type, nmb_working_threads, nmb_threads_per_gpu );
 
   auto store_factory = create_store_factory(store_type);
-  this->store = store_factory->create();
   this->master_thread_pool = make_shared<ThreadPool>(store_factory);
   this->master_thread_pool->spark_threads(nmb_working_threads, nmb_threads_per_gpu);
 }
@@ -87,9 +86,9 @@ set_config(
     const ConfigNode & config
     )
 {
-  this->store_config = ConfigNode(config);
-
   this->wait_for_assigned_blocks();
+
+  this->global_store = make_shared<GlobalStore>(config);
   this->master_thread_pool->update_config(config);
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix )
     this->mpi_world->send(ix, MPIWorkerPoolTag::update_config, config);
@@ -101,8 +100,9 @@ assign(
     vuu_block block
     )
 {
-  if ( this->store->was_saved(store_config, block) )
+  if ( this->global_store->contains(block) )
     return;
+
 
   if ( this->opencl_idle_queue.empty() )
     this->fill_idle_queues();

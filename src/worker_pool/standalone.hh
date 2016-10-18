@@ -28,8 +28,7 @@
 #include <set>
 
 #include "threaded/thread_pool.hh"
-#include "store/store.hh"
-#include "store/store_factory.hh"
+#include "store/global_store.hh"
 
 
 using std::set;
@@ -68,10 +67,9 @@ class StandaloneWorkerPool
     unsigned int nmb_cpu_idle = 0;
     unsigned int nmb_opencl_idle = 0;
 
-    shared_ptr<StoreInterface> store;
-    ConfigNode store_config;
-
     set<vuu_block> assigned_blocks;
+
+    shared_ptr<GlobalStore> global_store;
 };
 
 #endif

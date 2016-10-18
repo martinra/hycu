@@ -27,7 +27,7 @@
 #include <memory>
 
 #include "store/curve_data.hh"
-#include "store.hh"
+#include "store/store.hh"
 #include "store/store_data.hh"
 
 

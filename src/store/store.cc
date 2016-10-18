@@ -26,6 +26,7 @@
 #include <string>
 
 #include "store/curve_data.hh"
+#include "store/global_store.hh"
 #include "store/store.hh"
 #include "store/store_data.hh"
 
@@ -65,19 +66,6 @@ register_curve(
   }
 }
 
-template<
-  class CurveData,
-  class StoreData
-  >
-bool
-Store<CurveData, StoreData>::
-was_saved(
-    const ConfigNode & config,
-    const vuu_block & block
-    )
-{
-  return is_regular_file( path(this->output_file_name(config, block)) );
-}
 
 template<
   class CurveData,
@@ -90,31 +78,7 @@ save(
     const vuu_block & block
 )
 {
-  fstream(this->output_file_name(config, block), ios_base::out) << *this;
-}
-
-template<
-  class CurveData,
-  class StoreData
-  >
-string
-Store<CurveData, StoreData>::
-output_file_name(
-    const ConfigNode & config,
-    const vuu_block & block
-    )
-{
-  stringstream output_name(ios_base::out);
-  output_name << "store";
-
-  output_name << "__prime_power_" << pow(config.prime, config.prime_exponent);
-  output_name << "__coeff_exponent_bounds";
-  for ( auto bds : block )
-    output_name << "__" << get<0>(bds) << "_" << get<1>(bds);
-
-  output_name << ".hycu_unmerged";
-
-  return (config.result_path / path(output_name.str())).native();
+  fstream(GlobalStore::output_file_name(config, block), ios_base::out) << *this;
 }
 
 template<
