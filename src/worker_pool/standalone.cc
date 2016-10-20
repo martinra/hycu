@@ -35,7 +35,8 @@ StandaloneWorkerPool(
     shared_ptr<StoreFactoryInterface> store_factory,
     int nmb_working_threads,
     unsigned int nmb_threads_per_gpu
-    )
+    ) :
+  next_save_time ( system_clock::now() + chrono::minutes(5) )
 {
   this->master_thread_pool = make_shared<ThreadPool>(store_factory);
   this->master_thread_pool->spark_threads(nmb_working_threads, nmb_threads_per_gpu);
@@ -45,19 +46,21 @@ StandaloneWorkerPool::
 ~StandaloneWorkerPool()
 {
   this->wait_for_assigned_blocks();
+  this->save_global_stores_to_file();
 
   this->master_thread_pool->shutdown_threads();
 }
 
 void
 StandaloneWorkerPool::
-set_config(
+update_config(
     const ConfigNode & config
     )
 {
   this->wait_for_assigned_blocks();
+  this->save_global_stores_to_file();
 
-  this->global_store = make_shared<GlobalStore>(config);
+  this->file_store = make_shared<FileStore>(config);
   this->master_thread_pool->update_config(config);
 }
 
@@ -67,7 +70,9 @@ assign(
     vuu_block block
     )
 {
-  if ( this->global_store->contains(block) )
+  this->delayed_save_global_stores_to_file();
+
+  if ( this->file_store->contains(block) )
     return;
 
 
@@ -145,4 +150,11 @@ wait_for_assigned_blocks()
     else
       this_thread::sleep_for(std::chrono::milliseconds(500));
   }
+}
+
+void
+StandaloneWorkerPool::
+save_global_stores_to_file()
+{
+  this->file_store->save(master_thread_pool->flush_global_store());
 }

@@ -1,3 +1,4 @@
+/*============================================================================
 
     (C) 2016 Martin Westerholt-Raum
 
@@ -21,10 +22,12 @@
 
 
 #include <boost/mpi/communicator.hpp>
+#include <chrono>
 #include <vector>
+#include <thread>
 #include <tuple>
 
-#include "store/global_store.hh"
+#include "store/file_store.hh"
 #include "utils/serialization_tuple.hh"
 #include "worker_pool/mpi.hh"
 
@@ -46,7 +49,8 @@ MPIWorkerPool(
     int nmb_working_threads,
     unsigned int nmb_threads_per_gpu
     ) :
-  mpi_world ( mpi_world )
+  mpi_world ( mpi_world ),
+  next_save_time ( system_clock::now() + chrono::minutes(5) )
 {
   MPIWorkerPool::broadcast_initialization( mpi_world,
       store_type, nmb_working_threads, nmb_threads_per_gpu );
@@ -60,9 +64,13 @@ MPIWorkerPool::
 ~MPIWorkerPool()
 {
   this->wait_for_assigned_blocks();
+  this->save_global_stores_to_file();
 
-  for ( u_process_id ix = 1; ix < this->mpi_world->size(); ++ix )
+  {
+    unique_lock<mutex> mpi_lock(this->mpi_mutex);
+    for ( u_process_id ix = 1; ix < this->mpi_world->size(); ++ix )
       mpi_world->send(ix, MPIWorkerPoolTag::shutdown, true);
+  }
   this->master_thread_pool->shutdown_threads();
 }
 
@@ -75,6 +83,7 @@ broadcast_initialization(
     unsigned int & nmb_threads_per_gpu
     )
 {
+  // mpi_mutex not aquired, since this is a static method
   mpi::broadcast(*mpi_world, store_type, MPIWorkerPool::master_process_id);
   mpi::broadcast(*mpi_world, nmb_working_threads, MPIWorkerPool::master_process_id);
   mpi::broadcast(*mpi_world, nmb_threads_per_gpu, MPIWorkerPool::master_process_id);
@@ -82,14 +91,17 @@ broadcast_initialization(
 
 void
 MPIWorkerPool::
-set_config(
+update_config(
     const ConfigNode & config
     )
 {
   this->wait_for_assigned_blocks();
-
-  this->global_store = make_shared<GlobalStore>(config);
+  this->save_global_stores_to_file();
+  
+  this->file_store = make_shared<FileStore>(config);
   this->master_thread_pool->update_config(config);
+
+  unique_lock<mutex> mpi_lock(this->mpi_mutex);
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix )
     this->mpi_world->send(ix, MPIWorkerPoolTag::update_config, config);
 }
@@ -100,7 +112,9 @@ assign(
     vuu_block block
     )
 {
-  if ( this->global_store->contains(block) )
+  this->delayed_save_global_stores_to_file();
+
+  if ( this->file_store->contains(block) )
     return;
 
 
@@ -114,8 +128,10 @@ assign(
 
     if ( process_id == MPIWorkerPool::master_process_id )
       this->master_thread_pool->assign(block, true);
-    else
+    else {
+      unique_lock<mutex> mpi_lock(this->mpi_mutex);
       this->mpi_world->send(process_id, MPIWorkerPoolTag::assign_opencl_block, block);
+    }
   }
   else  {
     process_id = this->cpu_idle_queue.front();
@@ -123,8 +139,10 @@ assign(
 
     if ( process_id == MPIWorkerPool::master_process_id )
       this->master_thread_pool->assign(block, false);
-    else
+    else {
+      unique_lock<mutex> mpi_lock(this->mpi_mutex);
       this->mpi_world->send(process_id, MPIWorkerPoolTag::assign_cpu_block, block);
+    }
   }
 
   this->assigned_blocks[process_id].insert(block);
@@ -145,14 +163,17 @@ fill_idle_queues()
     for ( size_t jx=0; jx<get<1>(nmb_cpu_opencl); ++jx)
       this->opencl_idle_queue.push_back(MPIWorkerPool::master_process_id);
 
-    for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
-      this->mpi_world->send(ix, MPIWorkerPoolTag::flush_ready_threads, true);
-      this->mpi_world->recv(ix, MPIWorkerPoolTag::flush_ready_threads, nmb_cpu_opencl);
+    {
+      unique_lock<mutex> mpi_lock(this->mpi_mutex);
+      for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
+        this->mpi_world->send(ix, MPIWorkerPoolTag::flush_ready_threads, true);
+        this->mpi_world->recv(ix, MPIWorkerPoolTag::flush_ready_threads, nmb_cpu_opencl);
 
-      for ( size_t jx=0; jx<get<0>(nmb_cpu_opencl); ++jx)
-        this->cpu_idle_queue.push_back(ix);
-      for ( size_t jx=0; jx<get<1>(nmb_cpu_opencl); ++jx)
-        this->opencl_idle_queue.push_back(ix);
+        for ( size_t jx=0; jx<get<0>(nmb_cpu_opencl); ++jx)
+          this->cpu_idle_queue.push_back(ix);
+        for ( size_t jx=0; jx<get<1>(nmb_cpu_opencl); ++jx)
+          this->opencl_idle_queue.push_back(ix);
+      }
     }
 
     if ( this->cpu_idle_queue.empty() && this->opencl_idle_queue.empty() )
@@ -170,6 +191,7 @@ flush_finished_blocks()
   for ( const auto & block : blocks )
     this->finished_block(MPIWorkerPool::master_process_id, block);
 
+  unique_lock<mutex> mpi_lock(this->mpi_mutex);
   for ( u_process_id ix=1; ix<this->mpi_world->size(); ++ix ) {
     blocks.clear();
     this->mpi_world->send(ix, MPIWorkerPoolTag::finished_blocks, true);
@@ -213,5 +235,22 @@ wait_for_assigned_blocks()
         this_thread::sleep_for(std::chrono::milliseconds(500));
         break;
       }
+  }
+}
+
+void
+MPIWorkerPool::
+save_global_stores_to_file()
+{
+  this->file_store->save(master_thread_pool->flush_global_store());
+
+  for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
+    tuple<string, string> record_store;
+    {
+      unique_lock<mutex> mpi_lock(this->mpi_mutex);
+      this->mpi_world->send(ix, MPIWorkerPoolTag::save_global_stores_to_file, true);
+      this->mpi_world->recv(ix, MPIWorkerPoolTag::save_global_stores_to_file, record_store);
+    }
+    this->file_store->save(record_store);
   }
 }

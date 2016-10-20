@@ -21,8 +21,8 @@
 ===============================================================================*/
 
 
-#ifndef _H_MPI_WORKER
-#define _H_MPI_WORKER
+#ifndef _H_WORKER_POOL_MPI_WORKER
+#define _H_WORKER_POOL_MPI_WORKER
 
 #include <boost/mpi.hpp>
 #include <memory>
@@ -32,6 +32,6 @@ namespace mpi = boost::mpi;
 using std::shared_ptr;
 
 
-int main_worker(shared_ptr<mpi::communicator> mpi_world);
+int main_mpi_worker(shared_ptr<mpi::communicator> mpi_world);
 
 #endif

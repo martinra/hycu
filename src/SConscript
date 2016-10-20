@@ -35,6 +35,7 @@ Export("objs_config")
 
 sources_store = [
     "store/curve_data.cc"
+  , "store/file_store.cc"
   , "store/store.cc"
   , "store/store_data.cc"
   ]
@@ -81,9 +82,8 @@ Alias("threaded", inst_threaded)
 prg_mpi = env_mpi.Program(
     "executables/hycu-mpi"
   , [ "executables/mpi.cc"
-    , "executables/mpi/master.cc"
-    , "executables/mpi/worker.cc"
     , "worker_pool/mpi.cc"
+    , "worker_pool/mpi_worker.cc"
     ]
     + objs_curve
     + objs_config

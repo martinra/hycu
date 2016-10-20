@@ -57,6 +57,13 @@ class ThreadPool :
 
     vector<vuu_block> flush_finished_blocks();
     tuple<unsigned int, unsigned int> flush_ready_threads();
+    
+    inline
+    tuple<string, string>
+    flush_global_store()
+    {
+      return this->store_factory->create()->flush_global_store();
+    };
 
   private:
     const shared_ptr<StoreFactoryInterface> store_factory;

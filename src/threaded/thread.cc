@@ -76,10 +76,9 @@ main_thread(
     vuu_block block;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
-    shared_ptr<ConfigNode> config;
 
     thread->data_mutex.lock();
-    tie(block, config, fq_table, reduction_tables) =
+    tie(block, fq_table, reduction_tables) =
       thread->blocks.front();
     thread->blocks.pop_front();
     thread->data_mutex.unlock();
@@ -91,8 +90,7 @@ main_thread(
       for ( auto table : reduction_tables ) curve.count(table);
       store->register_curve(curve);
     }
-
-    store->save(*config, block);
+    store->flush_to_global_store(block);
 
 
     auto thread_pool_shared = thread->thread_pool.lock();
@@ -113,8 +111,6 @@ update_config(
     const ConfigNode & config
     )
 {
-  this->config = make_shared<ConfigNode>(config);
-
   this->fq_table = make_shared<FqElementTable>(config.prime, config.prime_exponent);
   this->reduction_tables.clear();
   for ( size_t fx=config.genus; fx>config.genus/2; --fx )
@@ -128,7 +124,7 @@ assign(
     )
 {
   this->data_mutex.lock();
-  this->blocks.emplace_back(block, this->config, this->fq_table, this->reduction_tables);
+  this->blocks.emplace_back(block, this->fq_table, this->reduction_tables);
   this->data_mutex.unlock();
 
   this->main_cond_var.notify_one();

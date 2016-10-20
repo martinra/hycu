@@ -139,7 +139,7 @@ main(
       cerr << "Incorrect configuration node:" << endl << node;
       exit(1);
     }
-    worker_pool.set_config(node);
+    worker_pool.update_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
     CurveIterator iter(enumeration_table, node.genus, node.package_size);

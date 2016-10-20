@@ -85,12 +85,11 @@ class Thread :
 
     const shared_ptr<StoreFactoryInterface> store_factory;
     
-    shared_ptr<ConfigNode> config;
     shared_ptr<OpenCLInterface> opencl;
     shared_ptr<FqElementTable> fq_table;
     vector<shared_ptr<ReductionTable>> reduction_tables;
 
-    deque<tuple< vuu_block, shared_ptr<ConfigNode>,
+    deque<tuple< vuu_block,
                  shared_ptr<FqElementTable>, vector<shared_ptr<ReductionTable>> >>
                    blocks;
 };

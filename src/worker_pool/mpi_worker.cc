@@ -21,11 +21,11 @@
 ===============================================================================*/
 
 
-#include "executables/mpi/worker.hh"
 #include "store/store_factory.hh"
 #include "threaded/thread_pool.hh"
 #include "utils/serialization_tuple.hh"
 #include "worker_pool/mpi.hh"
+#include "worker_pool/mpi_worker.hh"
 
 
 namespace mpi = boost::mpi;
@@ -33,7 +33,7 @@ using namespace std;
 
 
 int
-main_worker(
+main_mpi_worker(
     shared_ptr<mpi::communicator> mpi_world
     )
 {
@@ -79,6 +79,15 @@ main_worker(
       mpi_world->send( MPIWorkerPool::master_process_id,
                        MPIWorkerPoolTag::flush_ready_threads,
                        thread_pool->flush_ready_threads() );
+    }
+
+    else if ( mpi_status.tag() == MPIWorkerPoolTag::save_global_stores_to_file ) {
+      bool dummy;
+      mpi_world->recv( MPIWorkerPool::master_process_id,
+                       MPIWorkerPoolTag::save_global_stores_to_file, dummy );
+      mpi_world->send( MPIWorkerPool::master_process_id,
+                       MPIWorkerPoolTag::save_global_stores_to_file,
+                       thread_pool->flush_global_store() );
     }
 
     else if ( mpi_status.tag() == MPIWorkerPoolTag::finished_blocks ) {

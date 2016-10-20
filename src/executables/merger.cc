@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "store/curve_data.hh"
+#include "store/file_store.hh"
 #include "store/store.hh"
 #include "store/store_data.hh"
 
@@ -40,7 +41,11 @@ using popt::value;
 
 template<class Store>
 void
-merge(vector<filesys::path> input_files, filesys::path output_file);
+merge(
+    vector<filesys::path> input_files,
+    filesys::path record_output_file,
+    filesys::path store_output_file
+    );
 
 
 int
@@ -59,7 +64,7 @@ main(
     ( "input-path", value<string>(),
       "path to the input folder" )
     ( "output-file", value<string>(),
-      "path to the output file" );
+      "path to the output file omitting the extension" );
 
   positional_options.add("store-type", 1)
                     .add("input-path", 1)
@@ -109,12 +114,15 @@ main(
         back_inserter(input_files) );
 
 
-  filesys::path output_file(options_map["output-file"].as<string>());
+  filesys::path record_output_file(
+      options_map["output-file"].as<string>() + FileStore::record_extension );
+  filesys::path store_output_file(
+      options_map["output-file"].as<string>() + FileStore::store_extension );
 
   string store_type = options_map["store-type"].as<string>();
   if ( store_type == "c" )
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
-      (input_files, output_file);
+      (input_files, record_output_file, store_output_file);
   else {
       cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
       exit(1);
@@ -127,13 +135,30 @@ template<class Store>
 void
 merge(
     vector<filesys::path> input_files,
-    filesys::path output_file
+    filesys::path record_output_file,
+    filesys::path store_output_file
     )
 {
+  set<vuu_block> record;
   Store store;
-  for ( auto const& input_file : input_files )
-    if ( input_file.extension() == ".hycu_unmerged" )
-      fstream(input_file.native(), ios_base::in) >> store;
+  for ( auto const& record_file : input_files ) {
+    if (    !filesys::is_regular_file(record_file)
+         || record_file.extension() != FileStore::record_extension )
+      continue;
 
-  fstream(output_file.native(), ios_base::out) << store;
+    filesys::path store_file(record_file);
+    store_file.replace_extension( FileStore::store_extension );
+    if ( !filesys::is_regular_file(store_file) ) {
+      cerr << "found record file " << record_file.filename()
+           << ", but no corresponding store file" << endl;
+      exit(1);
+    }
+
+    FileStore::extract( filesys::fstream(record_file, ios_base::in), record );
+    store.extract( filesys::fstream(store_file, ios_base::in) );
+  }
+
+  // save record second as a witness to successful writing
+  store.insert( filesys::fstream(store_output_file, ios_base::out) );
+  FileStore::insert( filesys::fstream(record_output_file, ios_base::out), record );
 }

@@ -26,7 +26,7 @@
 #include <string>
 
 #include "store/curve_data.hh"
-#include "store/global_store.hh"
+#include "store/file_store.hh"
 #include "store/store.hh"
 #include "store/store_data.hh"
 
@@ -66,36 +66,48 @@ register_curve(
   }
 }
 
-
 template<
   class CurveData,
   class StoreData
   >
 void
 Store<CurveData, StoreData>::
-save(
-    const ConfigNode & config,
+flush_to_global_store(
     const vuu_block & block
 )
 {
-  fstream(GlobalStore::output_file_name(config, block), ios_base::out) << *this;
+  unique_lock<mutex> static_lock(this->static_mutex);
+
+  this->static_record.insert(block);
+
+  for ( auto const& item : this->store ) {
+    if ( this->static_store.count(item.first) )
+      this->static_store[item.first] += item.second;
+    else
+      this->static_store[item.first] = item.second;
+  }
+  this->store.clear();
 }
 
 template<
   class CurveData,
   class StoreData
   >
-ostream &
+tuple<string, string>
 Store<CurveData, StoreData>::
-insert(
-    ostream & stream
-    )
-  const
+flush_global_store()
 {
-  for ( auto & store_it : this->store )
-    stream << store_it.first << ":" << store_it.second << endl;
+  unique_lock<mutex> static_lock(this->static_mutex);
 
-  return stream;
+  stringstream record_ss;
+  FileStore::insert(record_ss, this->static_record);
+  this->static_record.clear();
+
+  stringstream store_ss;
+  this->insert(store_ss, this->static_store);
+  this->static_store.clear();
+
+  return make_tuple(record_ss.str(), store_ss.str());
 }
 
 template<
@@ -105,7 +117,8 @@ template<
 void
 Store<CurveData, StoreData>::
 extract(
-    istream & stream
+    istream & stream,
+    map<typename CurveData::ValueType, typename StoreData::ValueType> & store
     )
 {
   char delimiter;
@@ -123,17 +136,27 @@ extract(
     typename CurveData::ValueType curve_value(curve_str);
     typename StoreData::ValueType store_value(store_str);
 
-    auto store_it = this->store.find(curve_value);
-    if ( store_it == this->store.end() )
-      this->store[curve_value] = store_value;
+    if ( store.count(curve_value) )
+      store[curve_value] += store_value;
     else
-      this->store[curve_value] += store_value;
+      store[curve_value] = store_value;
   }
+}
+
+template<
+  class CurveData,
+  class StoreData
+  >
+void
+Store<CurveData, StoreData>::
+insert(
+    ostream & stream,
+    const map<typename CurveData::ValueType, typename StoreData::ValueType> & store
+    )
+{
+  for ( auto & store_it : store )
+    stream << store_it.first << ":" << store_it.second << endl;
 }
 
 
 template class Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>;
-
-typedef Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count> StoreEC;
-
-template ostream & operator<<(ostream & stream, const StoreEC & store);

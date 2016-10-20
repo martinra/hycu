@@ -22,6 +22,7 @@
 
 
 #include <vector>
+#include <sstream>
 #include <tuple>
 
 #include "threaded/thread_pool.hh"
@@ -165,6 +166,5 @@ ThreadPool::
 flush_finished_blocks()
 {
   unique_lock<mutex> data_lock(this->data_mutex);
-
   return move(finished_blocks);
 }

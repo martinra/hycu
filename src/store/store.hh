@@ -24,6 +24,9 @@
 #ifndef _H_STORE_STORE
 #define _H_STORE_STORE
 
+#include <map>
+#include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -33,7 +36,10 @@
 
 
 using std::istream;
+using std::map;
+using std::mutex;
 using std::ostream;
+using std::set;
 using std::string;
 using std::vector;
 
@@ -42,30 +48,14 @@ class StoreInterface
 {
   public:
     virtual void register_curve(const Curve & curve) = 0;
-    virtual void save(const ConfigNode & config, const vuu_block & block) = 0;
-
-    friend
-    inline
-    ostream &
-    operator<<(
-        ostream & stream,
-        const StoreInterface & store
-        )
-    {
-      return store.insert(stream);
-    };
+    virtual void flush_to_global_store(const vuu_block & block) = 0;
+    virtual tuple<string, string> flush_global_store() = 0;
 
     virtual void extract(istream & stream) = 0;
-
-  private:
-    virtual ostream & insert(ostream & stream) const = 0;
+    virtual void extract(istream && stream) = 0;
+    virtual void insert(ostream & stream) const = 0;
+    virtual void insert(ostream && stream) const = 0;
 };
-
-
-template<class CurveData, class StoreData> class Store;
-
-template<class CurveData, class StoreData>
-ostream & operator<<(ostream & stream, const Store<CurveData,StoreData> & store);
 
 
 template<class CurveData, class StoreData>
@@ -74,27 +64,79 @@ class Store :
 {
   public:
     void register_curve(const Curve & curve) final;
-    void save(const ConfigNode & config, const vuu_block & block);
+    void flush_to_global_store(const vuu_block & block);
+    tuple<string, string> flush_global_store();
 
-    friend ostream & operator<< <> (ostream & stream, const Store<CurveData,StoreData> & store);
-    void extract(istream & stream) final;
+    void
+    extract(
+        istream & stream
+        )
+    final
+    {
+      this->extract(stream, this->store);
+    };
 
-  protected:
-    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
+    inline
+    void
+    extract(
+        istream && stream
+        )
+    final
+    {
+      this->extract(stream);
+    };
+
+    void
+    insert(
+        ostream & stream
+        )
+    const final
+    {
+      this->insert(stream, this->store);
+    };
+
+    inline
+    void
+    insert(
+        ostream && stream
+        )
+    const final
+    {
+      this->insert(stream);
+    };
+
 
   private:
-    ostream & insert(ostream & stream) const final;
+
+    static void extract(
+        istream & stream,
+        map<typename CurveData::ValueType, typename StoreData::ValueType> & store
+        );
+
+    static void insert(
+        ostream & stream,
+        const map<typename CurveData::ValueType, typename StoreData::ValueType> & store
+        );
+
+
+    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
+
+    static mutex static_mutex;
+    static map<typename CurveData::ValueType, typename StoreData::ValueType> static_store;
+    static set<vuu_block> static_record;
 };
 
+
 template<class CurveData, class StoreData>
-inline
-ostream &
-operator<<(
-    ostream & stream,
-    const Store<CurveData,StoreData> & store
-    )
-{
-  return store.insert(stream);
-};
+mutex
+Store<CurveData, StoreData>::static_mutex;
+
+template<class CurveData, class StoreData>
+map<typename CurveData::ValueType, typename StoreData::ValueType>
+Store<CurveData, StoreData>::static_store;
+
+template<class CurveData, class StoreData>
+set<vuu_block>
+Store<CurveData, StoreData>::static_record;
 
 #endif
