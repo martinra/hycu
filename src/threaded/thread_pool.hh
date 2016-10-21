@@ -62,7 +62,7 @@ class ThreadPool :
     tuple<string, string>
     flush_global_store()
     {
-      return this->store_factory->create()->flush_global_store();
+      return this->store_factory->create()->flush_static_store();
     };
 
   private:

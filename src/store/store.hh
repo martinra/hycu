@@ -48,8 +48,8 @@ class StoreInterface
 {
   public:
     virtual void register_curve(const Curve & curve) = 0;
-    virtual void flush_to_global_store(const vuu_block & block) = 0;
-    virtual tuple<string, string> flush_global_store() = 0;
+    virtual void flush_to_static_store(const vuu_block & block) = 0;
+    virtual tuple<string, string> flush_static_store() = 0;
 
     virtual void extract(istream & stream) = 0;
     virtual void extract(istream && stream) = 0;
@@ -64,8 +64,8 @@ class Store :
 {
   public:
     void register_curve(const Curve & curve) final;
-    void flush_to_global_store(const vuu_block & block);
-    tuple<string, string> flush_global_store();
+    void flush_to_static_store(const vuu_block & block);
+    tuple<string, string> flush_static_store();
 
     void
     extract(

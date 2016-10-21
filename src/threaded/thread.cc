@@ -90,7 +90,7 @@ main_thread(
       for ( auto table : reduction_tables ) curve.count(table);
       store->register_curve(curve);
     }
-    store->flush_to_global_store(block);
+    store->flush_to_static_store(block);
 
 
     auto thread_pool_shared = thread->thread_pool.lock();

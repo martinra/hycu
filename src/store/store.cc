@@ -72,7 +72,7 @@ template<
   >
 void
 Store<CurveData, StoreData>::
-flush_to_global_store(
+flush_to_static_store(
     const vuu_block & block
 )
 {
@@ -95,7 +95,7 @@ template<
   >
 tuple<string, string>
 Store<CurveData, StoreData>::
-flush_global_store()
+flush_static_store()
 {
   unique_lock<mutex> static_lock(this->static_mutex);
 
