@@ -242,6 +242,9 @@ void
 MPIWorkerPool::
 save_global_stores_to_file()
 {
+  if ( !this->file_store )
+    return;
+
   this->file_store->save(master_thread_pool->flush_global_store());
 
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
