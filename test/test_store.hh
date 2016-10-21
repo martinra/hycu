@@ -41,58 +41,61 @@ class TestStore :
 {
   public:
     TestStore() {};
+
     TestStore(map<typename CurveData::ValueType, typename StoreData::ValueType> store)
     {
       this->store = store;
     };
 
-    static inline TestStore from_global_store()
+    inline
+    static
+    TestStore from_static_store()
     {
       TestStore store;
-      store.store = TestStore<prime_power, genus, CurveData, StoreData>::global_store;
+      store.store = TestStore<prime_power, genus, CurveData, StoreData>::static_store;
       return store;
     };
 
-    bool was_saved(const ConfigNode & config, const vuu_block & block) final
+    void flush_to_static_store(const vuu_block & block) final
     {
-      return false;
-    };
-
-    void save(const ConfigNode & config, const vuu_block & block) final
-    {
-      unique_lock<mutex> global_store_lock(TestStore<prime_power, genus, CurveData, StoreData>::global_store_mutex);
+      unique_lock<mutex> static_store_lock(TestStore<prime_power, genus, CurveData, StoreData>::static_mutex);
 
       for ( const auto & item : this->store ) {
-        auto store_it = TestStore<prime_power, genus, CurveData, StoreData>::global_store.find(item.first);
+        auto store_it = TestStore<prime_power, genus, CurveData, StoreData>::static_store.find(item.first);
 
-        if ( store_it == TestStore<prime_power, genus, CurveData, StoreData>::global_store.end() )
-          TestStore<prime_power, genus, CurveData,StoreData>::global_store[item.first] = item.second;
+        if ( store_it == TestStore<prime_power, genus, CurveData, StoreData>::static_store.end() )
+          TestStore<prime_power, genus, CurveData,StoreData>::static_store[item.first] = item.second;
         else
-          TestStore<prime_power, genus, CurveData,StoreData>::global_store[item.first] += item.second;
+          TestStore<prime_power, genus, CurveData,StoreData>::static_store[item.first] += item.second;
       }
       this->store.clear();
     };
 
-    inline bool operator!=(const TestStore & rhs) const
+    inline
+    bool
+    operator!=(
+        const TestStore & rhs
+        )
+    const
     {
       return this->store != rhs.store;
-    }
+    };
 
   private:
-    static mutex global_store_mutex;
+    static mutex static_mutex;
 
-    static map<typename CurveData::ValueType, typename StoreData::ValueType> global_store;
+    static map<typename CurveData::ValueType, typename StoreData::ValueType> static_store;
 };
 
 template<unsigned int prime_power, unsigned int genus, class CurveData, class StoreData>
 mutex
 TestStore<prime_power, genus, CurveData, StoreData>::
-global_store_mutex;
+static_mutex;
 
 template<unsigned int prime_power, unsigned int genus, class CurveData, class StoreData>
 map<typename CurveData::ValueType, typename StoreData::ValueType>
 TestStore<prime_power, genus, CurveData, StoreData>::
-global_store;
+static_store;
 
 
 template<unsigned int prime_power, unsigned int genus, class CurveData, class StoreData>

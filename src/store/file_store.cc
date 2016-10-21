@@ -37,8 +37,12 @@ FileStore::
 FileStore(
     const ConfigNode & config
     ) :
-  config ( config )
+  config ( config ),
+  valid_store ( is_directory(config.result_path) )
 {
+  if ( !valid_store )
+    return;
+
   directory_iterator end_dir_iter;
   for ( directory_iterator dir_iter(config.result_path);
         dir_iter != end_dir_iter; ++dir_iter ) {
@@ -57,6 +61,9 @@ save(
     tuple<string, string> record_store
     )
 {
+  if ( !this->valid_store )
+    return;
+
   path path_record, path_store;
   tie(path_record, path_store) = this->new_filenames();
 

@@ -48,19 +48,19 @@ BOOST_AUTO_TEST_CASE( threaded_q5_g1 )
   node.genus = 1;
   node.package_size = 30;
 
-  worker_pool->set_config(node);
+  worker_pool->update_config(node);
   FqElementTable enumeration_table(node.prime, node.prime_exponent);
   CurveIterator iter(enumeration_table, node.genus, node.package_size);
   for (; !iter.is_end(); iter.step() )
     worker_pool->assign(iter.as_block());
 
   worker_pool.reset();
-  auto computed_store = TestStore<5,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_global_store();
+  auto computed_store = TestStore<5,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_static_store();
   auto reference_store = create_reference_store<5,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>();
 
   if ( computed_store != reference_store ) {
     stringstream message;
-    message << "threaded computation of genus 1 curves / F_5:" << endl << computed_store;
+    computed_store.insert( message << "threaded computation of genus 1 curves / F_5:" << endl );
      
     BOOST_FAIL( message.str() );
   }
@@ -80,19 +80,19 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
   node.genus = 1;
   node.package_size = 30;
 
-  worker_pool->set_config(node);
+  worker_pool->update_config(node);
   FqElementTable enumeration_table(node.prime, node.prime_exponent);
   CurveIterator iter(enumeration_table, node.genus, node.package_size);
   for (; !iter.is_end(); iter.step() )
     worker_pool->assign(iter.as_block());
 
   worker_pool.reset();
-  auto computed_store = TestStore<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_global_store();
+  auto computed_store = TestStore<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_static_store();
   auto reference_store = create_reference_store<7,1, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>();
 
   if ( computed_store != reference_store ) {
     stringstream message;
-    message << "threaded computation of genus 1 curves / F_7:" << endl << computed_store;
+    computed_store.insert( message << "threaded computation of genus 1 curves / F_7:" << endl );
      
     BOOST_FAIL( message.str() );
   }
@@ -112,19 +112,19 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g2 )
   node.genus = 2;
   node.package_size = 30;
 
-  worker_pool->set_config(node);
+  worker_pool->update_config(node);
   FqElementTable enumeration_table(node.prime, node.prime_exponent);
   CurveIterator iter(enumeration_table, node.genus, node.package_size);
   for (; !iter.is_end(); iter.step() )
     worker_pool->assign(iter.as_block());
 
   worker_pool.reset();
-  auto computed_store = TestStore<7,2, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_global_store();
+  auto computed_store = TestStore<7,2, HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>::from_static_store();
   auto reference_store = create_reference_store<7,2, HyCu::CurveData::ExplicitRamificationHasseWeil,HyCu::StoreData::Count>();
 
   if ( computed_store != reference_store ) {
     stringstream message;
-    message << "threaded computation of genus 2 curves / F_7:" << endl << computed_store;
+    computed_store.insert( message << "threaded computation of genus 2 curves / F_7:" << endl );
      
     BOOST_FAIL( message.str() );
   }

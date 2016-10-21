@@ -123,6 +123,7 @@ class FileStore
   private:
 
     const ConfigNode config;
+    bool valid_store;
     set<vuu_block> initial_record;
 };
 

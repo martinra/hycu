@@ -156,5 +156,6 @@ void
 StandaloneWorkerPool::
 save_global_stores_to_file()
 {
-  this->file_store->save(master_thread_pool->flush_global_store());
+  if ( this->file_store )
+    this->file_store->save(master_thread_pool->flush_global_store());
 }

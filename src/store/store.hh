@@ -105,6 +105,10 @@ class Store :
       this->insert(stream);
     };
 
+  protected:
+
+    // derived test_store has to access this
+    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
 
   private:
 
@@ -119,7 +123,6 @@ class Store :
         );
 
 
-    map<typename CurveData::ValueType, typename StoreData::ValueType> store;
 
     static mutex static_mutex;
     static map<typename CurveData::ValueType, typename StoreData::ValueType> static_store;
