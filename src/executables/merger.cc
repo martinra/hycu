@@ -154,11 +154,11 @@ merge(
       exit(1);
     }
 
-    FileStore::extract( filesys::fstream(record_file, ios_base::in), record );
-    store.extract( filesys::fstream(store_file, ios_base::in) );
+    FileStore::extract( fstream(record_file.native(), ios_base::in), record );
+    store.extract( fstream(store_file.native(), ios_base::in) );
   }
 
   // save record second as a witness to successful writing
-  store.insert( filesys::fstream(store_output_file, ios_base::out) );
-  FileStore::insert( filesys::fstream(record_output_file, ios_base::out), record );
+  store.insert( fstream(store_output_file.native(), ios_base::out) );
+  FileStore::insert( fstream(record_output_file.native(), ios_base::out), record );
 }

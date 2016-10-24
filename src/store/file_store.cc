@@ -20,6 +20,7 @@
 
 ===============================================================================*/
 
+#include <fstream>
 #include <random>
 
 #include "store/file_store.hh"
@@ -51,7 +52,7 @@ FileStore(
          || filepath.extension() != FileStore::record_extension )
       continue;
     
-    this->extract(filesys::fstream(filepath, ios_base::in) , this->initial_record);
+    this->extract(fstream(filepath.native(), ios_base::in) , this->initial_record);
   }
 }
 
@@ -68,8 +69,8 @@ save(
   tie(path_record, path_store) = this->new_filenames();
 
   // save record second as a witness to successful writing
-  filesys::fstream(path_store,  ios_base::out) << get<1>(record_store);
-  filesys::fstream(path_record, ios_base::out) << get<0>(record_store);
+  fstream(path_store.native(),  ios_base::out) << get<1>(record_store);
+  fstream(path_record.native(), ios_base::out) << get<0>(record_store);
 }
 
 tuple<path, path>
