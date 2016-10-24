@@ -77,7 +77,7 @@ tuple<path, path>
 FileStore::
 new_filenames()
 {
-  mt19937_64 gen((random_device())());
+  random_device gen;
   uniform_int_distribution<long int> dist;
 
   while ( true ) {
