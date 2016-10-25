@@ -67,8 +67,9 @@ class StandaloneWorkerPool
     void
     delayed_save_global_stores_to_file()
     {
-      if ( system_clock::now() > this->next_save_time )
+      if ( system_clock::now() > this->next_save_time ) {
         this->save_global_stores_to_file();
+      }
     };
 
   private:
@@ -80,6 +81,7 @@ class StandaloneWorkerPool
 
     shared_ptr<FileStore> file_store;
     system_clock::time_point next_save_time;
+    static const std::chrono::minutes delay_save_time;
 };
 
 #endif

@@ -41,6 +41,11 @@ unsigned int
 MPIWorkerPool::
 master_process_id;
 
+const
+chrono::minutes
+MPIWorkerPool::
+delay_save_time
+= chrono::minutes(5);
 
 MPIWorkerPool::
 MPIWorkerPool(
@@ -50,7 +55,7 @@ MPIWorkerPool(
     unsigned int nmb_threads_per_gpu
     ) :
   mpi_world ( mpi_world ),
-  next_save_time ( system_clock::now() + chrono::minutes(5) )
+  next_save_time ( system_clock::now() + delay_save_time )
 {
   MPIWorkerPool::broadcast_initialization( mpi_world,
       store_type, nmb_working_threads, nmb_threads_per_gpu );
@@ -245,6 +250,8 @@ save_global_stores_to_file()
   if ( !this->file_store )
     return;
 
+  this->next_save_time = system_clock::now() + delay_save_time;
+
   this->file_store->save(master_thread_pool->flush_global_store());
 
   for ( size_t ix=1; ix<this->mpi_world->size(); ++ix ) {
@@ -256,4 +263,5 @@ save_global_stores_to_file()
     }
     this->file_store->save(record_store);
   }
+
 }

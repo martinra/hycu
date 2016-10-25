@@ -97,6 +97,7 @@ class MPIWorkerPool
 
     shared_ptr<FileStore> file_store;
     system_clock::time_point next_save_time;
+    static const std::chrono::minutes delay_save_time;
 };
 
 

@@ -30,13 +30,19 @@
 using namespace std;
 
 
+const
+chrono::minutes
+StandaloneWorkerPool::
+delay_save_time
+= chrono::minutes(5);
+
 StandaloneWorkerPool::
 StandaloneWorkerPool(
     shared_ptr<StoreFactoryInterface> store_factory,
     int nmb_working_threads,
     unsigned int nmb_threads_per_gpu
     ) :
-  next_save_time ( system_clock::now() + chrono::minutes(5) )
+  next_save_time ( system_clock::now() + delay_save_time )
 {
   this->master_thread_pool = make_shared<ThreadPool>(store_factory);
   this->master_thread_pool->spark_threads(nmb_working_threads, nmb_threads_per_gpu);
@@ -156,6 +162,10 @@ void
 StandaloneWorkerPool::
 save_global_stores_to_file()
 {
-  if ( this->file_store )
-    this->file_store->save(master_thread_pool->flush_global_store());
+  if ( !this->file_store )
+    return;
+
+  this->next_save_time = system_clock::now() + this->delay_save_time;
+
+  this->file_store->save(master_thread_pool->flush_global_store());
 }
