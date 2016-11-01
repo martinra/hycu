@@ -121,15 +121,10 @@ extract(
     map<typename CurveData::ValueType, typename StoreData::ValueType> & store
     )
 {
-  char delimiter;
-
-  string line, curve_str, store_str;
-
-  stream.peek();
-  while ( !stream.eof() ) {
-    getline(stream, line);
+  for ( string line; getline(stream, line); ) {
     stringstream line_stream(line);
 
+    string curve_str, store_str;
     getline(line_stream, curve_str, ':');
     getline(line_stream, store_str);
 
