@@ -59,14 +59,14 @@ main(
 
   visible_options.add_options()
     ( "help,h", "show help message" )
-    ( "store-type", value<string>(),
-      "the type of the store; c: Count" )
+//    ( "store-type", value<string>(),
+//      "the type of the store; c: Count" )
     ( "input-path", value<string>(),
       "path to the input folder" )
     ( "output-file", value<string>(),
       "path to the output file omitting the extension" );
 
-  positional_options.add("store-type", 1)
+  positional_options//.add("store-type", 1)
                     .add("input-path", 1)
                     .add("output-file", 1);
 
@@ -85,10 +85,10 @@ main(
   }
 
 
-  if ( !options_map.count("store-type") ) {
-   cerr << "store-type has to be set" << endl;
-   exit(1);
-  }
+//  if ( !options_map.count("store-type") ) {
+//   cerr << "store-type has to be set" << endl;
+//   exit(1);
+//  }
   if ( !options_map.count("input-path") ) {
    cerr << "input-path has to be set" << endl;
    exit(1);
@@ -119,14 +119,14 @@ main(
   filesys::path store_output_file(
       options_map["output-file"].as<string>() + FileStore::store_extension );
 
-  string store_type = options_map["store-type"].as<string>();
-  if ( store_type == "c" )
+//  string store_type = options_map["store-type"].as<string>();
+  if ( true ) // store_type == "c" )
     merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
       (input_files, record_output_file, store_output_file);
-  else {
-      cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
-      exit(1);
-  }
+//  else {
+//      cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
+//      exit(1);
+//  }
 
   return 0;
 }
