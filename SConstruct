@@ -87,7 +87,7 @@ if not GetOption("clean"):
 
   ## standard compiler arguments
   conf.env.Append(
-      CXXFLAGS  = "-O2 -pthread"
+      CXXFLAGS  = "-pthread"
     , CPPPATH   = [ Dir("#/src") ]
     , LINKFLAGS = "-pthread"
     )
