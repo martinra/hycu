@@ -79,8 +79,10 @@ FqElementTable(
 FqElementTable::
 ~FqElementTable()
 {
-  for ( auto fq : this->fq_elements )
+  for ( auto fq : this->fq_elements ) {
     fq_nmod_clear(fq, this->fq_ctx);
+    delete fq;
+  }
 
   fq_nmod_ctx_clear(this->fq_ctx);
 }
