@@ -74,7 +74,7 @@ main(
 
   if ( options_map.count("help") ) {
     cerr << visible_options;
-    exit(0);
+    return 0;
   }
 
 
@@ -94,13 +94,13 @@ main(
     }
     if ( invalid_options ) {
       cerr << ": call with at least 3 arguments" << endl;
-      exit(1);
+      return 1;
     }
   }
 
   if ( !n_is_prime(options_map["field_size"].as<unsigned int>()) ) {
     cerr << "field size is not prime";
-    exit(1);
+    return 1;
   }
 
 

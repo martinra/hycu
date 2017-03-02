@@ -40,7 +40,7 @@ using popt::value;
 
 
 template<class Store>
-void
+int
 merge(
     vector<filesys::path> input_files,
     filesys::path record_output_file,
@@ -81,32 +81,32 @@ main(
 
   if ( options_map.count("help") ) {
     cerr << visible_options;
-    exit(0);
+    return 0;
   }
 
 
 //  if ( !options_map.count("store-type") ) {
 //   cerr << "store-type has to be set" << endl;
-//   exit(1);
+//   return 1;
 //  }
   if ( !options_map.count("input-path") ) {
    cerr << "input-path has to be set" << endl;
-   exit(1);
+   return 1;
   }
   if ( !options_map.count("output-file") ) {
    cerr << "output-file has to be set" << endl;
-   exit(1);
+   return 1;
   }
   
 
   filesys::path input(options_map["input-path"].as<string>());
   if ( !filesys::exists(input) ) {
     cerr << "input-path does not exist" << endl;
-    exit(1);
+    return 1;
   }
   if ( !filesys::is_directory(input) ) {
     cerr << "input-path is not a folder" << endl;
-    exit(1);
+    return 1;
   }
 
   vector<filesys::path> input_files;
@@ -121,18 +121,16 @@ main(
 
 //  string store_type = options_map["store-type"].as<string>();
   if ( true ) // store_type == "c" )
-    merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
+    return merge<Store<HyCu::CurveData::ExplicitRamificationHasseWeil, HyCu::StoreData::Count>>
       (input_files, record_output_file, store_output_file);
 //  else {
 //      cerr << "undefined store-type: " << options_map["store-type"].as<string>() << endl;
-//      exit(1);
+//      return 1;
 //  }
-
-  return 0;
 }
 
 template<class Store>
-void
+int
 merge(
     vector<filesys::path> input_files,
     filesys::path record_output_file,
@@ -151,7 +149,7 @@ merge(
     if ( !filesys::is_regular_file(store_file) ) {
       cerr << "found record file " << record_file.filename()
            << ", but no corresponding store file" << endl;
-      exit(1);
+      return 1;
     }
 
     FileStore::extract( fstream(record_file.native(), ios_base::in), record );
@@ -161,4 +159,6 @@ merge(
   // save record second as a witness to successful writing
   store.insert( fstream(store_output_file.native(), ios_base::out) );
   FileStore::insert( fstream(record_output_file.native(), ios_base::out), record );
+
+  return 0;
 }

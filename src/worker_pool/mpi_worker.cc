@@ -109,7 +109,7 @@ main_mpi_worker(
 
     else {
       cerr << "main_worker: unrecognized MPI message tag" << endl;
-      exit(1);
+      return 1;
     }
   }
 

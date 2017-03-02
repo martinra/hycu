@@ -77,31 +77,31 @@ main(
 
   if ( options_map.count("help") ) {
     cerr << visible_options;
-    exit(0);
+    return 0;
   }
 
   if ( !options_map.count("config-file") ) {
     cerr << "configuration file required" << endl;
-    exit(1);
+    return 1;
   }
 
   if ( !options_map.count("output-path") ) {
     cerr << "output path required" << endl;
-    exit(1);
+    return 1;
   }
 
 
   path output_path(options_map["output-path"].as<string>());
   if ( !( is_directory(output_path) || create_directories(output_path) ) ) {
     cerr << "could not create output path" << endl;
-    exit(1);
+    return 1;
   }
 
 
   path config_file(options_map["config-file"].as<string>());
   if ( !is_regular_file(config_file) ) {
     cerr << "could not find configuration file or it is not a regular file" << endl;
-    exit(1);
+    return 1;
   }
   auto config_yaml = YAML::LoadFile(config_file.native());
 
@@ -115,7 +115,7 @@ main(
       store_type = StoreType::EC;
     else {
       cerr << "Invalid store type in configuration file" << endl;
-      exit(1);
+      return 1;
     }
   }
 
@@ -137,7 +137,7 @@ main(
     node.prepend_output_path(canonical(output_path,current_path()));
     if ( !node.verify() ) {
       cerr << "Incorrect configuration node:" << endl << node;
-      exit(1);
+      return 1;
     }
     worker_pool.update_config(node);
 
