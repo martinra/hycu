@@ -11,13 +11,13 @@ if (BuildTest)
     ${HyCu_SOURCES_TEST}
     )
   target_link_libraries(hycu-test
+    hycu-test-lib
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
     ${FLINT_LIBRARY}
     ${GMP_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    hycu-test-lib
     )
   if (WithOpenCL)
     target_link_libraries(hycu-test ${OpenCL_LIBRARY})

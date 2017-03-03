@@ -1,6 +1,6 @@
 mark_as_advanced(YAML-cpp_INCLUDE_DIR YAML-cpp_LIBRARY)
 
-find_path(YAML-cpp_INCLUDE_DIR yaml-cpp/yaml-cpp.h)
+find_path(YAML-cpp_INCLUDE_DIR yaml-cpp/yaml.h)
 find_library(YAML-cpp_LIBRARY yaml-cpp)
 
 add_library(yaml-cpp UNKNOWN IMPORTED)
