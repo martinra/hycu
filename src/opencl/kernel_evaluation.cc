@@ -59,35 +59,71 @@ OpenCLKernelEvaluation(
 
   status = this->kernel_cl->setArg(2, *table.buffer_evaluation()->buffer_exponent_reduction_table);
   if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not set exponent_reduction_table" << endl;
+    cerr << "OpenCLKernelEvaluation: could not set exponent_reduction_table_global" << endl;
     throw;
   }
 
   status = this->kernel_cl->setArg(3, *table.buffer_evaluation()->buffer_incrementation_table);
   if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not set incremetion_table" << endl;
+    cerr << "OpenCLKernelEvaluation: could not set incremetion_table_global" << endl;
     throw;
   }
 
   status = this->kernel_cl->setArg(4, *table.buffer_evaluation()->buffer_minimal_field_table);
   if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not set minimal_field_table" << endl;
+    cerr << "OpenCLKernelEvaluation: could not set minimal_field_table_global" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(5, *table.buffer_evaluation()->buffer_nmbs_unramified);
+  status = this->kernel_cl->setArg(5, sizeof(int), &table.buffer_evaluation()->exponent_reduction_table_size );
+  if ( status != CL_SUCCESS ) {
+    cerr << "OpenCLKernelEvaluation: could not set exponent_reduction_table_size" << endl;
+    throw;
+  }
+
+  status = this->kernel_cl->setArg(6, sizeof(int), &table.buffer_evaluation()->incrementation_table_size );
+  if ( status != CL_SUCCESS ) {
+    cerr << "OpenCLKernelEvaluation: could not set incrementation_table_size" << endl;
+    throw;
+  }
+
+  status = this->kernel_cl->setArg(7, sizeof(int), &table.buffer_evaluation()->minimal_field_table_size );
+  if ( status != CL_SUCCESS ) {
+    cerr << "OpenCLKernelEvaluation: could not set minimal_field_table_size" << endl;
+    throw;
+  }
+
+  status = this->kernel_cl->setArg(8, sizeof(int) * table.buffer_evaluation()->exponent_reduction_table_size, nullptr);
+  if ( status != CL_SUCCESS ) {
+    cerr << "OpenCLKernelReduction: could not initialize exponent_reduction_table" << endl;
+    throw;
+  }
+
+  status = this->kernel_cl->setArg(9, sizeof(int) * table.buffer_evaluation()->incrementation_table_size, nullptr);
+  if ( status != CL_SUCCESS ) {
+    cerr << "OpenCLKernelReduction: could not initialize incrementation_table" << endl;
+    throw;
+  }
+
+  status = this->kernel_cl->setArg(10, sizeof(int) * table.buffer_evaluation()->minimal_field_table_size, nullptr);
+  if ( status != CL_SUCCESS ) {
+    cerr << "OpenCLKernelReduction: could not initialize minimal_field_table" << endl;
+    throw;
+  }
+
+  status = this->kernel_cl->setArg(11, *table.buffer_evaluation()->buffer_nmbs_unramified);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set nmbs_unramified" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(6, *table.buffer_evaluation()->buffer_nmbs_ramified);
+  status = this->kernel_cl->setArg(12, *table.buffer_evaluation()->buffer_nmbs_ramified);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set nmbs_ramified" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(7, *table.buffer_evaluation()->buffer_minimal_fields);
+  status = this->kernel_cl->setArg(13, *table.buffer_evaluation()->buffer_minimal_fields);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set minimal_fields" << endl;
     throw;

@@ -37,12 +37,16 @@ OpenCLBufferEvaluation(
   prime_power_pred ( table.prime_power_pred ),
   opencl ( table.opencl )
 {
+  this->exponent_reduction_table_size = table.exponent_reduction_table->size();
+  this->incrementation_table_size = table.incrementation_table->size();
+  this->minimal_field_table_size = table.minimal_field_table->size();
+
   this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.exponent_reduction_table->size() );
+      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->exponent_reduction_table_size );
   this->buffer_incrementation_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.incrementation_table->size() );
+      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->incrementation_table_size );
   this->buffer_minimal_field_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.minimal_field_table->size() );
+      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * this->minimal_field_table_size );
 
   this->buffer_nmbs_unramified = make_shared<cl::Buffer>(
       *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
