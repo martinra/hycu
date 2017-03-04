@@ -59,10 +59,10 @@ single_curve_fp(
   if (  implementation == SingleCurveCountImplementationCPU
      || implementation == SingleCurveCountImplementationNaiveNMod
      || implementation == SingleCurveCountImplementationNaiveZech )
-    auto opencl = shared_ptr<OpenCLInterface>();
+    opencl = shared_ptr<OpenCLInterface>();
 #ifdef WITH_OPENCL
   else if ( implementation == SingleCurveCountImplementationOpenCL )
-    auto opencl = make_shared<OpenCLInterface>();
+    opencl = make_shared<OpenCLInterface>();
 #endif
   else {
     cerr << "curve count implementation not implemented" << endl;
