@@ -19,6 +19,7 @@ find_package (Boost COMPONENTS
 if (WithOpenCL)
   find_package (OpenCL REQUIRED)
   include_directories (${OpenCL_INCLUDE_DIRS})
+  add_definitions("-D WITH_OPENCL")
 endif ()
 
 find_package (FLINT REQUIRED)
