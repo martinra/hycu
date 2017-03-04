@@ -87,8 +87,6 @@ compute_tables()
   this->exponent_reduction_table = this->compute_exponent_reduction_table(prime_power);
   this->incrementation_table =
       this->compute_incrementation_table(prime, prime_exponent, prime_power);
-  this->minimal_field_table =
-      this->compute_minimal_field_table(prime, prime_exponent, prime_power);
 }
 
 shared_ptr<vector<int>>
@@ -164,26 +162,4 @@ compute_incrementation_table(
   fq_nmod_ctx_clear(ctx);
 
   return incrementations;
-}
-
-shared_ptr<vector<int>>
-ReductionTable::
-compute_minimal_field_table(
-    int prime,
-    int prime_exponent,
-    int prime_power
-    )
-{
-  auto minimal_field = make_shared<vector<int>>(prime_power, prime_exponent-1);
-
-  (*minimal_field)[prime_power-1] = 0;
-  for ( int ex=prime_exponent-2; ex>=0; --ex ) {
-    if ( prime_exponent % (ex+1) != 0 ) continue;
-
-    int factor_exponent = (prime_power - 1) / (pow(prime, ex+1) - 1);
-    for ( int ix=0; ix<prime_power-1; ix += factor_exponent )
-      (*minimal_field)[ix] = ex;
-  }
-
-  return minimal_field;
 }

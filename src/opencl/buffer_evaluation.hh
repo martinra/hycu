@@ -44,11 +44,9 @@ class OpenCLBufferEvaluation
   protected:
     shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
     shared_ptr<cl::Buffer> buffer_incrementation_table;
-    shared_ptr<cl::Buffer> buffer_minimal_field_table;
 
     shared_ptr<cl::Buffer> buffer_nmbs_unramified;
     shared_ptr<cl::Buffer> buffer_nmbs_ramified;
-    shared_ptr<cl::Buffer> buffer_minimal_fields;
 
   private:
     unsigned int prime_power_pred;

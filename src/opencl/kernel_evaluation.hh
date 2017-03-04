@@ -41,6 +41,7 @@ class OpenCLKernelEvaluation
     OpenCLKernelEvaluation(const ReductionTable & table, unsigned int degree);
 
     void enqueue(vector<int> poly_coeff_exponents);
+    std::tuple<int,int> nmb_points();
 
   private:
     unsigned int prime_power_pred;

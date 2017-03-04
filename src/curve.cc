@@ -161,20 +161,17 @@ count(
     ReductionTable & reduction_table
   )
 {
-  // todo: Use error checking for all calls. Some implementations don't seem to support try/catch, but doublecheck this.
-
   if ( reduction_table.prime != this->table->prime ) {
     cerr << "Curve.count: primes of curve and table must coincide: "
          << reduction_table.prime << " " << this->table->prime << endl;
     throw;
   }
   int prime_exponent = reduction_table.prime_exponent;
+  int prime_power_pred = reduction_table.prime_power_pred;
 
   if ( this->nmb_points.find( prime_exponent ) != this->nmb_points.end() )
     return;
-  for (size_t fx=1; fx<=prime_exponent; ++fx)
-    if ( prime_exponent % fx == 0 )
-      this->nmb_points[fx] = make_tuple(0,0);
+  this->nmb_points[prime_exponent] = make_tuple(0,0);
 
 
   // this also checks that the prime exponent is divisible by the one of the curve
@@ -189,30 +186,21 @@ count(
 
   // point x = 0
   // if constant coefficient is zero
-  if (poly_coeff_exponents.front() == reduction_table.prime_power_pred)
-    for ( size_t fx=1; fx<=prime_exponent; ++fx)
-      ++get<1>(this->nmb_points[fx]);
+  if (poly_coeff_exponents.front() == prime_power_pred)
+    get<1>(this->nmb_points[prime_exponent]) += 1;
   // if constant coefficient is even power of generator
   else if (!(poly_coeff_exponents.front() & 1)) {
-    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.front() / 2] + 1;
-    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
-      if ( prime_exponent % fx == 0 )
-        get<0>(this->nmb_points[fx]) += 2;
+    get<0>(this->nmb_points[prime_exponent]) += 2;
   }
 
 
   // point x = infty
   // if poly_coeffs ends with zero entry
   if ( this->degree() < 2*this->genus() + 2 )
-    for ( size_t fx=1; fx<=prime_exponent; ++fx)
-      get<1>(this->nmb_points[fx]) += 1;
-  // f leading coefficient is odd power of generator
+    get<1>(this->nmb_points[prime_exponent]) += 1;
+  // if leading coefficient is even power of generator
   else if (!(poly_coeff_exponents.back() & 1)) {
-    // todo: make sure that curve enumeration does not put 0 as the leading coefficient
-    size_t fx_min = (*reduction_table.minimal_field_table)[poly_coeff_exponents.back() / 2] + 1;
-    for ( size_t fx=fx_min; fx<=prime_exponent; fx+=fx_min )
-      if ( prime_exponent % fx == 0 )
-        get<0>(this->nmb_points[fx]) += 2;
+    get<0>(this->nmb_points[prime_exponent]) += 2;
   }
 }
 
@@ -225,7 +213,7 @@ count_opencl(
 {
 #ifdef WITH_OPENCL
   reduction_table.kernel_evaluation(this->degree())->enqueue(poly_coeff_exponents);
-  reduction_table.kernel_reduction()->reduce(this->nmb_points);
+  this->nmb_points.at(reduction_table.prime_exponent) = reduction_table.kernel_reduction()->reduce();
 #else
   cerr << "Curve::count_opencl: compiled without OpenCL support" << endl;
   throw;
@@ -244,7 +232,6 @@ count_cpu(
 
   const auto & exponent_reduction_table = *reduction_table.exponent_reduction_table;
   const auto & incrementation_table = *reduction_table.incrementation_table;
-  const auto & minimal_field_table = *reduction_table.minimal_field_table;
 
   int poly_size = (int)poly_coeff_exponents.size();
 
@@ -279,22 +266,10 @@ count_cpu(
     }
 
 
-    int minimal_field_x = 1 + minimal_field_table[x];
-    if ( f == prime_power_pred ) {
-      // minimal_field_f = 0;
-
-      for ( size_t fx=minimal_field_x; fx<=prime_exponent; fx+=minimal_field_x )
-        if ( prime_exponent % fx == 0 )
-          ++get<1>(this->nmb_points[fx]);
-    }
-    else if ( !(f & 1) ) {
-      int minimal_field_f = 1 + minimal_field_table[f/2];
-      minimal_field_x = minimal_field_x > minimal_field_f ?  minimal_field_x : minimal_field_f;
-
-      for ( size_t fx=minimal_field_x; fx<=prime_exponent; fx+=minimal_field_x )
-        if ( prime_exponent % fx == 0 )
-          get<0>(this->nmb_points[fx]) += 2;
-    }
+    if ( f == prime_power_pred )
+      get<1>(this->nmb_points[prime_exponent]) += 1;
+    else if ( !(f & 1) )
+      get<0>(this->nmb_points[prime_exponent]) += 2;
   }
 }
 

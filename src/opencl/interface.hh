@@ -35,7 +35,6 @@ class OpenCLInterface {};
 #include <CL/cl.hpp>
 
 #include "opencl/program_evaluation.hh"
-#include "opencl/program_reduction.hh"
 
 
 using std::map;
@@ -63,11 +62,6 @@ class OpenCLInterface
         return program_it->second;
     };
 
-    inline shared_ptr<OpenCLProgramReduction> program_reduction() const
-    {
-      return this->_program_reduction;
-    };
-
     friend class Curve;
     friend class ReductionTable;
     friend class OpenCLProgram;
@@ -82,7 +76,6 @@ class OpenCLInterface
     shared_ptr<cl::CommandQueue> queue;
 
     map<unsigned int, shared_ptr<OpenCLProgramEvaluation>> _program_evaluation;
-    shared_ptr<OpenCLProgramReduction> _program_reduction;
 };
 
 #endif // WITH_OPENCL

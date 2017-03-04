@@ -44,26 +44,20 @@ class OpenCLKernelReduction
   public:
     OpenCLKernelReduction(const ReductionTable & table);
 
-    void reduce(map<unsigned int, tuple<int,int>> & nmb_points);
+    tuple<int,int> reduce();
 
   private:
     unsigned int prime_exponent;
     unsigned int prime_power_pred;
 
     shared_ptr<OpenCLInterface> opencl;
-    shared_ptr<cl::Kernel> kernel_cl;
 
     shared_ptr<cl::Buffer> buffer_nmbs_unramified;
     shared_ptr<cl::Buffer> buffer_nmbs_ramified;
 
-    shared_ptr<cl::Buffer> buffer_sums;
-    vector<int> sums;
+    vector<int> vector_nmbs;
 
-    const int global_size_reduction = 1024;
-    const int local_size_reduction = 32;
-    const int nmb_groups_reduction = global_size_reduction / local_size_reduction;
-
-    void _reduce(shared_ptr<cl::Buffer> buffer_nmbs);
+    int _reduce(shared_ptr<cl::Buffer> buffer_nmbs);
 };
 
 #endif

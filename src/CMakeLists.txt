@@ -15,7 +15,6 @@ if (WithOpenCL)
     opencl/kernel_reduction.cc
     opencl/program.cc
     opencl/program_evaluation.cc
-    opencl/program_reduction.cc
     )
 endif()
 

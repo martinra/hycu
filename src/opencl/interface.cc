@@ -40,8 +40,6 @@ OpenCLInterface(
   this->device = make_shared<cl::Device>(device);
   this->context = make_shared<cl::Context>(*this->device);
   this->queue = make_shared<cl::CommandQueue>(*this->context, *this->device);
-
-  this->_program_reduction = make_shared<OpenCLProgramReduction>(*this);
 }
 
 vector<cl::Device>

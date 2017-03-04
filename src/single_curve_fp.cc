@@ -86,7 +86,7 @@ single_curve_fp(
       curve_count_duration += chrono::steady_clock::now() - start;
   }
   else {
-    for ( size_t fx=curve->genus(); fx>curve->genus()/2; --fx ) {
+    for ( size_t fx=curve->genus(); fx>0; --fx ) {
       if ( time )
         start = chrono::steady_clock::now();
       ReductionTable reduction_table(prime, fx, opencl);
