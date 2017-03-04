@@ -33,7 +33,20 @@
 using std::shared_ptr;
 using std::vector;
 
+enum SingleCurveCountImplementation
+{
+  SingleCurveCountImplementationCPU,
+  SingleCurveCountImplementationOpenCL,
+  SingleCurveCountImplementationNaiveNMod,
+  SingleCurveCountImplementationNaiveZech
+};
 
-shared_ptr<Curve> single_curve_fp(unsigned int prime, vector<unsigned int> poly_coeffs, bool use_opencl, bool time = false);
+shared_ptr<Curve>
+single_curve_fp(
+    unsigned int prime,
+    vector<unsigned int> poly_coeffs,
+    SingleCurveCountImplementation implementation,
+    bool time = false
+    );
 
 #endif

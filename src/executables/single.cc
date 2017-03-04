@@ -55,6 +55,8 @@ main(
 
   visible_options.add_options()
     ( "help,h", "show help message" )
+    ( "naivenmod", "use naive nmod implementation" )
+    ( "naivezech", "use naive zech implementation" )
 #ifdef WITH_OPENCL
     ( "opencl", "use OpenCL" )
 #endif
@@ -103,14 +105,32 @@ main(
     return 1;
   }
 
+  {
+    int nmb_implementations = options_map.count("naivenmod") +  options_map.count("naivezech");
+#ifdef WITH_OPENCL
+      nmb_implementations += options_map.count("opencl");
+#endif
+    if ( nmb_implementations > 1 ) {
+      cerr << "cannot choose more than one implementation" << endl;
+      return 1;
+    }
+  }
+
+  SingleCurveCountImplementation count_implementation;
+  if ( (bool)options_map.count("naivenmod") )
+    count_implementation = SingleCurveCountImplementationNaiveNMod;
+  else if ( (bool)options_map.count("naivezech") )
+    count_implementation = SingleCurveCountImplementationNaiveZech;
+#ifdef WITH_OPENCL
+  else if ( (bool)options_map.count("opencl") )
+    count_implementation = SingleCurveCountImplementationOpenCL;
+#endif
+  else
+    count_implementation = SingleCurveCountImplementationCPU;
 
   auto curve = single_curve_fp( options_map["field_size"].as<unsigned int>(),
                                 options_map["coefficients"].as<vector<unsigned int>>(),
-#ifdef WITH_OPENCL
-                                (bool)options_map.count("opencl"),
-#else
-                                false,
-#endif
+                                count_implementation,
                                 (bool)options_map.count("time")
                               );
     

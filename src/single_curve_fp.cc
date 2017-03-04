@@ -22,6 +22,7 @@
 
 
 #include <chrono>
+#include <cmath>
 
 #include "opencl/interface.hh"
 #include "reduction_table.hh"
@@ -35,7 +36,7 @@ shared_ptr<Curve>
 single_curve_fp(
     unsigned int prime,
     vector<unsigned int> poly_coeffs,
-    bool use_opencl,
+    SingleCurveCountImplementation implementation,
     bool time
     )
 {
@@ -54,31 +55,55 @@ single_curve_fp(
   for ( auto c : poly_coeffs )
     poly_coeff_exponents.push_back(fp_conversion_map[c]);
 
-
-  auto opencl = use_opencl ?
-                  make_shared<OpenCLInterface>() : shared_ptr<OpenCLInterface>();
+  shared_ptr<OpenCLInterface> opencl;
+  if (  implementation == SingleCurveCountImplementationCPU
+     || implementation == SingleCurveCountImplementationNaiveNMod
+     || implementation == SingleCurveCountImplementationNaiveZech )
+    auto opencl = shared_ptr<OpenCLInterface>();
+#ifdef WITH_OPENCL
+  else if ( implementation == SingleCurveCountImplementationOpenCL )
+    auto opencl = make_shared<OpenCLInterface>();
+#endif
+  else {
+    cerr << "curve count implementation not implemented" << endl;
+    throw;
+  }
   auto curve = make_shared<Curve>(enumeration_table, poly_coeff_exponents);
 
-  // todo: use C++ interface for time
   chrono::duration<double, milli> reduction_table_duration, curve_count_duration;
   chrono::steady_clock::time_point start;
-  for ( size_t fx=curve->genus(); fx>curve->genus()/2; --fx ) {
+  if (  implementation == SingleCurveCountImplementationNaiveNMod
+     || implementation == SingleCurveCountImplementationNaiveZech ) {
     if ( time )
       start = chrono::steady_clock::now();
-    ReductionTable reduction_table(prime, fx, opencl);
-    if ( time ) {
-      reduction_table_duration += chrono::steady_clock::now() - start;
-        // chrono::duration_cast<double, chrono::milliseconds>(chrono::steady_clock::now() - start);
-      start = chrono::steady_clock::now();
+    for ( size_t fx=curve->genus(); fx>0; --fx ) {
+      if ( implementation == SingleCurveCountImplementationNaiveNMod )
+        curve->count_naive_nmod(fx);
+      if ( implementation == SingleCurveCountImplementationNaiveZech )
+        curve->count_naive_zech(fx);
     }
-    curve->count(reduction_table);
     if ( time )
       curve_count_duration += chrono::steady_clock::now() - start;
-//        chrono::duration_cast<double, chrono::milliseconds>(chrono::steady_clock::now() - start);
+  }
+  else {
+    for ( size_t fx=curve->genus(); fx>curve->genus()/2; --fx ) {
+      if ( time )
+        start = chrono::steady_clock::now();
+      ReductionTable reduction_table(prime, fx, opencl);
+      if ( time ) {
+        reduction_table_duration += chrono::steady_clock::now() - start;
+        start = chrono::steady_clock::now();
+      }
+      curve->count(reduction_table);
+      if ( time )
+        curve_count_duration += chrono::steady_clock::now() - start;
+    }
   }
   if ( time ) {
-    cout << "Accumulated computation time for reduction tables: "
-         << reduction_table_duration.count() << " ms" << endl;
+    if (  implementation == SingleCurveCountImplementationCPU
+       || implementation == SingleCurveCountImplementationOpenCL )
+      cout << "Accumulated computation time for reduction tables: "
+           << reduction_table_duration.count() << " ms" << endl;
     cout << "Accumulated computation time for curve couting: "
          << curve_count_duration.count() << " ms" << endl;
   }

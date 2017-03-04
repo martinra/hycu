@@ -68,6 +68,8 @@ class Curve
     {
       this->count(*table);
     };
+    void count_naive_nmod(int prime_exponent);
+    void count_naive_zech(int prime_exponent);
 
     bool has_counted(size_t fx) const { return (this->nmb_points.find(fx) != this->nmb_points.end()); };
 

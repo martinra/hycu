@@ -25,6 +25,7 @@
 #include <cmath>
 #include <flint/fq_nmod.h>
 #include <flint/fq_nmod_poly.h>
+#include <flint/fq_zech.h>
 #include <flint/fmpz.h>
 #include <flint/nmod_poly.h>
 #include <map>
@@ -295,6 +296,252 @@ count_cpu(
           get<0>(this->nmb_points[fx]) += 2;
     }
   }
+}
+
+void
+Curve::
+count_naive_nmod(
+    int prime_exponent
+  )
+{
+  if ( prime_exponent <= 0 ) {
+    cerr << "Curve.count_naive: prime exponent must be positive: "
+         << prime_exponent << endl;
+    throw;
+  }
+  if ( prime_exponent % this->table->prime_exponent != 0 ) {
+    cerr << "Curve.count_naive: prime exponent must divide curve prime exponent: "
+         << prime_exponent << " " << this->table->prime_exponent << endl;
+    throw;
+  }
+
+  if ( this->nmb_points.find( prime_exponent ) != this->nmb_points.end() )
+    return;
+
+
+  int prime_power_pred = pow(table->prime, prime_exponent) - 1;
+
+
+  // create fq_nmod_ctx and gen
+  fq_nmod_ctx_t fq_ctx;
+  fmpz_t prime_fmpz;
+  fmpz_init_set_ui(prime_fmpz, this->table->prime);
+  fq_nmod_ctx_init(fq_ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
+  fmpz_clear(prime_fmpz);
+
+  fq_nmod_t gen;
+  fq_nmod_init(gen, fq_ctx);
+  fq_nmod_gen(gen, fq_ctx);
+
+  fq_nmod_t sub_gen;
+  fq_nmod_init(sub_gen, fq_ctx);
+  fq_nmod_pow_ui(sub_gen, gen, prime_power_pred / this->table->prime_power_pred, fq_ctx);
+
+  // convert coefficient exponents to fq_nmod elements
+  // fixme: in this conversion as in the other ones, we
+  // silently assume that gen_q = gen_{q^l}^{q^l - q}
+  vector<const fq_nmod_struct*> poly_coefficients;
+  for ( int e : this->poly_coeff_exponents ) {
+    auto a = new fq_nmod_struct;
+    fq_nmod_init(a, fq_ctx);
+    if ( e == table->prime_power_pred )
+      fq_nmod_zero(a, fq_ctx);
+    else
+      fq_nmod_pow_ui(a, sub_gen, e, fq_ctx);
+    poly_coefficients.push_back(a);
+  }
+
+
+  // detection of squares in the finite field
+  int square_detection_exp = prime_power_pred >> 1;
+  fq_nmod_t square_detection_tmp;
+  fq_nmod_init(square_detection_tmp, fq_ctx);
+  auto is_square_nonzero =
+    [&fq_ctx, square_detection_exp, &square_detection_tmp]
+    (const fq_nmod_t a)
+    {
+      fq_nmod_pow_ui(square_detection_tmp, a, square_detection_exp, fq_ctx);
+      return fq_nmod_is_one(square_detection_tmp, fq_ctx);
+    };
+
+
+  // points x != infty
+  fq_nmod_t x, xpw, rhs, m;
+  fq_nmod_init(x, fq_ctx);
+  fq_nmod_init(xpw, fq_ctx);
+  fq_nmod_init(rhs, fq_ctx);
+  fq_nmod_init(m, fq_ctx);
+
+  auto & nmb_points = this->nmb_points[prime_exponent];
+  auto update_count =
+    [&fq_ctx, &x, &xpw, &rhs, &m,
+     &poly_coefficients, &nmb_points,
+     &is_square_nonzero]()
+    {
+      fq_nmod_one(xpw, fq_ctx);
+      fq_nmod_zero(rhs, fq_ctx);
+      for ( auto c : poly_coefficients ) {
+        fq_nmod_mul(m, c, xpw, fq_ctx);
+        fq_nmod_add(rhs, rhs, m, fq_ctx);
+        fq_nmod_mul(xpw, xpw, x, fq_ctx);
+      }
+
+      if ( fq_nmod_is_zero(rhs, fq_ctx) )
+        get<1>(nmb_points) += 1;
+      else if ( is_square_nonzero(rhs) )
+        get<0>(nmb_points) += 2;
+    };
+
+  fq_nmod_zero(x, fq_ctx);
+  update_count();
+  fq_nmod_one(x, fq_ctx);
+  for ( int ix = 0; ix < prime_power_pred; ++ix ) {
+    update_count();
+    fq_nmod_mul(x, x, gen, fq_ctx);
+  }
+
+
+  // point x = infty
+  // if poly_coeffs ends with zero entry
+  if ( this->degree() < 2*this->genus() + 2 )
+    get<1>(this->nmb_points[prime_exponent]) += 1;
+  // if leading coefficient is odd power of generator
+  else if ( is_square_nonzero(poly_coefficients.back()) )
+    get<0>(this->nmb_points[prime_exponent]) += 2;
+
+
+  // clear flint variables
+  fq_nmod_clear(gen, fq_ctx);
+  fq_nmod_clear(sub_gen, fq_ctx);
+  fq_nmod_clear(x, fq_ctx);
+  fq_nmod_clear(xpw, fq_ctx);
+  fq_nmod_clear(rhs, fq_ctx);
+  fq_nmod_clear(m, fq_ctx);
+  fq_nmod_clear(square_detection_tmp, fq_ctx);
+  fq_nmod_ctx_clear(fq_ctx);
+}
+
+void
+Curve::
+count_naive_zech(
+    int prime_exponent
+  )
+{
+  if ( prime_exponent <= 0 ) {
+    cerr << "Curve.count_naive: prime exponent must be positive: "
+         << prime_exponent << endl;
+    throw;
+  }
+  if ( prime_exponent % this->table->prime_exponent != 0 ) {
+    cerr << "Curve.count_naive: prime exponent must divide curve prime exponent: "
+         << prime_exponent << " " << this->table->prime_exponent << endl;
+    throw;
+  }
+
+  if ( this->nmb_points.find( prime_exponent ) != this->nmb_points.end() )
+    return;
+
+
+  int prime_power_pred = pow(table->prime, prime_exponent) - 1;
+
+
+  // create fq_zech_ctx and gen
+  fq_zech_ctx_t fq_ctx;
+  fmpz_t prime_fmpz;
+  fmpz_init_set_ui(prime_fmpz, this->table->prime);
+  fq_zech_ctx_init(fq_ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
+  fmpz_clear(prime_fmpz);
+
+  fq_zech_t gen;
+  fq_zech_init(gen, fq_ctx);
+  fq_zech_gen(gen, fq_ctx);
+
+  fq_zech_t sub_gen;
+  fq_zech_init(sub_gen, fq_ctx);
+  fq_zech_pow_ui(sub_gen, gen, prime_power_pred / this->table->prime_power_pred, fq_ctx);
+
+  // convert coefficient exponents to fq_zech elements
+  // fixme: in this conversion as in the other ones, we
+  // silently assume that gen_q = gen_{q^l}^{q^l - q}
+  vector<const fq_zech_struct*> poly_coefficients;
+  for ( int e : this->poly_coeff_exponents ) {
+    auto a = new fq_zech_struct;
+    fq_zech_init(a, fq_ctx);
+    if ( e == table->prime_power_pred )
+      fq_zech_zero(a, fq_ctx);
+    else
+      fq_zech_pow_ui(a, sub_gen, e, fq_ctx);
+    poly_coefficients.push_back(a);
+  }
+
+
+  // detection of squares in the finite field
+  int square_detection_exp = prime_power_pred >> 1;
+  fq_zech_t square_detection_tmp;
+  fq_zech_init(square_detection_tmp, fq_ctx);
+  auto is_square_nonzero =
+    [&fq_ctx, square_detection_exp, &square_detection_tmp]
+    (const fq_zech_t a)
+    {
+      fq_zech_pow_ui(square_detection_tmp, a, square_detection_exp, fq_ctx);
+      return fq_zech_is_one(square_detection_tmp, fq_ctx);
+    };
+
+
+  // points x != infty
+  fq_zech_t x, xpw, rhs, m;
+  fq_zech_init(x, fq_ctx);
+  fq_zech_init(xpw, fq_ctx);
+  fq_zech_init(rhs, fq_ctx);
+  fq_zech_init(m, fq_ctx);
+
+  auto & nmb_points = this->nmb_points[prime_exponent];
+  auto update_count =
+    [&fq_ctx, &x, &xpw, &rhs, &m,
+     &poly_coefficients, &nmb_points,
+     &is_square_nonzero]()
+    {
+      fq_zech_one(xpw, fq_ctx);
+      fq_zech_zero(rhs, fq_ctx);
+      for ( auto c : poly_coefficients ) {
+        fq_zech_mul(m, c, xpw, fq_ctx);
+        fq_zech_add(rhs, rhs, m, fq_ctx);
+        fq_zech_mul(xpw, xpw, x, fq_ctx);
+      }
+
+      if ( fq_zech_is_zero(rhs, fq_ctx) )
+        get<1>(nmb_points) += 1;
+      else if ( is_square_nonzero(rhs) )
+        get<0>(nmb_points) += 2;
+    };
+
+  fq_zech_zero(x, fq_ctx);
+  update_count();
+  fq_zech_one(x, fq_ctx);
+  for ( int ix = 0; ix < prime_power_pred; ++ix ) {
+    update_count();
+    fq_zech_mul(x, x, gen, fq_ctx);
+  }
+
+
+  // point x = infty
+  // if poly_coeffs ends with zero entry
+  if ( this->degree() < 2*this->genus() + 2 )
+    get<1>(this->nmb_points[prime_exponent]) += 1;
+  // if leading coefficient is odd power of generator
+  else if ( is_square_nonzero(poly_coefficients.back()) )
+    get<0>(this->nmb_points[prime_exponent]) += 2;
+
+
+  // clear flint variables
+  fq_zech_clear(gen, fq_ctx);
+  fq_zech_clear(sub_gen, fq_ctx);
+  fq_zech_clear(x, fq_ctx);
+  fq_zech_clear(xpw, fq_ctx);
+  fq_zech_clear(rhs, fq_ctx);
+  fq_zech_clear(m, fq_ctx);
+  fq_zech_clear(square_detection_tmp, fq_ctx);
+  fq_zech_ctx_clear(fq_ctx);
 }
 
 vector<tuple<int,int>>
