@@ -108,6 +108,11 @@ if (BuildMerger)
     ${FLINT_LIBRARY}
     ${GMP_LIBRARY}
     )
+  if (WithOpenCL)
+    target_link_libraries(hycu-merger
+      ${OpenCL_LIBRARY}
+      )
+  endif()
   install(TARGETS hycu-merger DESTINATION bin)
 endif (BuildMerger)
 
