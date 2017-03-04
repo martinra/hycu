@@ -42,10 +42,6 @@ class OpenCLBufferEvaluation
     friend class OpenCLKernelReduction;
 
   protected:
-    int exponent_reduction_table_size;
-    int incrementation_table_size;
-    int minimal_field_table_size;
-
     shared_ptr<cl::Buffer> buffer_exponent_reduction_table;
     shared_ptr<cl::Buffer> buffer_incrementation_table;
     shared_ptr<cl::Buffer> buffer_minimal_field_table;
