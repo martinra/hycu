@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.5.1)
 project(HyCu)
 list(APPEND CMAKE_MODULE_PATH "${HyCu_SOURCE_DIR}/cmake")
 
-option(BuildSingle "build single curve version" ON)
+option(BuildSingle "build single curve version" OFF)
 option(BuildTest "build tests" OFF)
-option(BuildThreaded "build threaded version" ON)
+option(BuildThreaded "build threaded version" OFF)
 option(BuildMPI "build MPI version" OFF)
-option(BuildMerger "build MPI version" ON)
+option(BuildMerger "build MPI version" OFF)
 
 option(WithOpenCL "compile with OpenCL support" OFF)
 
