@@ -138,7 +138,7 @@ main(
 
   cout << "coefficient exponens: ";
   auto coeff_exponents = curve->convert_poly_coeff_exponents(
-      ReductionTable(curve->prime(), 1, make_shared<OpenCLInterface>()) );
+      ReductionTable(curve->prime(), 1, shared_ptr<OpenCLInterface>()) );
   for ( auto const& c : coeff_exponents )
     cout << c << " ";
   cout << endl;
