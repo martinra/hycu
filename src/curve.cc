@@ -41,6 +41,8 @@
 #include "opencl/interface.hh"
 #include "reduction_table.hh"
 
+// debug:
+#include <chrono>
 
 using namespace std;
 
@@ -227,7 +229,7 @@ count_opencl(
   chrono::steady_clock::time_point start = chrono::steady_clock::now();
   reduction_table.kernel_evaluation(this->degree())->enqueue(poly_coeff_exponents);
   reduction_table.kernel_reduction()->reduce(this->nmb_points);
-  cerr << "kernel time" << chrono::steady_clock::now() - start << endl;
+  cerr << "kernel time" << chrono::duration<double, milli>(chrono::steady_clock::now() - start).count() << endl;
 #else
   cerr << "Curve::count_opencl: compiled without OpenCL support" << endl;
   throw;
