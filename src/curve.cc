@@ -224,8 +224,10 @@ count_opencl(
     )
 {
 #ifdef WITH_OPENCL
+  chrono::steady_clock::time_point start = chrono::steady_clock::now();
   reduction_table.kernel_evaluation(this->degree())->enqueue(poly_coeff_exponents);
   reduction_table.kernel_reduction()->reduce(this->nmb_points);
+  cerr << "kernel time" << chrono::steady_clock::now() - start << endl;
 #else
   cerr << "Curve::count_opencl: compiled without OpenCL support" << endl;
   throw;
