@@ -76,8 +76,6 @@ class ReductionTable
     // given a^i, tabulate the mod q-1 reduced j with a^j = 1 + a^i,
     // if there is any, and q-1 if there is non
     shared_ptr<vector<int>> incrementation_table;
-    // given an exponent determine the minimal prime exponent for which it occurs as an element
-    shared_ptr<vector<int>> minimal_field_table;
 
 #ifdef WITH_OPENCL
     inline shared_ptr<OpenCLBufferEvaluation> buffer_evaluation() const
@@ -106,8 +104,6 @@ class ReductionTable
     shared_ptr<vector<int>> compute_exponent_reduction_table(int prime_power);
     shared_ptr<vector<int>>
         compute_incrementation_table(int prime, int prime_exponent, int prime_power);
-    shared_ptr<vector<int>>
-        compute_minimal_field_table(int prime, int prime_exponent, int prime_power);
 
 #ifdef WITH_OPENCL
     shared_ptr<OpenCLBufferEvaluation> _buffer_evaluation;

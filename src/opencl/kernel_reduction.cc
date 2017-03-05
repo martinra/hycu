@@ -21,6 +21,7 @@
 ===============================================================================*/
 
 #include <iostream>
+#include <numeric>
 
 #include "reduction_table.hh"
 #include "opencl/kernel_evaluation.hh"
@@ -39,7 +40,7 @@ OpenCLKernelReduction(
   buffer_nmbs_unramified ( table.buffer_evaluation()->buffer_nmbs_unramified ),
   buffer_nmbs_ramified ( table.buffer_evaluation()->buffer_nmbs_ramified )
 {
-  this->sums.resize(nmb_groups_reduction*prime_exponent);
+  this->sums.resize(nmb_groups_reduction);
 
 
   const auto & function_name = this->opencl->program_reduction()->function_name();
@@ -48,42 +49,30 @@ OpenCLKernelReduction(
 
 
   this->buffer_sums = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * this->nmb_groups_reduction * this->prime_exponent );
+      *this->opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * this->nmb_groups_reduction );
 
   cl_int status;
 
-  status = this->kernel_cl->setArg(1, *table.buffer_evaluation()->buffer_minimal_fields);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction: could not set minimal_fields" << endl;
-    throw;
-  }
-
-  status = this->kernel_cl->setArg(2, sizeof(int), &this->prime_power_pred);
+  status = this->kernel_cl->setArg(1, sizeof(int), &this->prime_power_pred);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelReduction: could not set prime_power_pred" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(3, sizeof(int), &this->prime_exponent);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction: could not set prime_exponent" << endl;
-    throw;
-  }
-
-  status = this->kernel_cl->setArg(4, sizeof(int) * this->local_size_reduction * this->prime_exponent, nullptr);
+  status = this->kernel_cl->setArg(2, sizeof(int) * this->local_size_reduction, nullptr);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelReduction: could not set scratch" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(5, *this->buffer_sums);
+  status = this->kernel_cl->setArg(3, *this->buffer_sums);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelReduction: could not set sums" << endl;
     throw;
   }
 }
 
-void
+int
 OpenCLKernelReduction::
 _reduce(
     shared_ptr<cl::Buffer> buffer_nmbs
@@ -115,11 +104,13 @@ _reduce(
   }
 
   status = this->opencl->queue->enqueueReadBuffer( *this->buffer_sums, CL_TRUE,
-               0, sizeof(int) * nmb_groups_reduction * prime_exponent, this->sums.data());
+               0, sizeof(int) * nmb_groups_reduction, this->sums.data());
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelReduction::_reduce: could not read sums unramified" << endl;
     throw;
   }
+
+  return accumulate(this->sums.cbegin(), this->sums.cend(), 0);
 }
 
 void
@@ -128,18 +119,9 @@ reduce(
     map<unsigned int, tuple<int,int>> & nmb_points
     )
 {
-  this->_reduce(this->buffer_nmbs_unramified);
+  get<0>(nmb_points[this->prime_exponent]) +=
+    this->_reduce(this->buffer_nmbs_unramified);
 
-  for (size_t fx=1; fx<=prime_exponent; ++fx)
-    if ( prime_exponent % fx == 0 )
-      for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
-        get<0>(nmb_points[fx]) += sums[ix];
-
-
-  this->_reduce(this->buffer_nmbs_ramified);
-
-  for (size_t fx=1; fx<=prime_exponent; ++fx)
-    if ( prime_exponent % fx == 0 )
-      for (size_t ix=(fx-1)*nmb_groups_reduction; ix<fx*nmb_groups_reduction; ++ix)
-        get<1>(nmb_points[fx]) += sums[ix];
+  get<1>(nmb_points[this->prime_exponent]) +=
+    this->_reduce(this->buffer_nmbs_ramified);
 }

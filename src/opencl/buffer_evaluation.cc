@@ -41,14 +41,10 @@ OpenCLBufferEvaluation(
       *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.exponent_reduction_table->size() );
   this->buffer_incrementation_table = make_shared<cl::Buffer>(
       *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.incrementation_table->size() );
-  this->buffer_minimal_field_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.minimal_field_table->size() );
 
   this->buffer_nmbs_unramified = make_shared<cl::Buffer>(
       *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
   this->buffer_nmbs_ramified = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
-  this->buffer_minimal_fields = make_shared<cl::Buffer>(
       *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
 
 
@@ -67,14 +63,6 @@ OpenCLBufferEvaluation(
       table.incrementation_table->data() );
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not write incrementation_table" << endl;
-    throw;
-  }
-
-  status = this->opencl->queue->enqueueWriteBuffer(*this->buffer_minimal_field_table, CL_FALSE, 0,
-      sizeof(int) * table.minimal_field_table->size(),
-      table.minimal_field_table->data() );
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not write minimal_field_table" << endl;
     throw;
   }
 }

@@ -69,27 +69,15 @@ OpenCLKernelEvaluation(
     throw;
   }
 
-  status = this->kernel_cl->setArg(4, *table.buffer_evaluation()->buffer_minimal_field_table);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not set minimal_field_table" << endl;
-    throw;
-  }
-
-  status = this->kernel_cl->setArg(5, *table.buffer_evaluation()->buffer_nmbs_unramified);
+  status = this->kernel_cl->setArg(4, *table.buffer_evaluation()->buffer_nmbs_unramified);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set nmbs_unramified" << endl;
     throw;
   }
 
-  status = this->kernel_cl->setArg(6, *table.buffer_evaluation()->buffer_nmbs_ramified);
+  status = this->kernel_cl->setArg(5, *table.buffer_evaluation()->buffer_nmbs_ramified);
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not set nmbs_ramified" << endl;
-    throw;
-  }
-
-  status = this->kernel_cl->setArg(7, *table.buffer_evaluation()->buffer_minimal_fields);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelEvaluation: could not set minimal_fields" << endl;
     throw;
   }
 }
@@ -123,7 +111,7 @@ enqueue(
 
 
   status = opencl->queue->enqueueNDRangeKernel( *this->kernel_cl,
-               cl::NullRange, cl::NDRange(prime_power_pred), cl::NullRange );
+               cl::NullRange, cl::NDRange(prime_power_pred), cl::NDRange(local_size_evaluation) );
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation::enqueue: could not enqueue kernel" << endl;
     throw;

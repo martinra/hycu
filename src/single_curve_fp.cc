@@ -94,7 +94,7 @@ single_curve_fp(
     }
   }
   else {
-    for ( size_t fx=curve->genus(); fx>curve->genus()/2; --fx ) {
+    for ( size_t fx=curve->genus(); fx>0; --fx ) {
 #ifdef TIMING
       start = chrono::steady_clock::now();
 #endif
