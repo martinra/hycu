@@ -55,12 +55,11 @@ main(
 
   visible_options.add_options()
     ( "help,h", "show help message" )
-    ( "naivenmod", "use naive nmod implementation" )
-    ( "naivezech", "use naive zech implementation" )
 #ifdef WITH_OPENCL
     ( "opencl", "use OpenCL" )
 #endif
-    ( "time", "measure times" );
+    ( "naivenmod", "use naive nmod implementation" )
+    ( "naivezech", "use naive zech implementation" );
 
   all_options.add(hidden_options)
              .add(visible_options);
@@ -130,8 +129,7 @@ main(
 
   auto curve = single_curve_fp( options_map["field_size"].as<unsigned int>(),
                                 options_map["coefficients"].as<vector<unsigned int>>(),
-                                count_implementation,
-                                (bool)options_map.count("time")
+                                count_implementation
                               );
     
   cout << *curve << endl;

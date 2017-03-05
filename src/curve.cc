@@ -37,6 +37,10 @@
 #include <tuple>
 #include <vector>
 
+#ifdef TIMING
+#include <chrono>
+#endif
+
 #include "curve.hh"
 #include "opencl/interface.hh"
 #include "reduction_table.hh"
@@ -223,13 +227,32 @@ count_opencl(
     const vector<int> & poly_coeff_exponents
     )
 {
-#ifdef WITH_OPENCL
-  reduction_table.kernel_evaluation(this->degree())->enqueue(poly_coeff_exponents);
-  reduction_table.kernel_reduction()->reduce(this->nmb_points);
-#else
+#ifndef WITH_OPENCL
   cerr << "Curve::count_opencl: compiled without OpenCL support" << endl;
   throw;
-#endif
+#else // WITH_OPENCL
+
+#ifdef TIMING
+  chrono::steady_clock::time_point start;
+  start = chrono::steady_clock::now();
+#endif // TIMING
+  reduction_table.kernel_evaluation(this->degree())->enqueue(poly_coeff_exponents);
+#ifdef TIMING
+    cerr << "  TIMING: counting opencl evaluation" << endl
+         << "    "
+         << chrono::duration<double, milli>(chrono::steady_clock::now() - start).count()
+         << " ms" << endl;
+    start = chrono::steady_clock::now();
+#endif // TIMING
+  reduction_table.kernel_reduction()->reduce(this->nmb_points);
+#ifdef TIMING
+    cerr << "  TIMING: counting opencl reduction" << endl
+         << "    "
+         << chrono::duration<double, milli>(chrono::steady_clock::now() - start).count()
+         << " ms" << endl;
+#endif // TIMING
+
+#endif // WITH_OPENCL
 }
 
 void

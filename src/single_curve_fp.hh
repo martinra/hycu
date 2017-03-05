@@ -45,8 +45,7 @@ shared_ptr<Curve>
 single_curve_fp(
     unsigned int prime,
     vector<unsigned int> poly_coeffs,
-    SingleCurveCountImplementation implementation,
-    bool time = false
+    SingleCurveCountImplementation implementation
     );
 
 #endif
