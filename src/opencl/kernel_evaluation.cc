@@ -111,7 +111,7 @@ enqueue(
 
 
   status = opencl->queue->enqueueNDRangeKernel( *this->kernel_cl,
-               cl::NullRange, cl::NDRange(prime_power_pred), cl::NDRange(local_size_evaluation) );
+               cl::NullRange, cl::NDRange(prime_power_pred), cl::NullRange );
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation::enqueue: could not enqueue kernel" << endl;
     throw;

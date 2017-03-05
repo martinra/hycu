@@ -50,8 +50,6 @@ class OpenCLKernelEvaluation
     shared_ptr<cl::Kernel> kernel_cl;
 
     shared_ptr<cl::Buffer> buffer_poly_coeff_exponents;
-
-    const int local_size_evaluation = 32;
 };
 
 #endif
