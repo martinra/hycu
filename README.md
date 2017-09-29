@@ -7,43 +7,22 @@ Hyperelliptic curve counter implements counts points of hyperelliptic curves ove
 INSTALL INSTRUCTIONS
 ---
 
-HyCu is built using scons, and provides four targets: single, threaded, mpi, and merger.
+HyCu is built using CMake, and provides four targets: single, threaded, mpi, and merger.
 
 To build and install the threaded version HyCu with no further adjustments into PREFIX/bin use
 ~~~
-scons threaded prefix=$PREFIX
+cmake -D CMAKE_INSTALL_PREFIX=/home/martin/Documents/Mathematik/Projekte/hycu 
+make
 ~~~
 
-This assumes that the compiler is C++11 enabled by default. Prior GCC 6 you have to set the compiler
+This assumes that the compiler is C++11 enabled by default. Prior GCC 6 you have to set the compiler flags
 ~~~
-scons threaded CXX="g++ -std=c++11" prefix=$PREFIX
+cmake -D CMAKE_CXX_FLAGS="-std=c++11" -D CMAKE_INSTALL_PREFIX=/home/martin/Documents/Mathematik/Projekte/hycu -D BuildThreaded=ON
 ~~~
 
-Scons caches configuration variables, so you do not have to pass them again when you rebuild.
+CMake caches configuration variables, so you do not have to pass them again when you rebuild.
 
-### Available build options
-
-
-- prefix: Installation, header, and library prefix.
-- CXX: E.g "g++ -std=c++11" of "clang++ -std=c++11".
-- cxx_include_path: Use only if C++ headers are in non-standard path.
-- cxx_library_path: Use only if C++ libraries are in non-standard path.
-- with_opencl: "y","yes" or "n","no".
-- openmpicxx_path: Path to OpenMPI mpicxx, if that is used.
-- mpi_compiler_flags: Extra flags for building with MPI version. This can be skipped if openmpicxx_path is set.
-- mpi_linker_flags: Extra flags for building with MPI version. This can be skipped if openmpicxx_path is set.
-- boost_include_path: Path to Boost headers if no in prefix/include path.
-- boost_library_path: Path to Boost libraries if no in prefix/lib path.
-- opencl_include_path: Path to OpenCL headers if no in prefix/include path.
-- opencl_library_path: Path to OpenCL libraries if no in prefix/lib path.
-- opencl_library: If the OpenCL library does not follow the Linux naming convention. Default is "OpenCL".
-- flint_include_path: Path to Flint headers if no in prefix/include path.
-- flint_library_path: Path to Flint libraries if no in prefix/lib path.
-- gmp_include_path: Path to GMP/MPIR headers if no in prefix/include path.
-- gmp_library_path: Path to GMP/MPIR libraries if no in prefix/lib path.
-- yaml_cpp_include_path: Path to Yaml-Cpp headers if no in prefix/include path.
-- yaml_cpp_library_path: Path to Yaml-Cpp libraries if no in prefix/lib path.
-
+Check for available build options in CMakeList.txt.
 
 USAGE
 ---
@@ -56,10 +35,12 @@ To compute with a single curve over a prime field, for testing purposes mostly, 
 ~~~
 hycu-single 7 3 2 6 8 2
 ~~~
-If HyCu was compiled with OpenCL support, you can use it by passing the flag opencl. To provide timings, use the flag time. For example, type
+If HyCu was compiled with OpenCL support, you can use it by passing the flag opencl.
 ~~~
-hycu-single --opencl --time 3001 7 531 63 3 152 476 1002
+hycu-single --opencl 3001 7 531 63 3 152 476 1002
 ~~~
+
+If HyCu was compiled with timing support, timing results will be output.
 
 ### Threaded and MPI
 
