@@ -564,12 +564,6 @@ Curve::
 hasse_weil_offsets()
   const
 {
-  if ( !this->table->is_prime_field() ) {
-    cerr << "hasse_weil_offsets implemented only for prime fields" << endl;
-    throw;
-    // todo: implement
-  }
-
   map<unsigned int, int> offsets;
   for ( auto & pts_it : this->nmb_points )
     offsets[pts_it.first] =   pow(this->table->prime, pts_it.first) + 1
