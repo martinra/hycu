@@ -37,70 +37,132 @@ CurveIterator(
     ) :
   prime ( table.prime )
 {
+  if ( prime == 2 ) {
+    cerr << "CurveIterator: "
+         << "implemented only if prime is odd" << endl;
+    throw;
+  }
+
   for ( int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
-    // next to hightest coefficient is zero
-    // two consecutive coefficients depend on each other
-    // and vary between a square and non-square
-    
-    // ix is exponent of the second non-zero coefficient
-    for ( int ix=degree-2; ix>=0; --ix ) {
-      // jx is the exponent of the non-zero coefficient thereafter
-      for ( int jx=ix-1; jx>=-1; --jx ) {
-        map<size_t, tuple<int,int>> blocks;
+    if ( prime > degree ) {
+      // next to hightest coefficient is zero
+      // two consecutive coefficients depend on each other
+      // and vary between a square and non-square
+      
+      // ix is exponent of the second non-zero coefficient
+      for ( int ix=degree-2; ix>=0; --ix ) {
+        // jx is the exponent of the non-zero coefficient thereafter
+        for ( int jx=ix-1; jx>=-1; --jx ) {
+          map<size_t, tuple<int,int>> blocks;
+          map<size_t, vector<int>> sets;
+          map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets;
+  
+          // highest coefficient is nonzero
+          blocks[degree] = table.block_non_zero();
+          for ( size_t kx=degree-1; kx>ix; --kx )
+            sets[kx] = {table.zero_index()};
+  
+  
+          // second nonzero coefficient is determined up to squaring
+          // it suffices, however, to choose a square here, since the other
+          // curves are twists, which we do not need enumerate separately
+          sets[ix] = table.power_coset_representatives(1);
+          for ( int kx=ix-1; kx>jx; --kx )
+            sets[kx] = {table.zero_index()};
+  
+          // the third nonzero coefficient is coupled with the second one
+          if ( jx != -1 ) {
+            // its possible values depend on the difference of exponents to the
+            // previous one
+            auto cosets = table.power_coset_representatives(ix-jx);
+  
+            map<int, vector<int>> coset_products;
+            set<int> coset_product;
+  
+            for ( size_t sx=0; sx<sets[ix].size(); ++sx ) {
+              coset_product.clear();
+              for ( int b : cosets )
+                coset_product.insert(table.reduce_index(sets[ix][sx]+b));
+              coset_products[sx] = vector<int>(coset_product.cbegin(), coset_product.cend());
+            }
+            dependent_sets[jx] = make_tuple(ix, coset_products);
+          }
+  
+          // remaining coefficients are free to vary
+          for ( int kx = jx-1; kx>=0; --kx )
+            blocks[kx] = table.block_complete();
+  
+          this->enumerators.emplace_back(
+              degree+1, blocks, package_size, sets, dependent_sets );
+        }
+      }
+  
+      { // the case of x^degree
         map<size_t, vector<int>> sets;
-        map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets;
-
-        // highest coefficient is nonzero
-        blocks[degree] = table.block_non_zero();
-        for ( size_t kx=degree-1; kx>ix; --kx )
-          sets[kx] = {table.zero_index()};
-
-
-        // second nonzero coefficient is determined up to squaring
+        // first coefficient is determined up to squaring
         // it suffices, however, to choose a square here, since the other
         // curves are twists, which we do not need enumerate separately
-        sets[ix] = table.power_coset_representatives(1);
-        for ( int kx=ix-1; kx>jx; --kx )
+        sets[degree] = table.power_coset_representatives(1);
+        for (int kx=degree-1; kx>=0; --kx)
           sets[kx] = {table.zero_index()};
+  
+        this->enumerators.push_back(
+                BlockIterator(degree+1, {}, package_size, sets, {}) );
+      }
+    } else if ( degree % prime == 0 ) {
 
-        // the third nonzero coefficient is coupled with the second one
-        if ( jx != -1 ) {
-          // its possible values depend on the difference of exponents to the
-          // previous one
-          auto cosets = table.power_coset_representatives(ix-jx);
+      // We reduce the leading coefficient by multiplicity with b_2^2.
+      // Since we do not enumerate quadratic twists, we fix the leading
+      // coefficient.
 
-          map<int, vector<int>> coset_products;
-          set<int> coset_product;
+      { // case next to leading coefficient is zero:
+        // No further reduction is applied.
+        map<size_t, vector<int>> sets;
+        map<size_t, tuple<int,int>> blocks;
 
-          for ( size_t sx=0; sx<sets[ix].size(); ++sx ) {
-            coset_product.clear();
-            for ( int b : cosets )
-              coset_product.insert(table.reduce_index(sets[ix][sx]+b));
-            coset_products[sx] = vector<int>(coset_product.cbegin(), coset_product.cend());
-          }
-          dependent_sets[jx] = make_tuple(ix, coset_products);
-        }
+        sets[degree] = table.power_coset_representatives(1);
 
-        // remaining coefficients are free to vary
-        for ( int kx = jx-1; kx>=0; --kx )
+        sets[degree-1] = {table.zero_index()};
+        for ( int kx=degree-2; kx>=0; --kx )
           blocks[kx] = table.block_complete();
 
-        this->enumerators.emplace_back(
-            degree+1, blocks, package_size, sets, dependent_sets );
+        this->enumerators.push_back(
+            BlockIterator(degree+1, blocks, package_size, sets, {}) );
       }
-    }
 
-    { // the case of x^degree
+      { // case next to leading coefficient is nonzero:
+        // Its exponent is not divisible by prime so that 
+        // we can reduce the next coefficient by x -> x + b_0.
+        map<size_t, vector<int>> sets;
+        map<size_t, tuple<int,int>> blocks;
+
+        sets[degree] = table.power_coset_representatives(1);
+        blocks[degree-1] = table.block_non_zero();
+        sets[degree-2] = {table.zero_index()};
+
+        for ( int kx=degree-3; kx>=0; --kx )
+          blocks[kx] = table.block_complete();
+
+        this->enumerators.push_back(
+            BlockIterator(degree+1, blocks, package_size, sets, {}) );
+      }
+    } else { // prime < degree
+      // polynomials a_n x^n + ... with n \ne prime are reduced so that a_{n-1}
+      // = 0 and a_n is a square class representative
+  
       map<size_t, vector<int>> sets;
-      // first coefficient is determined up to squaring
-      // it suffices, however, to choose a square here, since the other
-      // curves are twists, which we do not need enumerate separately
+      map<size_t, tuple<int,int>> blocks;
+  
+      // Since we do not enumerate quadratic twists, we fix the leading
+      // coefficient.
       sets[degree] = table.power_coset_representatives(1);
-      for (int kx=degree-1; kx>=0; --kx)
-        sets[kx] = {table.zero_index()};
-
-      this->enumerators.emplace_back(
-              BlockIterator(degree+1, {}, package_size, sets, {}) );
+  
+      sets[degree-1] = {table.zero_index()};
+      for ( int kx=degree-2; kx>=0; --kx )
+        blocks[kx] = table.block_complete();
+  
+      this->enumerators.push_back(
+          BlockIterator(degree+1, blocks, package_size, sets, {}) );
     }
   }
 
@@ -136,14 +198,14 @@ multiplicity(
     vector<unsigned int> coeff_support
     )
 {
-  unsigned int prime_power_pred = prime_power - 1;
-
-  unsigned int degree = coeff_support.back();
   if ( prime == 2 ) {
     cerr << "CurveIterator::multiplicity: "
          << "multiplicity implemented only if prime is odd" << endl;
     throw;
   }
+
+  unsigned int prime_power_pred = prime_power - 1;
+  unsigned int degree = coeff_support.back();
 
   if ( prime > degree ) {
     // in this case, there is no obstruction to the additive reduction x -> x + b
@@ -162,18 +224,22 @@ multiplicity(
       return   prime_power * prime_power_pred / 2
              * prime_power_pred / n_gcd(prime_power_pred, snd_exp-trd_exp);
     }
-  } else if ( degree < prime ) {
+  } else if ( degree % prime == 0 ) {
+    unsigned int snd_exp = *(coeff_support.rbegin()+1);
+    if ( coeff_support.size() >= 2 &&
+         *(coeff_support.rbegin()+1) == degree-1 ) {
+      // the orbit of a_n x^n + a_{n-1} x^{n-1} + ... is
+      // b_2^2 ( a_n (x + b_1)^n + a_{n-1} (x + b_1)^{n-1} + ... )
+      // (using that prime is odd)
+      return prime_power * prime_power_pred / 2;
+    } else {
+      // the orbit of a_n x^n + a_{n-2} x^{n-2} + ... is
+      // b_2^2 ( a_n x^n + a_{n-2} x^{n-2} + ... )
+      return prime_power_pred / 2;
+    }
+  } else { // degree % prime != 0
     // the orbit of a _n x^n + ...
     // is b_2^2 ( a_n (x + b_1)^n + ... )
     return prime_power * prime_power_pred / 2;
-  } else if ( coeff_support.size() == 1 ||
-              coeff_support.size() == 2 && coeff_support.front() == 0 ) {
-    // the orbit of a_n x^n is b_2^2 a_n x^n
-    // the orbit of a_n x^n + a_0 is b_2^2 (a_n x^n + a_0)
-    return prime_power_pred / 2;
-  } else {
-    // the orbit of a_n x^n + a_l x^l + ... if l \ne 0 is
-    // b_2^2 ( a_n (x + b_1)^n + a_l (x + b_1)^l + ... )
-    return   prime_power * prime_power_pred / 2;
   }
 }
