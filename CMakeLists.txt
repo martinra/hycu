@@ -8,15 +8,15 @@ option(BUILD_THREADED "build threaded version" OFF)
 option(BUILD_MPI "build MPI version" OFF)
 option(BUILD_MERGER "build MPI version" OFF)
 
-option(Timing "compile with timing output" OFF)
-option(WithOpenCL "compile with OpenCL support" OFF)
+option(TIMING "compile with timing output" OFF)
+option(WITH_OPENCL "compile with OpenCL support" OFF)
 
 
-if (Timing)
+if (TIMING)
   add_definitions("-D TIMING")
 endif()
 
-if (WithOpenCL)
+if (WITH_OPENCL)
   add_definitions("-D WITH_OPENCL")
 endif()
 
