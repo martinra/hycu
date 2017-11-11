@@ -6,7 +6,7 @@ set(HyCu_SOURCES_CURVE
   reduction_table.cc
   single_curve_fp.cc
   )
-if (WithOpenCL)
+if (WITH_OPENCL)
   set(HyCu_SOURCES_CURVE
     ${HyCu_SOURCES_CURVE}
     opencl/interface.cc
@@ -45,7 +45,7 @@ set(HyCu_SOURCES_MPI_WORKER_POOL
   )
 
 
-if (BuildSingle)
+if (BUILD_SINGLE)
   add_executable(hycu-single
     executables/single.cc
     ${HyCu_SOURCES_CURVE}
@@ -59,16 +59,16 @@ if (BuildSingle)
     ${YAML-cpp_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     )
-  if (WithOpenCL)
+  if (WITH_OPENCL)
     target_link_libraries(hycu-single
       ${OpenCL_LIBRARY}
       )
   endif()
   install(TARGETS hycu-single DESTINATION bin)
-endif (BuildSingle)
+endif (BUILD_SINGLE)
 
 
-if (BuildThreaded)
+if (BUILD_THREADED)
   add_executable(hycu-threaded
     executables/threaded.cc
     ${HyCu_SOURCES_CURVE}
@@ -86,16 +86,16 @@ if (BuildThreaded)
     ${YAML-cpp_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     )
-  if (WithOpenCL)
+  if (WITH_OPENCL)
     target_link_libraries(hycu-threaded
       ${OpenCL_LIBRARY}
       )
   endif()
   install(TARGETS hycu-threaded DESTINATION bin)
-endif (BuildThreaded)
+endif (BUILD_THREADED)
 
 
-if (BuildMerger)
+if (BUILD_MERGER)
   add_executable(hycu-merger
     executables/merger.cc
     ${HyCu_SOURCES_CURVE}
@@ -108,16 +108,16 @@ if (BuildMerger)
     ${FLINT_LIBRARY}
     ${GMP_LIBRARY}
     )
-  if (WithOpenCL)
+  if (WITH_OPENCL)
     target_link_libraries(hycu-merger
       ${OpenCL_LIBRARY}
       )
   endif()
   install(TARGETS hycu-merger DESTINATION bin)
-endif (BuildMerger)
+endif (BUILD_MERGER)
 
 
-if (BuildMPI)
+if (BUILD_MPI)
   find_package(MPI REQUIRED)
   find_package(Boost COMPONENTS
     serialization mpi
@@ -148,20 +148,20 @@ if (BuildMPI)
     ${YAML-cpp_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     )
-  if (WithOpenCL)
+  if (WITH_OPENCL)
     target_link_libraries(hycu-mpi
       ${OpenCL_LIBRARY}
       )
   endif()
   install(TARGETS hycu-mpi DESTINATION bin)
-endif (BuildMPI)
+endif (BUILD_MPI)
 
 
-if (BuildTest)
+if (BUILD_TEST)
   add_library(hycu-test-lib STATIC
     ${HyCu_SOURCES_CURVE}
     ${HyCu_SOURCES_STORE}
     ${HyCu_SOURCES_THREADED}
     ${HyCu_SOURCES_STANDALONE_WORKER_POOL}
     )
-endif (BuildTest)
+endif (BUILD_TEST)

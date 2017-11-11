@@ -1,4 +1,4 @@
-if (BuildTest)
+if (BUILD_TEST)
   find_package(Boost COMPONENTS
     unit_test_framework
     REQUIRED
@@ -19,7 +19,7 @@ if (BuildTest)
     ${GMP_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     )
-  if (WithOpenCL)
+  if (WITH_OPENCL)
     target_link_libraries(hycu-test ${OpenCL_LIBRARY})
   endif()
 
@@ -28,4 +28,4 @@ if (BuildTest)
     DEPENDS hycu-test
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
-endif (BuildTest)
+endif (BUILD_TEST)
