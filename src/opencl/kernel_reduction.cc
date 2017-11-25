@@ -40,35 +40,45 @@ OpenCLKernelReduction(
   buffer_nmbs_unramified ( table.buffer_evaluation()->buffer_nmbs_unramified ),
   buffer_nmbs_ramified ( table.buffer_evaluation()->buffer_nmbs_ramified )
 {
-  this->sums.resize(nmb_groups_reduction);
+  if ( size_partial_reduction == 0 )
+    this->sums.resize(prime_power_pred);
+
+  else { // size_partial_reduction != 0
+    this->sums.resize(nmb_groups_reduction*size_partial_reduction);
+
+    const auto & function_name = this->opencl->program_reduction()->function_name();
+    this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_reduction()->program_cl,
+                                              function_name.c_str());
 
 
-  const auto & function_name = this->opencl->program_reduction()->function_name();
-  this->kernel_cl = make_shared<cl::Kernel>(*this->opencl->program_reduction()->program_cl,
-                                            function_name.c_str());
+    this->buffer_sums = make_shared<cl::Buffer>(
+        *this->opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * this->sums.size() );
 
+    cl_int status;
 
-  this->buffer_sums = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_WRITE_ONLY, sizeof(int) * this->nmb_groups_reduction );
+    status = this->kernel_cl->setArg(1, sizeof(int), &this->prime_power_pred);
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction: could not set prime_power_pred" << endl;
+      throw;
+    }
 
-  cl_int status;
+    status = this->kernel_cl->setArg(2, sizeof(int), &this->size_partial_reduction);
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction: could not set size_partial_reduction" << endl;
+      throw;
+    }
 
-  status = this->kernel_cl->setArg(1, sizeof(int), &this->prime_power_pred);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction: could not set prime_power_pred" << endl;
-    throw;
-  }
+    status = this->kernel_cl->setArg(3, sizeof(int) * this->local_size_reduction, nullptr);
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction: could not set scratch" << endl;
+      throw;
+    }
 
-  status = this->kernel_cl->setArg(2, sizeof(int) * this->local_size_reduction, nullptr);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction: could not set scratch" << endl;
-    throw;
-  }
-
-  status = this->kernel_cl->setArg(3, *this->buffer_sums);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction: could not set sums" << endl;
-    throw;
+    status = this->kernel_cl->setArg(4, *this->buffer_sums);
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction: could not set sums" << endl;
+      throw;
+    }
   }
 }
 
@@ -80,34 +90,44 @@ _reduce(
 {
   cl_int status;
 
-  status = this->kernel_cl->setArg(0, *buffer_nmbs);
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction::_reduce: could not set buffer_nmbs" << endl;
-    throw;
-  }
+  if ( this->size_partial_reduction == 0 ) {
+    status = this->opencl->queue->enqueueReadBuffer( *buffer_nmbs, CL_TRUE,
+                 0, sizeof(int) * this->sums.size(), this->sums.data());
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction::_reduce: could not read buffer nmbs" << endl;
+      throw;
+    }
+
+  } else { // size_partial_reduction != 0
+    status = this->kernel_cl->setArg(0, *buffer_nmbs);
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction::_reduce: could not set buffer_nmbs" << endl;
+      throw;
+    }
 
 
-  status = this->opencl->queue->enqueueNDRangeKernel( *this->kernel_cl,
-               cl::NullRange, cl::NDRange(this->global_size_reduction), cl::NDRange(this->local_size_reduction) );
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction::_reduce: could not enqueue kernel" << endl;
-    throw;
-  }
-  status = this->opencl->queue->finish();
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction::_reduce: could not finish queue:" << endl;
-    if ( status == CL_OUT_OF_HOST_MEMORY )
-      cerr << "  out of host memory" << endl;
-    else if ( status == CL_INVALID_COMMAND_QUEUE )
-      cerr << "  invalid command queue" << endl;
-    throw;
-  }
+    status = this->opencl->queue->enqueueNDRangeKernel( *this->kernel_cl,
+                 cl::NullRange, cl::NDRange(this->global_size_reduction), cl::NDRange(this->local_size_reduction) );
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction::_reduce: could not enqueue kernel" << endl;
+      throw;
+    }
+    status = this->opencl->queue->finish();
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction::_reduce: could not finish queue:" << endl;
+      if ( status == CL_OUT_OF_HOST_MEMORY )
+        cerr << "  out of host memory" << endl;
+      else if ( status == CL_INVALID_COMMAND_QUEUE )
+        cerr << "  invalid command queue" << endl;
+      throw;
+    }
 
-  status = this->opencl->queue->enqueueReadBuffer( *this->buffer_sums, CL_TRUE,
-               0, sizeof(int) * nmb_groups_reduction, this->sums.data());
-  if ( status != CL_SUCCESS ) {
-    cerr << "OpenCLKernelReduction::_reduce: could not read sums unramified" << endl;
-    throw;
+    status = this->opencl->queue->enqueueReadBuffer( *this->buffer_sums, CL_TRUE,
+                 0, sizeof(int) * this->sums.size(), this->sums.data());
+    if ( status != CL_SUCCESS ) {
+      cerr << "OpenCLKernelReduction::_reduce: could not read sums" << endl;
+      throw;
+    }
   }
 
   return accumulate(this->sums.cbegin(), this->sums.cend(), 0);
