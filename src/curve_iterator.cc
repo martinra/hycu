@@ -42,6 +42,12 @@ CurveIterator(
          << "implemented only if prime is odd" << endl;
     throw;
   }
+  if ( genus == 1 && prime >= 2*genus + 1 ) {
+    cerr << "CurveIterator: "
+         << "genus 1 implemented only for prime > 2*genus+1" << endl;
+    throw;
+  }
+
 
   for ( int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
     if ( prime > degree ) {
@@ -115,30 +121,40 @@ CurveIterator(
       // Since we do not enumerate quadratic twists, we fix the leading
       // coefficient.
 
-      { // case next to leading coefficient is zero:
-        // No further reduction is applied.
-        map<size_t, vector<int>> sets;
+      { // Case: Next to leading coefficient is nonzero.
+        // Its exponent is not divisible by prime so that
+        // we can reduce the next coefficient by x -> x + b_0.
+        // The quotient of the one that follows and the leading one is
+        // determined up to a cube class.
         map<size_t, tuple<int,int>> blocks;
+        map<size_t, vector<int>> sets;
 
         sets[degree] = table.power_coset_representatives(1);
+        blocks[degree-1] = table.block_non_zero();
+        sets[degree-2] = {table.zero_index()};
 
-        sets[degree-1] = {table.zero_index()};
-        for ( int kx=degree-2; kx>=0; --kx )
+        // assert(sets[degree][0] == 0); otherwise, we need to shift
+        sets[degree-3] = table.power_coset_representatives(3);
+        sets[degree-3].push_back(table.zero_index());
+
+        for ( int kx=degree-4; kx>=0; --kx )
           blocks[kx] = table.block_complete();
 
         this->enumerators.push_back(
             BlockIterator(degree+1, blocks, package_size, sets, {}) );
       }
 
-      { // case next to leading coefficient is nonzero:
-        // Its exponent is not divisible by prime so that 
-        // we can reduce the next coefficient by x -> x + b_0.
-        map<size_t, vector<int>> sets;
+      { // Case: Next to leading coefficient is zero.
+        // The third highest coefficient is determined up to a square class.
         map<size_t, tuple<int,int>> blocks;
+        map<size_t, vector<int>> sets;
 
         sets[degree] = table.power_coset_representatives(1);
-        blocks[degree-1] = table.block_non_zero();
-        sets[degree-2] = {table.zero_index()};
+        sets[degree-1] = {table.zero_index()};
+
+        // assert(sets[degree][0] == 0); otherwise, we need to shift
+        sets[degree-2] = table.power_coset_representatives(2);
+        sets[degree-2].push_back(table.zero_index());
 
         for ( int kx=degree-3; kx>=0; --kx )
           blocks[kx] = table.block_complete();
@@ -146,10 +162,10 @@ CurveIterator(
         this->enumerators.push_back(
             BlockIterator(degree+1, blocks, package_size, sets, {}) );
       }
-    } else { // prime < degree
-      // polynomials a_n x^n + ... with n \ne prime are reduced so that a_{n-1}
-      // = 0 and a_n is a square class representative
-  
+    } else { // prime < degree and prime does not divide degree
+      // We can use the leading coefficient to reduce the next to leading one
+      // by x -> x + b_0. The one that follows is determined up to a square
+      // class.
       map<size_t, vector<int>> sets;
       map<size_t, tuple<int,int>> blocks;
   
@@ -158,7 +174,11 @@ CurveIterator(
       sets[degree] = table.power_coset_representatives(1);
   
       sets[degree-1] = {table.zero_index()};
-      for ( int kx=degree-2; kx>=0; --kx )
+
+      sets[degree-2] = table.power_coset_representatives(2);
+      sets[degree-2].push_back(table.zero_index());
+
+      for ( int kx=degree-3; kx>=0; --kx )
         blocks[kx] = table.block_complete();
   
       this->enumerators.push_back(
@@ -198,12 +218,6 @@ multiplicity(
     vector<unsigned int> coeff_support
     )
 {
-  if ( prime == 2 ) {
-    cerr << "CurveIterator::multiplicity: "
-         << "multiplicity implemented only if prime is odd" << endl;
-    throw;
-  }
-
   unsigned int prime_power_pred = prime_power - 1;
   unsigned int degree = coeff_support.back();
 
@@ -225,21 +239,43 @@ multiplicity(
              * prime_power_pred / n_gcd(prime_power_pred, snd_exp-trd_exp);
     }
   } else if ( degree % prime == 0 ) {
-    unsigned int snd_exp = *(coeff_support.rbegin()+1);
     if ( coeff_support.size() >= 2 &&
          *(coeff_support.rbegin()+1) == degree-1 ) {
-      // the orbit of a_n x^n + a_{n-1} x^{n-1} + ... is
-      // b_2^2 ( a_n (x + b_1)^n + a_{n-1} (x + b_1)^{n-1} + ... )
-      // (using that prime is odd)
-      return prime_power * prime_power_pred / 2;
+      if ( coeff_support.size() >= 3 &&
+           *(coeff_support.rbegin()+2) == degree-3 ) {
+        // the orbit of a_n x^n + a_{n-1} x^{n-1} + ... is
+        // b_2^2 ( a_n (b_3 x + b_1)^n + a_{n-1} (b_3 x + b_1)^{n-1} + ... )
+        // (using that prime is odd)
+        return   prime_power * prime_power_pred / 2
+               * prime_power_pred / n_gcd(prime_power_pred, 3);
+      } else {
+        // the orbit of a_n x^n + a_{n-1} x^{n-1} + ... is
+        // b_2^2 ( a_n (x + b_1)^n + a_{n-1} (x + b_1)^{n-1} + ... )
+        // (using that prime is odd)
+        return prime_power * prime_power_pred / 2;
+      }
     } else {
-      // the orbit of a_n x^n + a_{n-2} x^{n-2} + ... is
-      // b_2^2 ( a_n x^n + a_{n-2} x^{n-2} + ... )
-      return prime_power_pred / 2;
+      if ( coeff_support.size() >= 2 &&
+           *(coeff_support.rbegin()+1) == degree-2 ) {
+        // the orbit of a_n x^n + a_{n-2} x^{n-2} + ... is
+        // b_2^2 ( a_n (b_3 x)^n + a_{n-2} (b_3 x)^{n-2} + ... )
+        return prime_power_pred * prime_power_pred / 4;
+      } else {
+        // the orbit of a_n x^n + a_{n-3} x^{n-3} + ... is
+        // b_2^2 ( a_n x^n + a_{n-3} x^{n-3} + ... )
+        return prime_power_pred / 2;
+      }
     }
   } else { // degree % prime != 0
-    // the orbit of a _n x^n + ...
-    // is b_2^2 ( a_n (x + b_1)^n + ... )
-    return prime_power * prime_power_pred / 2;
+    if ( coeff_support.size() >= 2 &&
+         *(coeff_support.rbegin()+1) == degree-2 ) {
+      // the orbit of a _n x^n + ...
+      // is b_2^2 ( a_n (b_3 x + b_1)^n + ... )
+      return prime_power * prime_power_pred * prime_power_pred / 4;
+    } else {
+      // the orbit of a _n x^n + ...
+      // is b_2^2 ( a_n (x + b_1)^n + ... )
+      return prime_power * prime_power_pred / 2;
+    }
   }
 }
