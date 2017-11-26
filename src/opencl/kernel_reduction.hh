@@ -61,7 +61,6 @@ class OpenCLKernelReduction
 
     const int global_size_reduction = 8192;
     const int local_size_reduction = 256;
-    const int size_partial_reduction = 1 >> 2;
     const int nmb_groups_reduction = global_size_reduction / local_size_reduction;
 
     int _reduce(shared_ptr<cl::Buffer> buffer_nmbs);

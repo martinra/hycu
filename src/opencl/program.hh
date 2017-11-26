@@ -29,6 +29,9 @@
 #include <CL/cl.hpp>
 
 
+#define AS_STRING(S) AS_STRING_(S)
+#define AS_STRING_(S) #S
+
 class OpenCLInterface;
 
 using std::shared_ptr;

@@ -11,11 +11,13 @@ if (WITH_OPENCL)
     ${HyCu_SOURCES_CURVE}
     opencl/interface.cc
     opencl/buffer_evaluation.cc
+    opencl/evaluation.cl
     opencl/kernel_evaluation.cc
     opencl/kernel_reduction.cc
     opencl/program.cc
     opencl/program_evaluation.cc
     opencl/program_reduction.cc
+    opencl/reduction.cl
     )
 endif()
 

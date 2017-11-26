@@ -38,6 +38,8 @@ using std::string;
 class OpenCLInterface;
 
 
+#define SIZE_PARTIAL_REDUCTION  1 >> 2
+
 class OpenCLProgramReduction :
   public OpenCLProgram
 {

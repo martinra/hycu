@@ -20,21 +20,37 @@
 
 ===============================================================================*/
 
-#include <iostream>
+AS_STRING(
 
-#include "opencl/interface.hh"
-#include "opencl/program_evaluation.hh"
+void
+kernel
+reduce(
+  global const int * restrict as,
+  const int len,
+  local int * restrict partial_sum_a,
+  global int * restrict sum_a
+  )
+{
+  int gsz = get_global_size(0);
+  int gix = get_global_id(0);
+  int lsz = get_local_size(0);
+  int lix = get_local_id(0);
+  int nmb_groups = get_num_groups(0);
 
+  int acc = 0;
+  for (int ix=get_global_id(0); ix<len; ix+=gsz)
+    acc += as[ix];
+  partial_sum_a[lix] = acc;
 
-using namespace std;
+  barrier(CLK_LOCAL_MEM_FENCE);
+  for (int offset = lsz/2; offset>=SIZE_PARTIAL_REDUCTION; offset/=2) {
+    if (lix < offset)
+      partial_sum_a[lix] += partial_sum_a[lix+offset];
+    barrier(CLK_LOCAL_MEM_FENCE);
+  }
 
+  if (lix < SIZE_PARTIAL_REDUCTION)
+    sum_a[SIZE_PARTIAL_REDUCTION*get_group_id(0)+lix] = partial_sum_a[lix];
+}
 
-const string
-OpenCLProgramEvaluation::
-_function_name =
-  "evaluate";
-
-const string
-OpenCLProgramEvaluation::
-_code =
-#include "opencl/evaluation.cl"
+);
