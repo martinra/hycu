@@ -72,10 +72,10 @@ class ReductionTable
     shared_ptr<OpenCLInterface> opencl;
 
     // the reduction table is the reduction table modulo q-1 for integers less than max(r,2)*(q-1)
-    shared_ptr<vector<int>> exponent_reduction_table;
+    shared_ptr<vector<int32_t>> exponent_reduction_table;
     // given a^i, tabulate the mod q-1 reduced j with a^j = 1 + a^i,
     // if there is any, and q-1 if there is non
-    shared_ptr<vector<int>> incrementation_table;
+    shared_ptr<vector<int32_t>> incrementation_table;
 
 #ifdef WITH_OPENCL
     inline shared_ptr<OpenCLBufferEvaluation> buffer_evaluation() const

@@ -38,20 +38,20 @@ OpenCLBufferEvaluation(
   opencl ( table.opencl )
 {
   this->buffer_exponent_reduction_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.exponent_reduction_table->size() );
+      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int32_t) * table.exponent_reduction_table->size() );
   this->buffer_incrementation_table = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int) * table.incrementation_table->size() );
+      *this->opencl->context, CL_MEM_READ_ONLY, sizeof(int32_t) * table.incrementation_table->size() );
 
   this->buffer_nmbs_unramified = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
+      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int32_t) * table.prime_power_pred);
   this->buffer_nmbs_ramified = make_shared<cl::Buffer>(
-      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int) * table.prime_power_pred);
+      *this->opencl->context, CL_MEM_READ_WRITE, sizeof(int32_t) * table.prime_power_pred);
 
 
   cl_int status;
  
   status = this->opencl->queue->enqueueWriteBuffer(*this->buffer_exponent_reduction_table, CL_FALSE, 0,
-      sizeof(int) * table.exponent_reduction_table->size(),
+      sizeof(int32_t) * table.exponent_reduction_table->size(),
       table.exponent_reduction_table->data() );
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not write reduction_table" << endl;
@@ -59,7 +59,7 @@ OpenCLBufferEvaluation(
   }
 
   status = this->opencl->queue->enqueueWriteBuffer(*this->buffer_incrementation_table, CL_FALSE, 0,
-      sizeof(int) * table.incrementation_table->size(),
+      sizeof(int32_t) * table.incrementation_table->size(),
       table.incrementation_table->data() );
   if ( status != CL_SUCCESS ) {
     cerr << "OpenCLKernelEvaluation: could not write incrementation_table" << endl;

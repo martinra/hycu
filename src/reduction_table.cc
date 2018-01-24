@@ -89,13 +89,13 @@ compute_tables()
       this->compute_incrementation_table(prime, prime_exponent, prime_power);
 }
 
-shared_ptr<vector<int>>
+shared_ptr<vector<int32_t>>
 ReductionTable::
 compute_exponent_reduction_table(
     int prime_power
     )
 {
-  auto reductions = make_shared<vector<int>>();
+  auto reductions = make_shared<vector<int32_t>>();
   reductions->reserve(2*(prime_power-1));
 
   for (size_t hx=0; hx<2; ++hx)
@@ -105,7 +105,7 @@ compute_exponent_reduction_table(
   return reductions;
 }
 
-shared_ptr<vector<int>>
+shared_ptr<vector<int32_t>>
 ReductionTable::
 compute_incrementation_table(
     int prime,
@@ -126,10 +126,10 @@ compute_incrementation_table(
   fq_nmod_reduce(gen, ctx);
 
 
-  auto incrementations = make_shared<vector<int>>(prime_power);
+  auto incrementations = make_shared<vector<int32_t>>(prime_power);
   incrementations->at(prime_power-1) = 0; // special index for 0
 
-  map<int,int> gen_powers;
+  map<int32_t,int32_t> gen_powers;
   gen_powers[0] = prime_power - 1; // special index for 0
 
 
