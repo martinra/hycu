@@ -42,12 +42,13 @@ CurveIterator(
          << "implemented only if prime is odd" << endl;
     throw;
   }
-  if ( genus == 1 && prime >= 2*genus + 1 ) {
+
+  if ( genus == 0 ) {
     cerr << "CurveIterator: "
-         << "genus 1 implemented only for prime > 2*genus+1" << endl;
+         << "implemented only if genus is positive" << endl;
     throw;
   }
-
+    
 
   for ( int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
     if ( prime > degree ) {
@@ -117,7 +118,7 @@ CurveIterator(
       }
     } else if ( degree % prime == 0 ) {
 
-      // We reduce the leading coefficient by multiplicity with b_2^2.
+      // We reduce the leading coefficient by multiplying with b_2^2.
       // Since we do not enumerate quadratic twists, we fix the leading
       // coefficient.
 
