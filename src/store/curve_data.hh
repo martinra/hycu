@@ -54,7 +54,7 @@ class ExplicitRamificationHasseWeil
     ExplicitRamificationHasseWeil(const Curve & curve) :
       ExplicitRamificationHasseWeil(
           curve.ramification_type(),
-          curve.hasse_weil_offsets(curve.prime_exponent() * curve.genus()) )
+          curve.hasse_weil_offsets(curve.max_prime_exponent()) )
     {};
     
     ExplicitRamificationHasseWeil twist();

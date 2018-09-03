@@ -76,6 +76,7 @@ class Curve
     const map<unsigned int, tuple<int,int>> & number_of_points() const { return this->nmb_points; };
     vector<tuple<int,int>> number_of_points(unsigned int max_prime_exponent) const;
 
+    unsigned int max_prime_exponent() const;
     map<unsigned int, int> hasse_weil_offsets() const;
     vector<int> hasse_weil_offsets(unsigned int max_prime_exponent) const;
 

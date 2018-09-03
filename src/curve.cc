@@ -559,6 +559,19 @@ number_of_points(
   return nmb_points;
 }
 
+
+unsigned int
+Curve::
+max_prime_exponent()
+  const
+{
+  unsigned int max_prime_exponent = this->prime_exponent();
+  while ( this->nmb_points.count(max_prime_exponent) != 0 )
+    max_prime_exponent += this->prime_exponent();
+
+  return max_prime_exponent - this->prime_exponent();
+}
+
 map<unsigned int, int>
 Curve::
 hasse_weil_offsets()
