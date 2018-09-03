@@ -113,7 +113,8 @@ update_config(
 {
   this->fq_table = make_shared<FqElementTable>(config.prime, config.prime_exponent);
   this->reduction_tables.clear();
-  for ( size_t fx=config.genus*config.prime_exponent; fx>0; fx-=config.prime_exponent )
+  for ( size_t fx = config.count_exponent*config.prime_exponent;
+        fx>0; fx -= config.prime_exponent )
     this->reduction_tables.push_back(make_shared<ReductionTable>(config.prime, fx, this->opencl));
 }
 

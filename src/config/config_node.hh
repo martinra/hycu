@@ -42,6 +42,7 @@ struct ConfigNode
   unsigned int prime_exponent;
   
   unsigned int genus;
+  unsigned int count_exponent;
   
   path result_path;
   
@@ -51,7 +52,7 @@ struct ConfigNode
   inline bool verify() const
   {
     return (    prime != 0 && prime_exponent != 0
-             && genus != 0
+             && genus != 0 && count_exponent != 0
              && (is_directory(result_path) || create_directories(result_path))
              && package_size != 0
            );
@@ -81,6 +82,7 @@ namespace serialization {
     ar & config.prime_exponent;
 
     ar & config.genus;
+    ar & config.count_exponent;
 
     string result_path_str;
     if ( Archive::is_saving::value )

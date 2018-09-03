@@ -38,6 +38,8 @@ operator<<(
 {
   stream << "base field: " << config.prime << "^" << config.prime_exponent << "; ";
   stream << "genus: " << config.genus << "; ";
+  if ( config.count_exponent != config.genus )
+    stream << "count_exponent: " << config.count_exponent << "; ";
   stream << "result_path: " << config.result_path.generic_string() << "; ";
   stream << "package_size: " << config.package_size << endl;
 
@@ -59,6 +61,8 @@ namespace YAML
     node["Prime"] = config.prime;
     node["PrimeExponent"] = config.prime_exponent;
     node["Genus"] = config.genus;
+    if ( config.count_exponent != config.genus )
+      node["CountExponent"] = config.count_exponent;
   
     node["ResultPath"] = config.result_path.generic_string();
   
@@ -84,6 +88,10 @@ namespace YAML
     config.prime_exponent = node["PrimeExponent"].as<int>();
   
     config.genus = node["Genus"].as<int>();
+    if ( node["CountExponent"] )
+      config.count_exponent = node["CountExponent"].as<int>();
+    else
+      config.count_exponent = config.genus;
   
     config.result_path = path(node["ResultPath"].as<string>());
   
