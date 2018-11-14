@@ -46,53 +46,53 @@ using std::tuple;
 class Curve
 {
   public:
-    Curve(shared_ptr<FqElementTable> table, const vector<int> poly_coeff_exponents);
+    Curve(shared_ptr<FqElementTable> table, const vector<unsigned int> poly_coeff_exponents);
 
     unsigned int inline prime() const { return this->table->prime; };
     unsigned int inline prime_exponent() const { return this->table->prime_exponent; };
     unsigned int inline prime_power() const { return this->table->prime_power; };
 
-    int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
-    int genus() const;
-    vector<int> inline rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
+    unsigned int inline degree() const { return this->poly_coeff_exponents.size() - 1; };
+    unsigned int genus() const;
+    vector<unsigned int> inline rhs_coeff_exponents() const { return this->poly_coeff_exponents; };
     vector<unsigned int> rhs_support() const;
 
     bool has_squarefree_rhs();
     nmod_poly_struct rhs_nmod_polynomial() const;
     fq_nmod_poly_struct rhs_polynomial() const;
 
-    vector<int> convert_poly_coeff_exponents(const ReductionTable & table);
+    vector<unsigned int> convert_poly_coeff_exponents(const ReductionTable & table);
 
     void count(ReductionTable & table);
     void inline count(const shared_ptr<ReductionTable> table)
     {
       this->count(*table);
     };
-    void count_naive_nmod(int prime_exponent);
-    void count_naive_zech(int prime_exponent);
+    void count_naive_nmod(unsigned int prime_exponent);
+    void count_naive_zech(unsigned int prime_exponent);
 
     bool has_counted(size_t fx) const { return (this->nmb_points.find(fx) != this->nmb_points.end()); };
 
-    const map<unsigned int, tuple<int,int>> & number_of_points() const { return this->nmb_points; };
-    vector<tuple<int,int>> number_of_points(unsigned int max_prime_exponent) const;
+    const map<unsigned int, tuple<unsigned int,unsigned int>> & number_of_points() const { return this->nmb_points; };
+    vector<tuple<unsigned int,unsigned int>> number_of_points(unsigned int max_prime_exponent) const;
 
     unsigned int max_prime_exponent() const;
     map<unsigned int, int> hasse_weil_offsets() const;
     vector<int> hasse_weil_offsets(unsigned int max_prime_exponent) const;
 
-    vector<int> ramification_type() const;
+    vector<unsigned int> ramification_type() const;
 
     friend ostream& operator<<(ostream &stream, const Curve & curve);
 
   protected:
     const shared_ptr<FqElementTable> table;
-    vector<int> poly_coeff_exponents;
+    vector<unsigned int> poly_coeff_exponents;
 
-    map<unsigned int, tuple<int,int>> nmb_points;
+    map<unsigned int, tuple<unsigned int,unsigned int>> nmb_points;
 
   private:
-    void count_opencl(ReductionTable & table, const vector<int> & poly_coeff_exponents);
-    void count_cpu(const ReductionTable & table, const vector<int> & poly_coeff_exponents);
+    void count_opencl(ReductionTable & table, const vector<unsigned int> & poly_coeff_exponents);
+    void count_cpu(const ReductionTable & table, const vector<unsigned int> & poly_coeff_exponents);
 };
 
 #endif

@@ -47,7 +47,20 @@ template<class Store>
 class StoreFactory :
   public StoreFactoryInterface
 {
-  inline shared_ptr<StoreInterface> create() const final
+  public:
+
+  virtual
+  inline
+  ~StoreFactory()
+  {};
+
+
+  private:
+
+  inline
+  shared_ptr<StoreInterface>
+  create()
+  const final
   {
     return dynamic_pointer_cast<StoreInterface>(make_shared<Store>());
   };

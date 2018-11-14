@@ -33,11 +33,11 @@ using namespace std;
 
 BlockIterator::
 BlockIterator(
-    const vector<tuple<int,int>> & bounds
+    const vector<tuple<unsigned int,unsigned int>> & bounds
     ) :
   length_( bounds.size() )
 {
-  map<size_t, tuple<int,int>> blocks;
+  map<size_t, tuple<unsigned int,unsigned int>> blocks;
   for (size_t ix=0; ix<this->length_; ++ix)
     blocks[ix] = bounds[ix];
 
@@ -49,10 +49,10 @@ BlockIterator(
 BlockIterator::
 BlockIterator(
     size_t length,
-    const map<size_t, tuple<int,int>> & blocks,
+    const map<size_t, tuple<unsigned int,unsigned int>> & blocks,
     unsigned int package_size,
-    map<size_t, vector<int>> sets,
-    map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets
+    map<size_t, vector<unsigned int>> sets,
+    map<size_t, tuple<size_t, map<unsigned int, vector<unsigned int>>>> dependent_sets
     ) :
   length_( length )
 {
@@ -76,14 +76,14 @@ BlockIterator(
 void
 BlockIterator::
 initialize_blocks(
-    const map<size_t, tuple<int,int>> & blocks,
+    const map<size_t, tuple<unsigned int,unsigned int>> & blocks,
     unsigned int package_size
     )
 {
-  vector<tuple<size_t,int>> block_sizes;
+  vector<tuple<size_t,unsigned int>> block_sizes;
 
   for ( auto & blocks_it : blocks ) {
-    int lbd, ubd;
+    unsigned int lbd, ubd;
     tie(lbd,ubd) = blocks_it.second;
 
     if ( lbd >= ubd ) {
@@ -104,7 +104,7 @@ initialize_blocks(
     package_size /= step_size;
 
     this->update_order_blocks.push_back(ix);
-    int lbd, ubd; tie(lbd,ubd) = blocks.at(ix);
+    unsigned int lbd, ubd; tie(lbd,ubd) = blocks.at(ix);
     this->blocks[ix] = make_tuple(lbd, ubd, step_size);
   }
 }
@@ -113,7 +113,7 @@ void
 BlockIterator::
 set_initial_position()
 {
-  this->position = vector<int>(this->length_);
+  this->position = vector<unsigned int>(this->length_);
   for ( size_t ix : this->update_order_blocks )
     this->position[ix] = get<0>(this->blocks[ix]);
   for ( size_t ix : this->update_order_sets )
@@ -128,7 +128,7 @@ set_initial_position()
     this->has_reached_end = true;
 }
 
-vector<int>
+vector<unsigned int>
 BlockIterator::
 as_position()
 {
@@ -150,22 +150,22 @@ as_position()
   return position;
 }
 
-vector<tuple<int,int>>
+vector<tuple<unsigned int,unsigned int>>
 BlockIterator::
 as_block()
 {
   auto position = this->as_position();
-  vector<tuple<int,int>> bounds;
+  vector<tuple<unsigned int,unsigned int>> bounds;
   bounds.reserve(position.size());
 
-  for ( int c : position )
+  for ( unsigned int c : position )
     bounds.push_back(make_tuple(c,c+1));
 
   for ( auto & blocks_it : this->blocks ) {
     size_t ix = blocks_it.first;
-    int lbd = get<0>(bounds[ix]);
+    unsigned int lbd = get<0>(bounds[ix]);
 
-    int ubd = lbd + get<2>(blocks_it.second);
+    unsigned int ubd = lbd + get<2>(blocks_it.second);
     if (ubd > get<1>(blocks_it.second))
       ubd = get<1>(blocks_it.second);
 
@@ -181,13 +181,13 @@ as_block_enumerator()
 {
   auto position = this->as_position();
 
-  auto blocks = map<size_t, tuple<int,int>>();
-  auto sets = map<size_t, vector<int>>();
+  auto blocks = map<size_t, tuple<unsigned int,unsigned int>>();
+  auto sets = map<size_t, vector<unsigned int>>();
 
   for ( auto & blocks_it : this->blocks ) {
-    int lbd = position[blocks_it.first];
+    unsigned int lbd = position[blocks_it.first];
 
-    int ubd = lbd + get<2>(blocks_it.second);
+    unsigned int ubd = lbd + get<2>(blocks_it.second);
     if (ubd > get<1>(blocks_it.second))
       ubd = get<1>(blocks_it.second);
 

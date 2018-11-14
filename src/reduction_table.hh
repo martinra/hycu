@@ -48,10 +48,10 @@ class ReductionTable
     // we write q = p^r
     // a fixed generator for F_q is referred to by a
     // in the current implemnentation it is given by the Conway polynomial
-    ReductionTable(int prime, int prime_exponent)
+    ReductionTable(unsigned int prime, unsigned int prime_exponent)
       : ReductionTable(prime, prime_exponent, shared_ptr<OpenCLInterface>()) {};
-    ReductionTable(int prime, int prime_exponent, shared_ptr<OpenCLInterface> && opencl);
-    ReductionTable(int prime, int prime_exponent, const shared_ptr<OpenCLInterface> & opencl);
+    ReductionTable(unsigned int prime, unsigned int prime_exponent, shared_ptr<OpenCLInterface> && opencl);
+    ReductionTable(unsigned int prime, unsigned int prime_exponent, const shared_ptr<OpenCLInterface> & opencl);
 
     void compute_tables();
     inline bool is_opencl_enabled() const { return (bool)opencl; };
@@ -64,10 +64,10 @@ class ReductionTable
 #endif
 
   protected:
-    const int prime;
-    const int prime_exponent;
-    const int prime_power;
-    const int prime_power_pred;
+    const unsigned int prime;
+    const unsigned int prime_exponent;
+    const unsigned int prime_power;
+    const unsigned int prime_power_pred;
 
     shared_ptr<OpenCLInterface> opencl;
 
@@ -101,9 +101,9 @@ class ReductionTable
 #endif
 
   private:
-    shared_ptr<vector<int>> compute_exponent_reduction_table(int prime_power);
-    shared_ptr<vector<int>>
-        compute_incrementation_table(int prime, int prime_exponent, int prime_power);
+    shared_ptr<vector<int32_t>> compute_exponent_reduction_table(unsigned int prime_power);
+    shared_ptr<vector<int32_t>>
+        compute_incrementation_table(unsigned int prime, unsigned int prime_exponent, unsigned int prime_power);
 
 #ifdef WITH_OPENCL
     shared_ptr<OpenCLBufferEvaluation> _buffer_evaluation;

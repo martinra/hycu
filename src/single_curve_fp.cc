@@ -52,7 +52,7 @@ single_curve_fp(
     a = (a*gen) % prime;
   }
 
-  vector<int> poly_coeff_exponents;
+  vector<unsigned int> poly_coeff_exponents;
   for ( auto c : poly_coeffs )
     poly_coeff_exponents.push_back(fp_conversion_map[c]);
 

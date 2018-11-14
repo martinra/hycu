@@ -34,7 +34,7 @@ using std::vector;
 using std::tuple;
 
 
-void message_positions( string && description, const vector<vector<int>> & positions );
-void message_position_blocks( string && description, const vector<vector<tuple<int,int>>> & blocks );
+void message_positions( string && description, const vector<vector<unsigned int>> & positions );
+void message_position_blocks( string && description, const vector<vector<tuple<unsigned int,unsigned int>>> & blocks );
 
 #endif

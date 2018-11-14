@@ -40,8 +40,8 @@ using namespace std;
 
 ReductionTable::
 ReductionTable(
-    int prime,
-    int prime_exponent,
+    unsigned int prime,
+    unsigned int prime_exponent,
     shared_ptr<OpenCLInterface> && opencl
     ) :
   prime( prime ),
@@ -61,8 +61,8 @@ ReductionTable(
 
 ReductionTable::
 ReductionTable(
-    int prime,
-    int prime_exponent,
+    unsigned int prime,
+    unsigned int prime_exponent,
     const shared_ptr<OpenCLInterface> & opencl
     ) :
   prime( prime ),
@@ -92,7 +92,7 @@ compute_tables()
 shared_ptr<vector<int32_t>>
 ReductionTable::
 compute_exponent_reduction_table(
-    int prime_power
+    unsigned int prime_power
     )
 {
   auto reductions = make_shared<vector<int32_t>>();
@@ -108,9 +108,9 @@ compute_exponent_reduction_table(
 shared_ptr<vector<int32_t>>
 ReductionTable::
 compute_incrementation_table(
-    int prime,
-    int prime_exponent,
-    int prime_power
+    unsigned int prime,
+    unsigned int prime_exponent,
+    unsigned int prime_power
     )
 {
   fmpz_t prime_fmpz;
@@ -139,7 +139,7 @@ compute_incrementation_table(
 
   for ( size_t ix=0; ix<prime_power-1; ++ix) {
     unsigned int coeff_sum = 0;
-    for ( int dx=prime_exponent-1; dx>=0; --dx ) {
+    for ( int dx= (int)prime_exponent-1; dx>=0; --dx ) {
       coeff_sum *= prime;
       coeff_sum += nmod_poly_get_coeff_ui(a,dx);
     }

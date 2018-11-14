@@ -63,6 +63,11 @@ class Store :
   public StoreInterface
 {
   public:
+    virtual
+    inline
+    ~Store()
+    {};
+
     void register_curve(const Curve & curve) final;
     void flush_to_static_store(const vuu_block & block);
     tuple<string, string> flush_static_store();

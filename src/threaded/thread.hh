@@ -59,8 +59,10 @@ class Thread :
     Thread( weak_ptr<ThreadPool> thread_pool,
             const shared_ptr<StoreFactoryInterface> store_factory,
             shared_ptr<OpenCLInterface> opencl = {} ) :
-      thread_pool ( thread_pool ), opencl ( opencl ),
-      store_factory ( store_factory )  {};
+      thread_pool ( thread_pool ),
+      store_factory ( store_factory ),
+      opencl ( opencl )
+      {};
 
     void spark();
     void shutdown();

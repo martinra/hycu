@@ -40,17 +40,17 @@ using std::tuple;
 class CurveIterator
 {
   public:
-    CurveIterator( const FqElementTable & table, int genus, unsigned int package_size );
+    CurveIterator( const FqElementTable & table, unsigned int genus, unsigned int package_size );
 
     CurveIterator const& step();
     bool is_end() const;
 
-    vector<int> inline as_position() { return this->enumerator_it->as_position(); };
-    vector<tuple<int,int>> inline as_block() { return this->enumerator_it->as_block(); };
+    vector<unsigned int> inline as_position() { return this->enumerator_it->as_position(); };
+    vector<tuple<unsigned int,unsigned int>> inline as_block() { return this->enumerator_it->as_block(); };
 
     BlockIterator inline as_block_enumerator() { return this->enumerator_it->as_block_enumerator(); };
 
-    static unsigned int multiplicity(unsigned int prime, unsigned int prime_power, vector<unsigned int> coeff_support);
+    static void multiplicity(fmpz_t mult, unsigned int prime, unsigned int prime_power, vector<unsigned int> coeff_support);
 
   private:
     unsigned int prime;

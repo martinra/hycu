@@ -59,7 +59,7 @@ spark_threads(
   // each GPU thread accounts for about 1/8 core
   // we slightly oversubscribe here, assuming that the
   // package size in BlockIterator is large enough
-  for ( size_t ix=this->threads.size()/8; ix<nmb_working_threads; ++ix )
+  for ( unsigned int ix=this->threads.size()/8; ix<(unsigned int)nmb_working_threads; ++ix )
     this->threads.push_back(make_shared<Thread>(shared_from_this(), this->store_factory));
 
 

@@ -88,7 +88,7 @@ FqElementTable::
 }
 
 
-vector<int>
+vector<unsigned int>
 FqElementTable::
 power_coset_representatives(
     unsigned int n
@@ -97,9 +97,9 @@ power_coset_representatives(
 {
   n = n_gcd(n, this->prime_power_pred);
 
-  vector<int> cosets;
+  vector<unsigned int> cosets;
   cosets.reserve(n);
-  for (int i=0; i<n; ++i)
+  for (unsigned int i=0; i<n; ++i)
     cosets.push_back(i);
 
   return cosets;

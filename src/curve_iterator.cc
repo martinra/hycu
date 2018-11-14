@@ -32,7 +32,7 @@ using namespace std;
 CurveIterator::
 CurveIterator(
     const FqElementTable & table,
-    int genus,
+    unsigned int genus,
     unsigned int package_size
     ) :
   prime ( table.prime )
@@ -50,7 +50,7 @@ CurveIterator(
   }
     
 
-  for ( int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
+  for ( unsigned int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
     if ( prime > degree ) {
       // next to hightest coefficient is zero
       // two consecutive coefficients depend on each other
@@ -60,13 +60,13 @@ CurveIterator(
       for ( int ix=degree-2; ix>=0; --ix ) {
         // jx is the exponent of the non-zero coefficient thereafter
         for ( int jx=ix-1; jx>=-1; --jx ) {
-          map<size_t, tuple<int,int>> blocks;
-          map<size_t, vector<int>> sets;
-          map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets;
+          map<size_t, tuple<unsigned int,unsigned int>> blocks;
+          map<size_t, vector<unsigned int>> sets;
+          map<size_t, tuple<size_t, map<unsigned int, vector<unsigned int>>>> dependent_sets;
   
           // highest coefficient is nonzero
           blocks[degree] = table.block_non_zero();
-          for ( size_t kx=degree-1; kx>ix; --kx )
+          for ( int kx = degree-1; kx>ix; --kx )
             sets[kx] = {table.zero_index()};
   
   
@@ -83,16 +83,16 @@ CurveIterator(
             // previous one
             auto cosets = table.power_coset_representatives(ix-jx);
   
-            map<int, vector<int>> coset_products;
-            set<int> coset_product;
+            map<unsigned int, vector<unsigned int>> coset_products;
+            set<unsigned int> coset_product;
   
             for ( size_t sx=0; sx<sets[ix].size(); ++sx ) {
               coset_product.clear();
-              for ( int b : cosets )
+              for ( unsigned int b : cosets )
                 coset_product.insert(table.reduce_index(sets[ix][sx]+b));
-              coset_products[sx] = vector<int>(coset_product.cbegin(), coset_product.cend());
+              coset_products[sx] = vector<unsigned int>(coset_product.cbegin(), coset_product.cend());
             }
-            dependent_sets[jx] = make_tuple(ix, coset_products);
+            dependent_sets[jx] = make_tuple((unsigned int)ix, coset_products);
           }
   
           // remaining coefficients are free to vary
@@ -105,7 +105,7 @@ CurveIterator(
       }
   
       { // the case of x^degree
-        map<size_t, vector<int>> sets;
+        map<size_t, vector<unsigned int>> sets;
         // first coefficient is determined up to squaring
         // it suffices, however, to choose a square here, since the other
         // curves are twists, which we do not need enumerate separately
@@ -127,8 +127,8 @@ CurveIterator(
         // we can reduce the next coefficient by x -> x + b_0.
         // The quotient of the one that follows and the leading one is
         // determined up to a cube class.
-        map<size_t, tuple<int,int>> blocks;
-        map<size_t, vector<int>> sets;
+        map<size_t, tuple<unsigned int,unsigned int>> blocks;
+        map<size_t, vector<unsigned int>> sets;
 
         sets[degree] = table.power_coset_representatives(1);
         blocks[degree-1] = table.block_non_zero();
@@ -147,8 +147,8 @@ CurveIterator(
 
       { // Case: Next to leading coefficient is zero.
         // The third highest coefficient is determined up to a square class.
-        map<size_t, tuple<int,int>> blocks;
-        map<size_t, vector<int>> sets;
+        map<size_t, tuple<unsigned int,unsigned int>> blocks;
+        map<size_t, vector<unsigned int>> sets;
 
         sets[degree] = table.power_coset_representatives(1);
         sets[degree-1] = {table.zero_index()};
@@ -157,7 +157,7 @@ CurveIterator(
         sets[degree-2] = table.power_coset_representatives(2);
         sets[degree-2].push_back(table.zero_index());
 
-        for ( int kx=degree-3; kx>=0; --kx )
+        for ( int kx=(int)degree-3; kx>=0; --kx )
           blocks[kx] = table.block_complete();
 
         this->enumerators.push_back(
@@ -167,8 +167,8 @@ CurveIterator(
       // We can use the leading coefficient to reduce the next to leading one
       // by x -> x + b_0. The one that follows is determined up to a square
       // class.
-      map<size_t, vector<int>> sets;
-      map<size_t, tuple<int,int>> blocks;
+      map<size_t, vector<unsigned int>> sets;
+      map<size_t, tuple<unsigned int,unsigned int>> blocks;
   
       // Since we do not enumerate quadratic twists, we fix the leading
       // coefficient.
@@ -211,9 +211,10 @@ is_end()
   return ( this->enumerator_it == this->enumerators.end() );
 }
 
-unsigned int
+void
 CurveIterator::
 multiplicity(
+    fmpz_t mult,
     unsigned int prime,
     unsigned int prime_power,
     vector<unsigned int> coeff_support
@@ -225,10 +226,13 @@ multiplicity(
   if ( prime > degree ) {
     // in this case, there is no obstruction to the additive reduction x -> x + b
 
-    if ( coeff_support.size() <= 2 )
+    if ( coeff_support.size() <= 2 ) {
       // the orbit of a_n x^n consists of a_n b_2^2 (x+b_1)^n
-      return prime_power * prime_power_pred / 2;
-    else {
+      fmpz_set_ui(mult, prime_power);
+      fmpz_mul_ui(mult, mult, prime_power_pred);
+      fmpz_fdiv_q_2exp(mult, mult, 1); // / 2
+      return;
+    } else {
       // the orbit of a_n x^n + a_m x^m + a_l x^l + ....
       // is b_2^2 ( a_n (b_3 x+b_1)^n + a_m (b_3 x+b_1)^m + a_l (b_3 x+b_1)^l + .... )
       // the orbit size comes from the (n-1)-th coefficent, the m-th coeffficent and the qutient of the
@@ -236,8 +240,12 @@ multiplicity(
       unsigned int snd_exp = *(coeff_support.rbegin()+1);
       unsigned int trd_exp = *(coeff_support.rbegin()+2);
 
-      return   prime_power * prime_power_pred / 2
-             * prime_power_pred / n_gcd(prime_power_pred, snd_exp-trd_exp);
+      fmpz_set_ui(mult, prime_power);
+      fmpz_mul_ui(mult, mult, prime_power_pred);
+      fmpz_fdiv_q_2exp(mult, mult, 1); // / 2
+      fmpz_mul_ui(mult, mult, prime_power_pred);
+      fmpz_divexact_ui(mult, mult, n_gcd(prime_power_pred, snd_exp-trd_exp));
+      return;
     }
   } else if ( degree % prime == 0 ) {
     if ( coeff_support.size() >= 2 &&
@@ -247,24 +255,36 @@ multiplicity(
         // the orbit of a_n x^n + a_{n-1} x^{n-1} + ... is
         // b_2^2 ( a_n (b_3 x + b_1)^n + a_{n-1} (b_3 x + b_1)^{n-1} + ... )
         // (using that prime is odd)
-        return   prime_power * prime_power_pred / 2
-               * prime_power_pred / n_gcd(prime_power_pred, 3);
+        fmpz_set_ui(mult, prime_power);
+        fmpz_mul_ui(mult, mult, prime_power_pred);
+        fmpz_fdiv_q_2exp(mult, mult, 1); /// / 2
+        fmpz_mul_ui(mult, mult, prime_power_pred);
+        fmpz_divexact_ui(mult, mult, n_gcd(prime_power_pred, 3));
+        return;
       } else {
         // the orbit of a_n x^n + a_{n-1} x^{n-1} + ... is
         // b_2^2 ( a_n (x + b_1)^n + a_{n-1} (x + b_1)^{n-1} + ... )
         // (using that prime is odd)
-        return prime_power * prime_power_pred / 2;
+        fmpz_set_ui(mult, prime_power);
+        fmpz_mul_ui(mult, mult, prime_power_pred);
+        fmpz_fdiv_q_2exp(mult, mult, 1); // / 2
+        return;
       }
     } else {
       if ( coeff_support.size() >= 2 &&
            *(coeff_support.rbegin()+1) == degree-2 ) {
         // the orbit of a_n x^n + a_{n-2} x^{n-2} + ... is
         // b_2^2 ( a_n (b_3 x)^n + a_{n-2} (b_3 x)^{n-2} + ... )
-        return prime_power_pred * prime_power_pred / 4;
+        fmpz_set_ui(mult, prime_power_pred);
+        fmpz_mul_ui(mult, mult, prime_power_pred);
+        fmpz_fdiv_q_2exp(mult, mult, 2); // / 4
+        return;
       } else {
         // the orbit of a_n x^n + a_{n-3} x^{n-3} + ... is
         // b_2^2 ( a_n x^n + a_{n-3} x^{n-3} + ... )
-        return prime_power_pred / 2;
+        fmpz_set_ui(mult, prime_power_pred);
+        fmpz_fdiv_q_2exp(mult, mult, 1); // / 2
+        return;
       }
     }
   } else { // degree % prime != 0
@@ -272,11 +292,18 @@ multiplicity(
          *(coeff_support.rbegin()+1) == degree-2 ) {
       // the orbit of a _n x^n + ...
       // is b_2^2 ( a_n (b_3 x + b_1)^n + ... )
-      return prime_power * prime_power_pred * prime_power_pred / 4;
+      fmpz_set_ui(mult, prime_power);
+      fmpz_mul_ui(mult, mult, prime_power_pred);
+      fmpz_mul_ui(mult, mult, prime_power_pred);
+      fmpz_fdiv_q_2exp(mult, mult, 2); // / 4
+      return;
     } else {
       // the orbit of a _n x^n + ...
       // is b_2^2 ( a_n (x + b_1)^n + ... )
-      return prime_power * prime_power_pred / 2;
+      fmpz_set_ui(mult, prime_power);
+      fmpz_mul_ui(mult, mult, prime_power_pred);
+      fmpz_fdiv_q_2exp(mult, mult, 1); // / 2
+      return;
     }
   }
 }

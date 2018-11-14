@@ -51,13 +51,13 @@ class FqElementTable
     {
       return nmod_poly_get_coeff_ui(this->fq_elements.at(ix), 0);
     };
-    inline const fq_nmod_struct* at(int ix) const { return this->fq_elements[ix]; };
-    inline const fq_nmod_struct* operator[](int ix) const { return this->fq_elements[ix]; };
+    inline const fq_nmod_struct* at(unsigned int ix) const { return this->fq_elements[ix]; };
+    inline const fq_nmod_struct* operator[](unsigned int ix) const { return this->fq_elements[ix]; };
 
-    int inline zero_index() const { return this->prime_power_pred; };
-    inline tuple<int,int> block_non_zero() const { return make_tuple(0, (int)this->prime_power_pred); };
-    inline tuple<int,int> block_complete() const { return make_tuple(0, (int)this->prime_power); };
-    vector<int> power_coset_representatives(unsigned int n) const;
+    unsigned int inline zero_index() const { return this->prime_power_pred; };
+    inline tuple<unsigned int,unsigned int> block_non_zero() const { return make_tuple(0, (int)this->prime_power_pred); };
+    inline tuple<unsigned int,unsigned int> block_complete() const { return make_tuple(0, (int)this->prime_power); };
+    vector<unsigned int> power_coset_representatives(unsigned int n) const;
 
     unsigned int inline reduce_index(unsigned int ix) const { return ix % this->prime_power_pred; };
 

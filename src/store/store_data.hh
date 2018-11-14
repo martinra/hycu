@@ -46,12 +46,11 @@ namespace StoreData
 class Count
 {
   public:
-    inline Count(const Curve & curve) :
-      value (
-          CurveIterator::multiplicity( curve.prime(),
-                                       curve.prime_power(),
-                                       curve.rhs_support() ) )
+    inline Count(const Curve & curve)
     {
+      CurveIterator::multiplicity( value.counter,
+          curve.prime(), curve.prime_power(),
+          curve.rhs_support() );
     };
     
     inline const Count twist() { return *this; };
@@ -65,29 +64,15 @@ class Count
     {
       fmpz_t counter;
 
-      ValueType() :
-        ValueType ( (unsigned long int)0 )
+      ValueType()
       {
+        fmpz_init(this->counter);
       };
 
-      ValueType(unsigned long int counter)
+      ValueType(unsigned int counter)
       {
         fmpz_init(this->counter);
         fmpz_set_ui(this->counter, counter);
-      };
-
-      ValueType(const fmpz * counter)
-      {
-        fmpz_init(this->counter);
-        fmpz_set(this->counter, counter);
-      };
-
-      ValueType(fmpz * && counter)
-      {
-        fmpz_init(this->counter);
-        fmpz_set(this->counter, counter);
-        fmpz_clear(counter);
-        delete counter;
       };
 
       ValueType(const Count & count)

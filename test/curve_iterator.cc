@@ -40,12 +40,12 @@ BOOST_AUTO_TEST_CASE( enumerate_f2_g1 )
   FqElementTable table(2, 1);
   CurveIterator iter(table, 1, 1);
 
-  vector<vector<int>> positions_deg4;
-  vector<vector<int>> positions_deg3;
+  vector<vector<unsigned int>> positions_deg4;
+  vector<vector<unsigned int>> positions_deg3;
   for (; !iter.is_end(); iter.step() ) {
     auto position = iter.as_position();
     for_each( position.begin(), position.end(),
-              [&table](int &p){ p = table.at_nmod(p); } );
+              [&table](unsigned int &p){ p = table.at_nmod(p); } );
     if ( position.size() == 5 )
       positions_deg4.emplace_back(position);
     else
@@ -55,14 +55,14 @@ BOOST_AUTO_TEST_CASE( enumerate_f2_g1 )
   sort(positions_deg3.begin(), positions_deg3.end());
 
 
-  vector<vector<int>> positions_deg4_valid = 
+  vector<vector<unsigned int>> positions_deg4_valid = 
        { {0,0,0,0,1}, {0,0,1,0,1}, {0,1,0,0,1}, {0,1,1,0,1}
        , {1,0,0,0,1}, {1,0,1,0,1}, {1,1,0,0,1}, {1,1,1,0,1}
        };
   if ( positions_deg4 != positions_deg4_valid )
     message_positions("genus 1 degree 4 curves / F_2: ", positions_deg4);
 
-  vector<vector<int>> positions_deg3_valid = 
+  vector<vector<unsigned int>> positions_deg3_valid = 
        { {0,0,0,1}, {0,1,0,1}
        , {1,0,0,1}, {1,1,0,1}
        };
@@ -76,12 +76,12 @@ BOOST_AUTO_TEST_CASE( enumerate_f3_g0 )
   FqElementTable table(3, 1);
   CurveIterator iter(table, 0, 1);
 
-  vector<vector<int>> positions_deg2;
-  vector<vector<int>> positions_deg1;
+  vector<vector<unsigned int>> positions_deg2;
+  vector<vector<unsigned int>> positions_deg1;
   for (; !iter.is_end(); iter.step() ) {
     auto position = iter.as_position();
     for_each( position.begin(), position.end(),
-              [&table](int &p){ p = table.at_nmod(p); } );
+              [&table](unsigned int &p){ p = table.at_nmod(p); } );
     if ( position.size() == 3 )
       positions_deg2.emplace_back(position);
     else
@@ -91,14 +91,14 @@ BOOST_AUTO_TEST_CASE( enumerate_f3_g0 )
   sort(positions_deg1.begin(), positions_deg1.end());
 
 
-  vector<vector<int>> positions_deg2_valid = 
+  vector<vector<unsigned int>> positions_deg2_valid = 
        { {0,0,1}
        , {1,0,1}, {1,0,2}
        };
   if ( positions_deg2 != positions_deg2_valid )
     message_positions("genus 1 degree 2 curves / F_3: ", positions_deg2);
 
-  vector<vector<int>> positions_deg1_valid = 
+  vector<vector<unsigned int>> positions_deg1_valid = 
        { {0,1},
        };
   if ( positions_deg1 != positions_deg1_valid )
@@ -116,23 +116,24 @@ BOOST_AUTO_TEST_CASE( blocks_f13_g2 )
   fmpz_init(total_nmb);
   fmpz_zero(total_nmb);
 
+  fmpz_t tmp;
+  fmpz_init(tmp);
+
   for (; !iter.is_end(); iter.step() ) {
     BlockIterator block_iter(iter.as_block());
     for (; !block_iter.is_end(); block_iter.step() ) {
       Curve curve(table, block_iter.as_position());
       if ( !curve.has_squarefree_rhs() ) continue;
-      fmpz_add_ui(total_nmb, total_nmb, CurveIterator::multiplicity(prime, prime, curve.rhs_support()));
+      CurveIterator::multiplicity(tmp, prime, prime, curve.rhs_support());
+      fmpz_add(total_nmb, total_nmb, tmp);
       // twist
-      fmpz_add_ui(total_nmb, total_nmb, CurveIterator::multiplicity(prime, prime, curve.rhs_support()));
+      fmpz_add(total_nmb, total_nmb, tmp);
     }
   }
 
   fmpz_t total_nmb_cmp;
   fmpz_init(total_nmb_cmp);
   fmpz_zero(total_nmb_cmp);
-
-  fmpz_t tmp;
-  fmpz_init(tmp);
 
   fmpz_set_ui(tmp, prime);
   fmpz_pow_ui(tmp, tmp, 7);

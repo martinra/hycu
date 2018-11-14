@@ -36,27 +36,27 @@ using std::shared_ptr;
 using std::tuple;
 
 
-typedef vector<tuple<int,int>> vuu_block;
+typedef vector<tuple<unsigned int,unsigned int>> vuu_block;
 typedef shared_ptr<vuu_block> svuu_block;
 
 
 class BlockIterator
 {
   public:
-    BlockIterator( const vector<tuple<int,int>> & bounds);
+    BlockIterator( const vector<tuple<unsigned int,unsigned int>> & bounds);
     BlockIterator(
         size_t length,
-        const map<size_t, tuple<int,int>> & blocks,
-        map<size_t, vector<int>> sets = {},
-        map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets = {}
+        const map<size_t, tuple<unsigned int,unsigned int>> & blocks,
+        map<size_t, vector<unsigned int>> sets = {},
+        map<size_t, tuple<size_t, map<unsigned int, vector<unsigned int>>>> dependent_sets = {}
         ) :
       BlockIterator( length, blocks, 1, sets, dependent_sets ) {};
     BlockIterator(
         size_t length,
-        const map<size_t, tuple<int,int>> & blocks,
+        const map<size_t, tuple<unsigned int,unsigned int>> & blocks,
         unsigned int package_size,
-        map<size_t, vector<int>> sets = {},
-        map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets = {}
+        map<size_t, vector<unsigned int>> sets = {},
+        map<size_t, tuple<size_t, map<unsigned int, vector<unsigned int>>>> dependent_sets = {}
         );
 
     size_t inline length() const { return length_; };
@@ -64,12 +64,12 @@ class BlockIterator
     const BlockIterator & step();
     bool inline is_end() const { return has_reached_end; };
 
-    vector<int> as_position();
-    vector<tuple<int,int>> as_block();
+    vector<unsigned int> as_position();
+    vector<tuple<unsigned int,unsigned int>> as_block();
     BlockIterator as_block_enumerator();
 
   private:
-    void initialize_blocks(const map<size_t, tuple<int,int>> & blocks, unsigned int package_size = 1);
+    void initialize_blocks(const map<size_t, tuple<unsigned int,unsigned int>> & blocks, unsigned int package_size = 1);
     void set_initial_position();
     const BlockIterator & step_(int step_type, size_t step_ix);
 
@@ -79,11 +79,11 @@ class BlockIterator
     vector<size_t> update_order_sets;
     vector<size_t> update_order_dependend_sets;
 
-    map<size_t, tuple<int,int,unsigned int>> blocks;
-    map<size_t, vector<int>> sets;
-    map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets;
+    map<size_t, tuple<unsigned int,unsigned int,unsigned int>> blocks;
+    map<size_t, vector<unsigned int>> sets;
+    map<size_t, tuple<size_t, map<unsigned int, vector<unsigned int>>>> dependent_sets;
 
-    vector<int> position;
+    vector<unsigned int> position;
     bool has_reached_end;
 };
 

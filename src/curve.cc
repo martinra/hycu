@@ -71,7 +71,7 @@ operator<<(
 Curve::
 Curve(
     shared_ptr<FqElementTable> table,
-    const vector<int> poly_coeff_exponents
+    const vector<unsigned int> poly_coeff_exponents
     ) :
     table( table )
 {
@@ -81,7 +81,7 @@ Curve(
     this->poly_coeff_exponents.pop_back();
 }
 
-int
+unsigned int
 Curve::
 genus()
   const
@@ -127,7 +127,7 @@ has_squarefree_rhs()
   }
 }
 
-vector<int>
+vector<unsigned int>
 Curve::
 convert_poly_coeff_exponents(
     const ReductionTable & table
@@ -150,9 +150,9 @@ convert_poly_coeff_exponents(
   unsigned int prime_power_pred = this->table->prime_power_pred;
   unsigned int exponent_factor = table.prime_power_pred / this->table->prime_power_pred;
 
-  vector<int> converted;
+  vector<unsigned int> converted;
   converted.reserve(this->poly_coeff_exponents.size());
-  for ( int c : this->poly_coeff_exponents )
+  for ( unsigned int c : this->poly_coeff_exponents )
     converted.push_back(c != prime_power_pred ? exponent_factor * c
                                               : table.prime_power_pred );
 
@@ -180,7 +180,7 @@ count(
 
 
   // this also checks that the prime exponent is divisible by the one of the curve
-  const vector<int> poly_coeff_exponents = this->convert_poly_coeff_exponents(reduction_table);
+  const vector<unsigned int> poly_coeff_exponents = this->convert_poly_coeff_exponents(reduction_table);
 
   // ponts x != 0, infty
   if ( reduction_table.is_opencl_enabled() )
@@ -211,7 +211,7 @@ void
 Curve::
 count_opencl(
     ReductionTable & reduction_table,
-    const vector<int> & poly_coeff_exponents
+    const vector<unsigned int> & poly_coeff_exponents
     )
 {
 #ifndef WITH_OPENCL
@@ -246,30 +246,30 @@ void
 Curve::
 count_cpu(
     const ReductionTable & reduction_table,
-    const vector<int> & poly_coeff_exponents
+    const vector<unsigned int> & poly_coeff_exponents
     )
 {
-  int prime_exponent = reduction_table.prime_exponent;
-  int prime_power_pred = reduction_table.prime_power_pred;
+  unsigned int prime_exponent = reduction_table.prime_exponent;
+  unsigned int prime_power_pred = reduction_table.prime_power_pred;
 
   const auto & exponent_reduction_table = *reduction_table.exponent_reduction_table;
   const auto & incrementation_table = *reduction_table.incrementation_table;
 
-  int poly_size = (int)poly_coeff_exponents.size();
+  unsigned int poly_size = poly_coeff_exponents.size();
 
 
-  for ( int x = 1; x <= prime_power_pred; ++x ) {
-    int f = poly_coeff_exponents[0];
-    for ( int dx=1, xpw=x; dx < poly_size; ++dx, xpw+=x ) {
+  for ( unsigned int x = 1; x <= prime_power_pred; ++x ) {
+    unsigned int f = poly_coeff_exponents[0];
+    for ( unsigned int dx=1, xpw=x; dx < poly_size; ++dx, xpw+=x ) {
       xpw = exponent_reduction_table[xpw];
       if ( poly_coeff_exponents[dx] != prime_power_pred ) { // i.e. coefficient is not zero
         if ( f == prime_power_pred ) { // i.e. f = 0
           f = poly_coeff_exponents[dx] + xpw;
           f = exponent_reduction_table[f];
         } else {
-          int tmp = exponent_reduction_table[poly_coeff_exponents[dx] + xpw];
+          unsigned int tmp = exponent_reduction_table[poly_coeff_exponents[dx] + xpw];
 
-          int tmp2;
+          unsigned int tmp2;
           if (tmp <= f) {
             // todo: this can be removed by doubling the size of incrementation_table
             // and checking at prime_power_pred + 1 + tmp - f
@@ -297,7 +297,7 @@ count_cpu(
 void
 Curve::
 count_naive_nmod(
-    int prime_exponent
+    unsigned int prime_exponent
   )
 {
   if ( prime_exponent <= 0 ) {
@@ -337,7 +337,7 @@ count_naive_nmod(
   // fixme: in this conversion as in the other ones, we
   // silently assume that gen_q = gen_{q^l}^{q^l - q}
   vector<const fq_nmod_struct*> poly_coefficients;
-  for ( int e : this->poly_coeff_exponents ) {
+  for ( unsigned int e : this->poly_coeff_exponents ) {
     auto a = new fq_nmod_struct;
     fq_nmod_init(a, fq_ctx);
     if ( e == table->prime_power_pred )
@@ -420,7 +420,7 @@ count_naive_nmod(
 void
 Curve::
 count_naive_zech(
-    int prime_exponent
+    unsigned int prime_exponent
   )
 {
   if ( prime_exponent <= 0 ) {
@@ -460,7 +460,7 @@ count_naive_zech(
   // fixme: in this conversion as in the other ones, we
   // silently assume that gen_q = gen_{q^l}^{q^l - q}
   vector<const fq_zech_struct*> poly_coefficients;
-  for ( int e : this->poly_coeff_exponents ) {
+  for ( unsigned int e : this->poly_coeff_exponents ) {
     auto a = new fq_zech_struct;
     fq_zech_init(a, fq_ctx);
     if ( e == table->prime_power_pred )
@@ -540,7 +540,7 @@ count_naive_zech(
   fq_zech_ctx_clear(fq_ctx);
 }
 
-vector<tuple<int,int>>
+vector<tuple<unsigned int,unsigned int>>
 Curve::
 number_of_points(
     unsigned int max_prime_exponent
@@ -549,7 +549,7 @@ number_of_points(
 {
   unsigned int prime_exponent = this->table->prime_exponent;
 
-  vector<tuple<int,int>> nmb_points;
+  vector<tuple<unsigned int,unsigned int>> nmb_points;
   nmb_points.reserve(max_prime_exponent/prime_exponent);
   for ( size_t fx=prime_exponent;
         fx<=max_prime_exponent;
@@ -605,12 +605,12 @@ hasse_weil_offsets(
   return offsets;
 }
 
-vector<int>
+vector<unsigned int>
 Curve::
 ramification_type()
   const
 {
-  vector<int> ramifications;
+  vector<unsigned int> ramifications;
 
   // try to compute ramification from point counts
 
@@ -637,7 +637,7 @@ ramification_type()
   }
 
 
-  int ramification_difference = 2*this->genus() + 2 - ramification_sum;
+  unsigned int ramification_difference = 2*this->genus() + 2 - ramification_sum;
   if ( ramification_difference < 2*fx ) {
     if ( ramification_difference != 0 )
       ramifications.push_back(ramification_difference);
@@ -657,8 +657,8 @@ ramification_type()
     nmod_poly_factor_init(poly_factor);
     nmod_poly_factor(poly_factor, &poly);
 
-    for (size_t ix=0; ix<poly_factor->num; ++ix)
-      for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
+    for (unsigned int ix=0; ix<(unsigned int)poly_factor->num; ++ix)
+      for (unsigned int jx=0; jx<(unsigned int)poly_factor->exp[ix]; ++jx)
         ramifications.push_back(nmod_poly_degree(poly_factor->p + ix));
 
     nmod_poly_factor_clear(poly_factor);
@@ -672,8 +672,8 @@ ramification_type()
     fq_nmod_poly_factor_init(poly_factor, this->table->fq_ctx);
     fq_nmod_poly_factor(poly_factor, lead, &poly, this->table->fq_ctx);
 
-    for (size_t ix=0; ix<poly_factor->num; ++ix)
-      for (size_t jx=0; jx<poly_factor->exp[ix]; ++jx)
+    for (unsigned int ix=0; ix<(unsigned int)poly_factor->num; ++ix)
+      for (unsigned int jx=0; jx<(unsigned int)poly_factor->exp[ix]; ++jx)
         ramifications.push_back(fq_nmod_poly_degree(poly_factor->poly + ix, this->table->fq_ctx));
 
     fq_nmod_poly_factor_clear(poly_factor, this->table->fq_ctx);
@@ -698,7 +698,7 @@ rhs_nmod_polynomial()
   nmod_poly_struct poly;
   nmod_poly_init2( &poly, this->table->prime, this->poly_coeff_exponents.size() );
 
-  for (long ix=0; ix<this->poly_coeff_exponents.size(); ++ix)
+  for (long int ix=0; ix<(long int)this->poly_coeff_exponents.size(); ++ix)
     nmod_poly_set_coeff_ui(&poly, ix, this->table->at_nmod(this->poly_coeff_exponents[ix]));
 
   return poly;
@@ -712,7 +712,7 @@ rhs_polynomial()
   fq_nmod_poly_struct poly;
   fq_nmod_poly_init2( &poly, this->poly_coeff_exponents.size(), this->table->fq_ctx );
 
-  for (long ix=0; ix<this->poly_coeff_exponents.size(); ++ix)
+  for (long int ix=0; ix<(long int)this->poly_coeff_exponents.size(); ++ix)
     fq_nmod_poly_set_coeff( &poly, ix, this->table->at(this->poly_coeff_exponents[ix]), this->table->fq_ctx );
 
   return poly;

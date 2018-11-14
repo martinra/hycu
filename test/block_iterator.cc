@@ -35,20 +35,20 @@ using namespace std;
 
 BOOST_AUTO_TEST_CASE( blocks )
 {
-  map<size_t, tuple<int,int>> blocks
+  map<size_t, tuple<unsigned int,unsigned int>> blocks
       { {0, make_tuple(2, 4)}
       , {1, make_tuple(5, 9)}
       , {2, make_tuple(0, 1)}
       };
   BlockIterator iter(3, blocks);
 
-  vector<vector<int>> positions;
+  vector<vector<unsigned int>> positions;
   for (; !iter.is_end(); iter.step() )
     positions.emplace_back(iter.as_position());
   sort(positions.begin(), positions.end());
 
 
-  vector<vector<int>> positions_valid = 
+  vector<vector<unsigned int>> positions_valid = 
        { {2,5,0}, {2,6,0} 
        , {2,7,0}, {2,8,0} 
        , {3,5,0}, {3,6,0} 
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( blocks )
 
 BOOST_AUTO_TEST_CASE( sets )
 {
-  map<size_t, vector<int>> sets
+  map<size_t, vector<unsigned int>> sets
       { {0, {5, 7}}
       , {1, {3}}
       , {2, {9, 13}}
@@ -70,13 +70,13 @@ BOOST_AUTO_TEST_CASE( sets )
   auto iter = BlockIterator(3, {}, sets);
 
 
-  vector<vector<int>> positions;
+  vector<vector<unsigned int>> positions;
   for (; !iter.is_end(); iter.step() )
     positions.push_back(iter.as_position());
   sort(positions.begin(), positions.end());
 
 
-  vector<vector<int>> positions_valid =
+  vector<vector<unsigned int>> positions_valid =
       { {5,3,9}, {5,3,13}
       , {7,3,9}, {7,3,13} };
 
@@ -86,26 +86,26 @@ BOOST_AUTO_TEST_CASE( sets )
 
 BOOST_AUTO_TEST_CASE( dependent_sets )
 {
-  map<size_t, vector<int>> sets
+  map<size_t, vector<unsigned int>> sets
       { {0, {5, 7}}
       };
-  map<size_t, tuple<size_t, map<int, vector<int>>>> dependent_sets
-      { {1, make_tuple( 0, map<int, vector<int>>{ {0, {2, 4}}
-                                                , {1, {3, 6}}
-                                                }
+  map<size_t, tuple<size_t, map<unsigned int, vector<unsigned int>>>> dependent_sets
+      { {1, make_tuple( 0, map<unsigned int, vector<unsigned int>>{ {0, {2, 4}}
+                                                                  , {1, {3, 6}}
+                                                                  }
                       )}
       };
 
   auto iter = BlockIterator(2, {}, sets, dependent_sets);
 
 
-  vector<vector<int>> positions;
+  vector<vector<unsigned int>> positions;
   for (; !iter.is_end(); iter.step() )
     positions.push_back(iter.as_position());
   sort(positions.begin(), positions.end());
 
 
-  vector<vector<int>> positions_valid =
+  vector<vector<unsigned int>> positions_valid =
       { {5,2}, {5,4}
       , {7,3}, {7,6} };
 
@@ -116,25 +116,25 @@ BOOST_AUTO_TEST_CASE( dependent_sets )
 
 BOOST_AUTO_TEST_CASE( blocks_sets_package_position )
 {
-  map<size_t, tuple<int,int>> blocks
+  map<size_t, tuple<unsigned int,unsigned int>> blocks
       { {0, make_tuple(2, 10)}
       , {1, make_tuple(5, 7)}
       };
-  map<size_t, vector<int>> sets
+  map<size_t, vector<unsigned int>> sets
       { {2, {9, 7}}
       , {3, {3}}
       };
 
   BlockIterator iter(4, blocks, 3, sets);
 
-  vector<vector<int>> positions;
-  vector<vector<tuple<int,int>>> position_blocks;
+  vector<vector<unsigned int>> positions;
+  vector<vector<tuple<unsigned int,unsigned int>>> position_blocks;
   for (; !iter.is_end(); iter.step() )
     positions.emplace_back(iter.as_position());
   sort(positions.begin(), positions.end());
 
 
-  vector<vector<int>> positions_valid
+  vector<vector<unsigned int>> positions_valid
        { {2,5,7,3}, {2,5,9,3} 
        , {2,6,7,3}, {2,6,9,3} 
        , {5,5,7,3}, {5,5,9,3} 
@@ -148,23 +148,23 @@ BOOST_AUTO_TEST_CASE( blocks_sets_package_position )
 
 BOOST_AUTO_TEST_CASE( blocks_sets_package_block )
 {
-  map<size_t, tuple<int,int>> blocks
+  map<size_t, tuple<unsigned int,unsigned int>> blocks
       { {0, make_tuple(2, 10)}
       , {1, make_tuple(5, 7)}
       };
-  map<size_t, vector<int>> sets
+  map<size_t, vector<unsigned int>> sets
       { {2, {9, 7}}
       , {3, {3}}
       };
 
   BlockIterator iter(4, blocks, 3, sets);
 
-  vector<vector<tuple<int,int>>> position_blocks;
+  vector<vector<tuple<unsigned int,unsigned int>>> position_blocks;
   for (; !iter.is_end(); iter.step() )
     position_blocks.emplace_back(iter.as_block());
   sort(position_blocks.begin(), position_blocks.end());
 
-  vector<tuple<int,int>> position_blocks_valid
+  vector<tuple<unsigned int,unsigned int>> position_blocks_valid
       { make_tuple(2,5)
       , make_tuple(5,6)
       , make_tuple(7,8)
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE( blocks_sets_package_block )
 
 BOOST_AUTO_TEST_CASE( blocks_package_block_enumerator )
 {
-  map<size_t, tuple<int,int>> blocks
+  map<size_t, tuple<unsigned int,unsigned int>> blocks
       { {0, make_tuple(2, 9)}
       , {1, make_tuple(5, 7)}
       , {2, make_tuple(8, 10)}
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE( blocks_package_block_enumerator )
 
   BlockIterator iter(3, blocks, 4);
 
-  vector<vector<int>> positions, positions_valid;
+  vector<vector<unsigned int>> positions, positions_valid;
 
   auto iter_sub = iter.as_block_enumerator();
   for (; !iter_sub.is_end(); iter_sub.step())

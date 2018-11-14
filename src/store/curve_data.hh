@@ -61,14 +61,14 @@ class ExplicitRamificationHasseWeil
 
     struct ValueType
     {
-      vector<int> ramification_type;
+      vector<unsigned int> ramification_type;
       vector<int> hasse_weil_offsets;
   
 
       ValueType() {};
-      ValueType(const vector<int> & ramification_type, const vector<int> & hasse_weil_offsets) :
+      ValueType(const vector<unsigned int> & ramification_type, const vector<int> & hasse_weil_offsets) :
         ramification_type ( ramification_type ), hasse_weil_offsets ( hasse_weil_offsets ) {};
-      ValueType(vector<int> && ramification_type, vector<int> && hasse_weil_offsets) :
+      ValueType(vector<unsigned int> && ramification_type, vector<int> && hasse_weil_offsets) :
         ramification_type ( move(ramification_type) ), hasse_weil_offsets ( move(hasse_weil_offsets) ) {};
 
       explicit inline ValueType(const ExplicitRamificationHasseWeil & data) :
@@ -82,9 +82,9 @@ class ExplicitRamificationHasseWeil
     inline ValueType as_value() { return ValueType( *this ); };
 
   private:
-    ExplicitRamificationHasseWeil(const vector<int> & ramification_type, const vector<int> & hasse_weil_offsets) :
+    ExplicitRamificationHasseWeil(const vector<unsigned int> & ramification_type, const vector<int> & hasse_weil_offsets) :
       value ( ValueType(ramification_type, hasse_weil_offsets) ) {};
-    ExplicitRamificationHasseWeil(vector<int> && ramification_type, vector<int> && hasse_weil_offsets) :
+    ExplicitRamificationHasseWeil(vector<unsigned int> && ramification_type, vector<int> && hasse_weil_offsets) :
       value( ValueType(ramification_type, hasse_weil_offsets) ) {};
 
     ValueType value;

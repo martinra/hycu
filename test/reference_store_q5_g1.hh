@@ -14,24 +14,24 @@ create_reference_store<5, 1,
       typename HyCu::StoreData::Count::ValueType>
     store;
 
-  store[{ vector<int>{ 1,1,1,1 }, vector<int>{ -2 } }] = { 30 };
-  store[{ vector<int>{ 1,1,1,1 }, vector<int>{ 2 } }] = { 30 };
-  store[{ vector<int>{ 1,1,2 }, vector<int>{ -4 } }] = { 60 };
-  store[{ vector<int>{ 1,1,2 }, vector<int>{ -2 } }] = { 120 };
-  store[{ vector<int>{ 1,1,2 }, vector<int>{ 0 } }] = { 240 };
-  store[{ vector<int>{ 1,1,2 }, vector<int>{ 2 } }] = { 120 };
-  store[{ vector<int>{ 1,1,2 }, vector<int>{ 4 } }] = { 60 };
-  store[{ vector<int>{ 1,3 }, vector<int>{ -3 } }] = { 240 };
-  store[{ vector<int>{ 1,3 }, vector<int>{ -1 } }] = { 240 };
-  store[{ vector<int>{ 1,3 }, vector<int>{ 1 } }] = { 240 };
-  store[{ vector<int>{ 1,3 }, vector<int>{ 3 } }] = { 240 };
-  store[{ vector<int>{ 2,2 }, vector<int>{ -2 } }] = { 90 };
-  store[{ vector<int>{ 2,2 }, vector<int>{ 2 } }] = { 90 };
-  store[{ vector<int>{ 4 }, vector<int>{ -4 } }] = { 60 };
-  store[{ vector<int>{ 4 }, vector<int>{ -2 } }] = { 120 };
-  store[{ vector<int>{ 4 }, vector<int>{ 0 } }] = { 240 };
-  store[{ vector<int>{ 4 }, vector<int>{ 2 } }] = { 120 };
-  store[{ vector<int>{ 4 }, vector<int>{ 4 } }] = { 60 };
+  store[{ vector<unsigned int>{ 1,1,1,1 }, vector<int>{ -2 } }] = { 30 };
+  store[{ vector<unsigned int>{ 1,1,1,1 }, vector<int>{ 2 } }] = { 30 };
+  store[{ vector<unsigned int>{ 1,1,2 }, vector<int>{ -4 } }] = { 60 };
+  store[{ vector<unsigned int>{ 1,1,2 }, vector<int>{ -2 } }] = { 120 };
+  store[{ vector<unsigned int>{ 1,1,2 }, vector<int>{ 0 } }] = { 240 };
+  store[{ vector<unsigned int>{ 1,1,2 }, vector<int>{ 2 } }] = { 120 };
+  store[{ vector<unsigned int>{ 1,1,2 }, vector<int>{ 4 } }] = { 60 };
+  store[{ vector<unsigned int>{ 1,3 }, vector<int>{ -3 } }] = { 240 };
+  store[{ vector<unsigned int>{ 1,3 }, vector<int>{ -1 } }] = { 240 };
+  store[{ vector<unsigned int>{ 1,3 }, vector<int>{ 1 } }] = { 240 };
+  store[{ vector<unsigned int>{ 1,3 }, vector<int>{ 3 } }] = { 240 };
+  store[{ vector<unsigned int>{ 2,2 }, vector<int>{ -2 } }] = { 90 };
+  store[{ vector<unsigned int>{ 2,2 }, vector<int>{ 2 } }] = { 90 };
+  store[{ vector<unsigned int>{ 4 }, vector<int>{ -4 } }] = { 60 };
+  store[{ vector<unsigned int>{ 4 }, vector<int>{ -2 } }] = { 120 };
+  store[{ vector<unsigned int>{ 4 }, vector<int>{ 0 } }] = { 240 };
+  store[{ vector<unsigned int>{ 4 }, vector<int>{ 2 } }] = { 120 };
+  store[{ vector<unsigned int>{ 4 }, vector<int>{ 4 } }] = { 60 };
 
   return TestStore<5, 1,
                    HyCu::CurveData::ExplicitRamificationHasseWeil,
@@ -39,6 +39,7 @@ create_reference_store<5, 1,
              (store);
 }
 
+/*
 template
 TestStore<5, 1,
           HyCu::CurveData::ExplicitRamificationHasseWeil,
@@ -46,5 +47,6 @@ TestStore<5, 1,
 create_reference_store<5,1,
                         HyCu::CurveData::ExplicitRamificationHasseWeil,
                         HyCu::StoreData::Count>();
+*/
 
 #endif

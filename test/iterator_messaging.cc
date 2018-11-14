@@ -34,7 +34,7 @@ using namespace std;
 void
 message_positions(
     string && description,
-    const vector<vector<int>> & positions
+    const vector<vector<unsigned int>> & positions
     )
 {
   stringstream out;
@@ -49,7 +49,7 @@ message_positions(
 void
 message_position_blocks(
     string && description,
-    const vector<vector<tuple<int,int>>> & blocks
+    const vector<vector<tuple<unsigned int,unsigned int>>> & blocks
     )
 {
   stringstream out;
