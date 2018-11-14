@@ -172,7 +172,7 @@ count(
          << reduction_table.prime << " " << this->table->prime << endl;
     throw;
   }
-  int prime_exponent = reduction_table.prime_exponent;
+  unsigned int prime_exponent = reduction_table.prime_exponent;
 
   if ( this->nmb_points.find( prime_exponent ) != this->nmb_points.end() )
     return;
@@ -565,6 +565,13 @@ Curve::
 max_prime_exponent()
   const
 {
+  // DEBUG
+  /*
+  cerr << "DEBUG: " << endl;
+  for ( auto p : this->nmb_points )
+    cerr << get<0>(p) << " " << get<0>(get<1>(p)) << " " << get<1>(get<1>(p)) << endl;
+  */
+
   unsigned int max_prime_exponent = this->prime_exponent();
   while ( this->nmb_points.count(max_prime_exponent) != 0 )
     max_prime_exponent += this->prime_exponent();

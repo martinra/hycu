@@ -46,6 +46,7 @@ BOOST_AUTO_TEST_CASE( threaded_q5_g1 )
   node.prime = 5;
   node.prime_exponent = 1;
   node.genus = 1;
+  node.count_exponent = 1;
   node.package_size = 30;
 
   worker_pool->update_config(node);
@@ -78,6 +79,7 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g1 )
   node.prime = 7;
   node.prime_exponent = 1;
   node.genus = 1;
+  node.count_exponent = 1;
   node.package_size = 30;
 
   worker_pool->update_config(node);
@@ -110,6 +112,7 @@ BOOST_AUTO_TEST_CASE( threaded_q7_g2 )
   node.prime = 7;
   node.prime_exponent = 1;
   node.genus = 2;
+  node.count_exponent = 2;
   node.package_size = 30;
 
   worker_pool->update_config(node);
