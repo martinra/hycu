@@ -42,6 +42,8 @@ struct ConfigNode
   unsigned int prime_exponent;
   
   unsigned int genus;
+  bool with_marked_point;
+
   unsigned int count_exponent;
   
   path result_path;
@@ -82,6 +84,8 @@ namespace serialization {
     ar & config.prime_exponent;
 
     ar & config.genus;
+    ar & config.with_marked_point;
+
     ar & config.count_exponent;
 
     string result_path_str;

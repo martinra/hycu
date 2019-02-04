@@ -151,7 +151,7 @@ main(
     worker_pool.update_config(node);
 
     FqElementTable enumeration_table(node.prime, node.prime_exponent);
-    CurveIterator iter(enumeration_table, node.genus, node.package_size);
+    CurveIterator iter(enumeration_table, node.genus, node.with_marked_point, node.package_size);
     for (; !iter.is_end(); iter.step() )
       worker_pool.assign(iter.as_block());
   }

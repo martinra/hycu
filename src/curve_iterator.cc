@@ -33,6 +33,7 @@ CurveIterator::
 CurveIterator(
     const FqElementTable & table,
     unsigned int genus,
+    bool with_marked_point,
     unsigned int package_size
     ) :
   prime ( table.prime )
@@ -50,7 +51,7 @@ CurveIterator(
   }
     
 
-  for ( unsigned int degree = 2*genus + 1; degree < 2*genus + 3; ++degree ) {
+  for ( unsigned int degree = 2*genus + 1; degree < with_marked_point ? 2*genus + 2 : 2*genus + 3; ++degree ) {
     if ( prime > degree ) {
       // next to hightest coefficient is zero
       // two consecutive coefficients depend on each other

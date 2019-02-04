@@ -40,7 +40,12 @@ using std::tuple;
 class CurveIterator
 {
   public:
-    CurveIterator( const FqElementTable & table, unsigned int genus, unsigned int package_size );
+    CurveIterator(
+      const FqElementTable & table,
+      unsigned int genus,
+      bool with_marked_point,
+      unsigned int package_size
+    );
 
     CurveIterator const& step();
     bool is_end() const;
