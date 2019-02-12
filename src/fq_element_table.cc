@@ -53,8 +53,17 @@ FqElementTable(
   fq_nmod_init(a, this->fq_ctx);
   fq_nmod_one(a, this->fq_ctx);
 
+  flint_rand_t state;
+  flint_randinit(state);
+
+
   this->fq_elements.reserve(this->prime_power);
-  for (size_t ix=0; ix<this->prime_power_pred; ++ix) {
+
+  for ( bool is_gen = false; !is_gen; fq_nmod_randtest(gen, state, this->fq_ctx)) {
+    is_gen = true;
+
+    this->fq_elements.clear();
+
     auto b = new fq_nmod_struct;
     fq_nmod_init(b, this->fq_ctx);
     fq_nmod_set(b, a, this->fq_ctx);
@@ -62,6 +71,25 @@ FqElementTable(
     this->fq_elements.push_back(b);
 
     fq_nmod_mul(a, a, gen, this->fq_ctx);
+
+    for (size_t ix=1; ix<this->prime_power_pred; ++ix) {
+      if ( fq_nmod_equal(a, this->fq_elements.front(), this->fq_ctx) ) {
+        is_gen = false;
+        for ( auto fq : this->fq_elements ) {
+          fq_nmod_clear(fq, this->fq_ctx);
+          delete fq;
+        }
+        break;
+      }
+      auto b = new fq_nmod_struct;
+      fq_nmod_init(b, this->fq_ctx);
+      fq_nmod_set(b, a, this->fq_ctx);
+      fq_nmod_reduce(b, this->fq_ctx);
+
+      this->fq_elements.push_back(b);
+
+      fq_nmod_mul(a, a, gen, this->fq_ctx);
+    }
   }
 
   { // the case of b == 0
@@ -72,6 +100,7 @@ FqElementTable(
     this->fq_elements.push_back(b);
   }
 
+  flint_randclear(state);
   fq_nmod_clear(gen, this->fq_ctx);
   fq_nmod_clear(a, this->fq_ctx);
 }

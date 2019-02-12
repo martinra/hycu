@@ -322,7 +322,8 @@ count_naive_nmod(
   fq_nmod_ctx_t fq_ctx;
   fmpz_t prime_fmpz;
   fmpz_init_set_ui(prime_fmpz, this->table->prime);
-  fq_nmod_ctx_init(fq_ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
+  // use Conway polynomials so that fq_nmod_gen is a multiplicative generator
+  fq_nmod_ctx_init_conway(fq_ctx, prime_fmpz, prime_exponent, ((string)"T").c_str());
   fmpz_clear(prime_fmpz);
 
   fq_nmod_t gen;

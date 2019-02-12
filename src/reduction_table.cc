@@ -122,33 +122,46 @@ compute_incrementation_table(
 
   fq_nmod_t gen;
   fq_nmod_init(gen, ctx);
+  // Flint, when the field is not given by Conway polynomials, does not provide a multiplicative generator
   fq_nmod_gen(gen, ctx);
-  fq_nmod_reduce(gen, ctx);
+
+  fq_nmod_t a;
+  fq_nmod_init(a, ctx);
+
+  flint_rand_t state;
+  flint_randinit(state);
+
+
+  map<int32_t,int32_t> gen_powers;
+
+  for ( bool is_gen = false; !is_gen; fq_nmod_randtest(gen, state, ctx)) {
+    is_gen = true;
+
+    gen_powers.clear();
+    gen_powers[0] = prime_power - 1; // special index for 0
+
+    fq_nmod_one(a, ctx);
+    for ( size_t ix=0; ix<prime_power-1; ++ix) {
+      unsigned int coeff_sum = 0;
+      for ( int dx = (int)prime_exponent-1; dx>=0; --dx ) {
+        coeff_sum *= prime;
+        coeff_sum += nmod_poly_get_coeff_ui(a,dx);
+      }
+
+      if ( gen_powers.count(coeff_sum) != 0 ) {
+        is_gen = false;
+        break;
+      }
+      gen_powers[coeff_sum] = ix;
+
+      fq_nmod_mul(a, a, gen, ctx);
+      fq_nmod_reduce(a, ctx);
+    }
+  }
 
 
   auto incrementations = make_shared<vector<int32_t>>(prime_power);
   incrementations->at(prime_power-1) = 0; // special index for 0
-
-  map<int32_t,int32_t> gen_powers;
-  gen_powers[0] = prime_power - 1; // special index for 0
-
-
-  fq_nmod_t a;
-  fq_nmod_init(a, ctx);
-  fq_nmod_one(a, ctx);
-
-  for ( size_t ix=0; ix<prime_power-1; ++ix) {
-    unsigned int coeff_sum = 0;
-    for ( int dx= (int)prime_exponent-1; dx>=0; --dx ) {
-      coeff_sum *= prime;
-      coeff_sum += nmod_poly_get_coeff_ui(a,dx);
-    }
-
-    gen_powers[coeff_sum] = ix;
-
-    fq_nmod_mul(a, a, gen, ctx);
-    fq_nmod_reduce(a, ctx);
-  }
 
   for ( size_t pix=0; pix<prime_power-1; pix+=prime) {
     for ( size_t ix=pix; ix<pix+prime-1; ++ix)
@@ -157,6 +170,7 @@ compute_incrementation_table(
   }
 
 
+  flint_randclear(state);
   fq_nmod_clear(gen, ctx); 
   fq_nmod_clear(a, ctx); 
   fq_nmod_ctx_clear(ctx);
